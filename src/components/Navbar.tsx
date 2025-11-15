@@ -18,13 +18,13 @@ const NavBar: React.FC = () => {
     <Navbar bg="light" expand="lg">
       <Container>
         <Navbar.Brand href="/" className="d-flex align-items-center">
-          {/* TODO: Save logo to /public/manoa-roomiematch-logo.png */}
           <Image
-            src="/manoa-roomiematch-logo.png"
+            src="/RoomieLogo.png"
             alt="Manoa RoomieMatch"
             width={200}
-            height={40}
+            height={70}
             className="d-inline-block align-top"
+            style={{ objectFit: 'contain', maxHeight: '100%' }}
             priority
           />
         </Navbar.Brand>
