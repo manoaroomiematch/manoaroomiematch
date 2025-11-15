@@ -1,4 +1,5 @@
 /* eslint-disable react/jsx-indent, @typescript-eslint/indent */
+/* eslint-disable react/prop-types */
 
 'use client';
 
@@ -92,7 +93,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, viewMode }) => {
             ) : (
               <Star className="text-warning me-1" size={20} />
             )}
-            <strong>{match.matchPercentage}% Match</strong>
+            <strong>
+              {match.matchPercentage}
+              % Match
+            </strong>
           </div>
 
           {/* View Details Button */}
