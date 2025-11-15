@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { BoxArrowRight, Lock, PersonFill, PersonPlusFill } from 'react-bootstrap-icons';
+import Image from 'next/image';
 
 const NavBar: React.FC = () => {
   const { data: session } = useSession();
@@ -16,7 +17,17 @@ const NavBar: React.FC = () => {
   return (
     <Navbar bg="light" expand="lg">
       <Container>
-        <Navbar.Brand href="/">Next.js Application Template</Navbar.Brand>
+        <Navbar.Brand href="/" className="d-flex align-items-center">
+          {/* TODO: Save logo to /public/manoa-roomiematch-logo.png */}
+          <Image
+            src="/manoa-roomiematch-logo.png"
+            alt="Manoa RoomieMatch"
+            width={200}
+            height={40}
+            className="d-inline-block align-top"
+            priority
+          />
+        </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto justify-content-start">
@@ -27,6 +38,9 @@ const NavBar: React.FC = () => {
                   </Nav.Link>,
                   <Nav.Link id="list-stuff-nav" href="/list" key="list" active={pathName === '/list'}>
                     List Stuff
+                  </Nav.Link>,
+                  <Nav.Link id="browse-matches-nav" href="/matches" key="matches" active={pathName === '/matches'}>
+                    Browse Matches
                   </Nav.Link>,
                 ]
               : ''}
