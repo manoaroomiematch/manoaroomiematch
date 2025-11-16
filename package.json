@@ -17,6 +17,7 @@
     "@hookform/resolvers": "^3.6.0",
     "@ngneat/falso": "^7.2.0",
     "@prisma/client": "^6.19.0",
+    "@types/react-router-dom": "^5.3.3",
     "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.3",
     "multiselect-react-dropdown": "^2.0.25",
@@ -27,6 +28,7 @@
     "react-bootstrap-icons": "^1.11.4",
     "react-dom": "^18",
     "react-hook-form": "^7.52.0",
+    "react-router-dom": "^7.9.6",
     "sweetalert": "^2.1.2",
     "ts-node": "10.9.2",
     "yup": "^1.4.0"
