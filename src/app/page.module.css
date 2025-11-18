@@ -1,10 +1,154 @@
-.main {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6rem;
-  min-height: 100vh;
+/* Hero Section */
+.heroSection {
+  background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroSection::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(74, 144, 77, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Branding Section */
+.brandingSection {
+  margin-bottom: 2rem;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #4a904d;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.brandSubtitle {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #2d5a2f;
+  text-transform: uppercase;
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Hero Title */
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #1f3a21;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  word-spacing: 100vw;
+}
+
+/* Hero Description */
+.heroDescription {
+  font-size: 1.125rem;
+  color: #555555;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* CTA Button */
+.ctaButton {
+  background-color: #4a904d !important;
+  border: none !important;
+  color: white !important;
+  padding: 0.875rem 2.5rem !important;
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(74, 144, 77, 0.2) !important;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.ctaButton:hover {
+  background-color: #3d7540 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(74, 144, 77, 0.3) !important;
+}
+
+.ctaButton:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(74, 144, 77, 0.2) !important;
+}
+
+.ctaButton:focus {
+  outline: 2px solid #4a904d;
+  outline-offset: 2px;
+}
+
+/* Secondary CTA */
+.secondaryCta {
+  margin-top: 1.5rem;
+}
+
+.smallText {
+  font-size: 0.95rem;
+  color: #777777;
+  margin: 0;
+}
+
+.link {
+  color: #4a904d;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #3d7540;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .heroDescription {
+    font-size: 1rem;
+  }
+
+  .ctaButton {
+    padding: 0.75rem 2rem !important;
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .heroTitle {
+    font-size: 1.875rem;
+  }
+
+  .brandSubtitle {
+    font-size: 0.875rem;
+  }
+
+  .heroDescription {
+    font-size: 0.95rem;
+  }
+
+  .ctaButton {
+    padding: 0.65rem 1.75rem !important;
+    font-size: 0.95rem !important;
+  }
 }
 
 .description {

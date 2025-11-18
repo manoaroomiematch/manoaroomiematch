@@ -1,0 +1,5 @@
+{
+  "defaultModel": "claude-haiku-4.5",
+  "provider": "anthropic",
+  "notes": "Set NEXT_PUBLIC_AI_MODEL to override at build/runtime. Set ANTHROPIC_API_KEY in environment for Anthropic requests."
+}
