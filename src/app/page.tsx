@@ -25,7 +25,8 @@ const Home = () => {
 
             {/* Hero Heading */}
             <h1 className={styles.heroTitle}>
-              Find the<br />
+              Find the
+              <br />
               Perfect Roommate
             </h1>
 
@@ -50,7 +51,11 @@ const Home = () => {
             {session && (
               <div className={styles.secondaryCta}>
                 <p className={styles.smallText}>
-                  or <Link href="/add" className={styles.link}>view profiles</Link>
+                  or
+                  {' '}
+                  <Link href="/add" className={styles.link}>
+                    view profiles
+                  </Link>
                 </p>
               </div>
             )}
