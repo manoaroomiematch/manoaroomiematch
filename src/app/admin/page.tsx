@@ -1,3 +1,8 @@
+/**
+ * The Admin Home page.
+ * Contains sections for User Management, Content Moderation, and Lifestyle Categories with tables.
+ * This page provides a simple overview of the admin interface.
+ */
 import { getServerSession } from 'next-auth';
 import { Col, Container, Row, Table } from 'react-bootstrap';
 import StuffItemAdmin from '@/components/StuffItemAdmin';
@@ -17,17 +22,23 @@ const AdminPage = async () => {
 
   return (
     <main>
-      <Container id="list" fluid className="py-3">
+      <Container id="list" className="py-3">
+        {/* Page Header */}
+        <h1>Admin Home</h1>
+        <br />
+        {/* User Management Section */}
         <Row>
           <Col>
-            <h1>List Stuff Admin</h1>
-            <Table striped bordered hover>
+            <h2>User Management</h2>
+            <Table hover>
               <thead>
+                {/* User Management Table Headers */}
                 <tr>
                   <th>Name</th>
-                  <th>Quantity</th>
-                  <th>Condition</th>
-                  <th>Owner</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Activity</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -39,14 +50,19 @@ const AdminPage = async () => {
             </Table>
           </Col>
         </Row>
+        <br />
+        {/* Content Moderation Section */}
         <Row>
           <Col>
-            <h1>List Users Admin</h1>
-            <Table striped bordered hover>
+            <h2>Content Moderation</h2>
+            <Table hover>
               <thead>
+                {/* Content Moderation Table Headers */}
                 <tr>
-                  <th>Email</th>
-                  <th>Role</th>
+                  <th>User</th>
+                  <th>Flag Reason</th>
+                  <th>Flagged Date</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -55,6 +71,29 @@ const AdminPage = async () => {
                     <td>{user.email}</td>
                     <td>{user.role}</td>
                   </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Col>
+        </Row>
+        <br />
+        {/* Lifestyle Categories Section */}
+        <Row>
+          <Col>
+            <h2>Lifestyle Categories</h2>
+            <Table hover>
+              <thead>
+                {/* Lifestyle Categories Table Headers */}
+                <tr>
+                  <th>Category</th>
+                  <th>Items</th>
+                  <th>Last Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stuff.map((item) => (
+                  <StuffItemAdmin key={item.id} {...item} />
                 ))}
               </tbody>
             </Table>
