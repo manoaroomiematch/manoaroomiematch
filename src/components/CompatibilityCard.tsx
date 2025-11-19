@@ -1,8 +1,8 @@
 'use client';
 
 const CompatibilityCard: React.FC = () => (
-  <div className="bg-white border rounded-xl shadow-sm p-6 h-full">
-    <h2 className="font-semibold mb-4 text-center">Compatibility Highlights</h2>
+  <div className="border w-full max-w-4xl mx-auto w-100">
+    <h2 className="font-semibold font-size-46 mb-6 my-4 text-center">Compatibility Highlights</h2>
 
     <div
       className="
@@ -14,8 +14,8 @@ const CompatibilityCard: React.FC = () => (
         "
     >
       {/* Shared Interests */}
-      <div className="bg-white border rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold mb-3">Top Shared Interests</h3>
+      <div className=" p-6">
+        <h3 className="text-lg font-semibold mb-4 mx-4">Interests</h3>
         <ul className="list-disc list-inside text-gray-700 space-y-1">
           <li>Coding</li>
           <li>Hiking</li>
@@ -24,8 +24,8 @@ const CompatibilityCard: React.FC = () => (
       </div>
 
       {/* Complementary Traits */}
-      <div className="bg-white border rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold mb-3">Complementary Traits</h3>
+      <div className="p-6">
+        <h3 className="text-lg font-semibold mb-4 mx-4">Personalities</h3>
         <ul className="list-disc list-inside text-gray-700 space-y-1">
           <li>Adventurous</li>
           <li>Creative Thinker</li>

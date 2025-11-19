@@ -3,32 +3,31 @@
 import UserOverviewCard from '@/components/UserOverviewCard';
 import CompatibilityCard from '@/components/CompatibilityCard';
 import MatchesCardOverview from '@/components/MatchesCardOverview';
-import { Container } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 
 const ProfilePage = () => (
   <>
-    <Container className="d-flex align-items-center">
-      {/* LEFT COLUMN */}
-      <div className="w-100 mb-4">
-        {/*
-        John Doe is just a mock up user data for demonstration purposes.
-        Will need to fetch this data from your backend database or user session.
-        */}
-        <UserOverviewCard
-          name="John Doe"
-          year="Junior"
-          age={20}
-          major="Computer Science"
-          bio="I love coding, hiking, and matcha lattes."
-          photoUrl=""
-        />
-      </div>
+    <Container className="my-5">
+      <Row className="align-items-stretch g-3">
+        {/* LEFT COLUMN */}
+        <Col md={6}>
+          <UserOverviewCard
+            name="John Doe"
+            year="Junior"
+            age={20}
+            major="Computer Science"
+            bio="I love coding, hiking, and matcha lattes."
+            photoUrl=""
+          />
+        </Col>
 
-      {/* RIGHT COLUMN */}
-      <div className="w-100 mb-4 flex-row">
-        <CompatibilityCard />
-      </div>
+        {/* RIGHT COLUMN */}
+        <Col md={6} className="d-flex">
+          <CompatibilityCard />
+        </Col>
+      </Row>
     </Container>
+
     <Container>
       <div className="w-100 text-center">
         <MatchesCardOverview />
@@ -36,4 +35,5 @@ const ProfilePage = () => (
     </Container>
   </>
 );
+
 export default ProfilePage;

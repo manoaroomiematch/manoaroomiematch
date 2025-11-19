@@ -20,30 +20,20 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
   bio,
   photoUrl,
 }) => (
-  <div className="
-      bg-white border rounded-xl shadow-sm p-8
-      flex items-center justify-start
-      h-full
-    "
-  >
-    {/* Profile Image - Left Side */}
-    <div className="flex-shrink-0 mr-8">
+  <div className="border w-100">
+    {/* Profile Image - Centered at Top */}
+    <div className="mb-6 flex text-center">
       <Image
         src={photoUrl || '/johndoe.jpg'}
         alt={`${name}'s profile picture`}
         width={200}
         height={200}
-        className="
-          rounded-full
-          border-4 border-white
-          shadow-md
-          object-cover
-        "
+        className="py-6"
       />
     </div>
 
-    {/* Content - Right Side */}
-    <div className="flex-1">
+    {/* Content - Below Image */}
+    <div className="w-full">
       {/* Name + major */}
       <div>
         <h2 className="text-4xl font-bold">{name}</h2>
