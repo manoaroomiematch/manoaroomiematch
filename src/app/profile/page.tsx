@@ -9,7 +9,7 @@ const ProfilePage = () => (
   <>
     <Container className="d-flex align-items-center">
       {/* LEFT COLUMN */}
-      <div className="w-100 mb-4 flex-row">
+      <div className="w-100 mb-4">
         {/*
         John Doe is just a mock up user data for demonstration purposes.
         Will need to fetch this data from your backend database or user session.
