@@ -22,18 +22,24 @@ enum Role {
   ADMIN
 }
 
-enum UserStatus {
-  ACTIVE 
-  SUSPENDED
-  BANNED
-}
-
 model User {
   id       Int    @id @default(autoincrement())
   email    String @unique
   password String
   role     Role   @default(USER)
+}
 
-  activity String? // (e.g. "Online", "Last seen 1h ago")
-  status UserStatus @default(ACTIVE)
+enum Condition {
+  excellent
+  good
+  fair
+  poor
+}
+
+model Stuff {
+  id        Int       @id @default(autoincrement())
+  name      String
+  quantity  Int
+  condition Condition @default(good)
+  owner     String
 }
