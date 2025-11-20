@@ -13,28 +13,6 @@ interface LifestyleSurveyData {
   guestPolicy: string;
 }
 
-type QuestionType = 'radio' | 'range';
-
-interface BaseQuestion {
-  key: keyof LifestyleSurveyData;
-  label: string;
-  type: QuestionType;
-}
-
-interface RadioQuestion extends BaseQuestion {
-  type: 'radio';
-  options: Array<{ value: string; label: string }>;
-}
-
-interface RangeQuestion extends BaseQuestion {
-  type: 'range';
-  min: number;
-  max: number;
-  labels?: string[];
-}
-
-type Question = RadioQuestion | RangeQuestion;
-
 // Steps configuration
 const SURVEY_STEPS = [
   {
@@ -174,7 +152,7 @@ const LifestyleSurvey: React.FC = () => {
     try {
       // TODO: Replace with actual API call
       console.log('Survey submitted:', surveyData);
-      
+
       // Show success message
       console.log('Survey completed successfully!');
     } catch (error) {
@@ -223,7 +201,7 @@ const LifestyleSurvey: React.FC = () => {
                 {currentStepData.questions.map((question) => (
                   <Form.Group key={question.key} className="mb-4">
                     <Form.Label as="legend">{question.label}</Form.Label>
-                    
+
                     {question.type === 'radio' && question.options && (
                       <div>
                         {question.options.map((option) => (
@@ -237,9 +215,10 @@ const LifestyleSurvey: React.FC = () => {
                             checked={
                               surveyData[question.key as keyof LifestyleSurveyData] === option.value
                             }
-                            onChange={(e) =>
-                              handleInputChange(question.key as keyof LifestyleSurveyData, e.target.value)
-                            }
+                            onChange={(e) => handleInputChange(
+                              question.key as keyof LifestyleSurveyData,
+                              e.target.value,
+                            )}
                             className="mb-2"
                           />
                         ))}
@@ -252,12 +231,10 @@ const LifestyleSurvey: React.FC = () => {
                           min={question.min}
                           max={question.max}
                           value={Number(surveyData[question.key as keyof LifestyleSurveyData])}
-                          onChange={(e) =>
-                            handleInputChange(
-                              question.key as keyof LifestyleSurveyData,
-                              parseInt(e.target.value, 10),
-                            )
-                          }
+                          onChange={(e) => handleInputChange(
+                            question.key as keyof LifestyleSurveyData,
+                            parseInt(e.target.value, 10),
+                          )}
                           className="mb-3"
                         />
                         {question.labels && (
