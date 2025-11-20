@@ -63,7 +63,6 @@ const AdminPage: React.FC = () => {
             >
               <option value="">Filter by role</option>
               <option value="Admin">Admin</option>
-              <option value="Editor">Editor</option>
               <option value="User">User</option>
             </Form.Select>
 
@@ -75,9 +74,9 @@ const AdminPage: React.FC = () => {
                 setPage(1);
               }}
             >
-              <option value="">Filter by activity</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="">Sort by</option>
+              <option value="NameA">Name A-Z</option>
+              <option value="NameZ">Name Z-A</option>
             </Form.Select>
           </div>
           {/* User Management Table */}
