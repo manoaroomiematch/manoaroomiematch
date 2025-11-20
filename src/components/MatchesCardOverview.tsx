@@ -13,7 +13,6 @@ interface Match {
   photoUrl: string | null;
 }
 
-// Mock users
 const matches: Match[] = [
   {
     id: 1,
@@ -45,22 +44,16 @@ const MatchesCardOverview: React.FC = () => (
   <div>
     <h2 className="font-semibold mb-4">Your Matches</h2>
 
-    <div
-      className="
-        grid
-        grid-cols-1
-        sm:grid-cols-2
-        lg:grid-cols-3
-        gap-6
-      "
-    >
+    {/* ⭐ SAME STYLE — JUST FORCED TO 3 COLUMNS ⭐ */}
+    <div className="grid grid-cols-3 gap-6">
+
       {matches.map((match) => (
         <div
           key={match.id}
-          className="match-card bg-white border rounded-xl shadow-sm"
+          className="match-card bg-white border rounded-xl shadow-sm overflow-hidden d-flex flex-column"
         >
           {/* PHOTO SECTION */}
-          <div className="match-photo-container relative w-full pt-[100%] bg-gray-100">
+          <div className="match-photo-container w-100 position-relative" style={{ height: '180px' }}>
             {match.photoUrl ? (
               <Image
                 src={match.photoUrl}
@@ -69,7 +62,12 @@ const MatchesCardOverview: React.FC = () => (
                 className="object-cover"
               />
             ) : (
-              <div className="match-photo-placeholder absolute inset-0 flex">
+              <div className="
+              match-photo-placeholder
+              absolute inset-0 d-flex flex-columns
+              justify-content-center
+              align-items-center"
+              >
                 <PersonCircle size={80} className="text-gray-400" />
               </div>
             )}
@@ -82,7 +80,7 @@ const MatchesCardOverview: React.FC = () => (
 
             <p className="match-traits mt-2">{match.traits.join(' · ')}</p>
 
-            <div className="match-percentage mt-2 flex items-center">
+            <div className="match-percentage mt-2 d-flex justify-content-center align-items-center">
               <StarFill size={18} className="text-yellow-500 mr-1" />
               <span className="font-semibold">
                 {match.matchPercentage}
