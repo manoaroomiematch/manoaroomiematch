@@ -1,4 +1,7 @@
 /* eslint-disable react/button-has-type */
+/**
+ * A user management component to display user information in a table row.
+ */
 import React, { Key } from 'react';
 
 export interface UserManagementProps {
@@ -10,6 +13,7 @@ export interface UserManagementProps {
   activity: string;
 }
 
+/* Renders a single row in the User Management table. See admin/page.tsx. */
 const UserManagement: React.FC<UserManagementProps> = ({ name, email, role, activity }) => (
   <tr>
     <td>{name}</td>
@@ -25,11 +29,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ name, email, role, acti
 
 // Mock data for the admin page (temporary, until Prisma is working)
 export const mockUsers: UserManagementProps[] = [
-  { id: '1', name: 'Alice', email: 'alice@hawaii.edu', role: 'ADMIN', activity: 'Online' },
-  { id: '2', name: 'Bob', email: 'bob@hawaii.edu', role: 'USER', activity: 'Last seen 2h ago' },
-  { id: '3', name: 'Carol', email: 'carol@hawaii.edu', role: 'USER', activity: 'Offline' },
-  { id: '4', name: 'Tom', email: 'tom@hawaii.edu', role: 'ADMIN', activity: 'Last seen 1h ago' },
-  { id: '5', name: 'Bill', email: 'bill@hawaii.edu', role: 'USER', activity: 'Online' },
+  { id: '1', name: 'Alice Lee', email: 'alice@hawaii.edu', role: 'ADMIN', activity: 'Online' },
+  { id: '2', name: 'Bob Jones', email: 'bob@hawaii.edu', role: 'USER', activity: 'Last seen 2h ago' },
+  { id: '3', name: 'Carol Smith', email: 'carol@hawaii.edu', role: 'USER', activity: 'Offline' },
+  { id: '4', name: 'Tom Kim', email: 'tom@hawaii.edu', role: 'ADMIN', activity: 'Last seen 1h ago' },
+  { id: '5', name: 'Bill Miller', email: 'bill@hawaii.edu', role: 'USER', activity: 'Online' },
 ];
 
 export default UserManagement;
