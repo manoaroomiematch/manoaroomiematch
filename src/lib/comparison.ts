@@ -1,5 +1,3 @@
-// src/lib/comparison.ts
-
 import { UserProfile, Match, ComparisonData, CategoryBreakdown, CategoryScores } from '@/types';
 
 function getSleepLabel(val: number): string {
@@ -30,7 +28,6 @@ function getLifestyleLabel(user: UserProfile): string {
   if (user.dietary.length > 0) traits.push(user.dietary[0]);
   return traits.length > 0 ? traits.join(', ') : 'Standard';
 }
-
 export default function buildComparisonData(
   currentUser: UserProfile,
   matchUser: UserProfile,
@@ -39,7 +36,7 @@ export default function buildComparisonData(
   // Parse the categoryScores from JSON if needed
   const scores = typeof match.categoryScores === 'string'
     ? JSON.parse(match.categoryScores)
-    : match.categoryScores as CategoryScores;
+    : match.categoryScores as unknown as CategoryScores;
 
   const categoryBreakdown: CategoryBreakdown[] = [
     {
