@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Button, Card, Col, Container, Form, Row, ProgressBar } from 'react-bootstrap';
 
 // TYPE DEFINITIONS
 interface LifestyleSurveyData {
@@ -111,6 +111,8 @@ const SURVEY_STEPS = [
   },
 ];
 
+const STORAGE_KEY = 'lifestyle-survey-draft';
+
 const LifestyleSurvey: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyData, setSurveyData] = useState<LifestyleSurveyData>({
@@ -122,8 +124,83 @@ const LifestyleSurvey: React.FC = () => {
     guestPolicy: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const totalSteps = SURVEY_STEPS.length;
+
+  // Set client-side rendering flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Restore from draft on mount
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(STORAGE_KEY);
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        setSurveyData(parsed.data);
+        setCurrentStep(parsed.step || 0);
+        setLastSaved(new Date(parsed.timestamp));
+        setShowDraftBanner(true);
+        console.log('Draft restored from localStorage');
+      }
+    } catch (error) {
+      console.error('Error restoring draft:', error);
+    }
+  }, []);
+
+  // Auto-save hook with localStorage and optional API backup
+  useEffect(() => {
+    const saveData = async () => {
+      setIsSaving(true);
+      try {
+        const timestamp = new Date().toISOString();
+        const draftData = {
+          data: surveyData,
+          step: currentStep,
+          timestamp,
+        };
+
+        // Save to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+
+        // TODO: Optionally save to backend API
+        // await fetch('/api/lifestyle/draft', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify(draftData),
+        // });
+
+        console.log('Progress auto-saved to localStorage:', surveyData);
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error('Error auto-saving:', error);
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    // Debounce auto-save by 1 second
+    const timeoutId = setTimeout(() => {
+      // Only save if there's actual data entered
+      const hasData = surveyData.sleepSchedule
+        || surveyData.noiseTolerance !== 50
+        || surveyData.cleanliness
+        || surveyData.studyHabits
+        || surveyData.socialLevel
+        || surveyData.guestPolicy;
+
+      if (hasData) {
+        saveData();
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [surveyData, currentStep]);
 
   // Handle input changes
   const handleInputChange = (key: keyof LifestyleSurveyData, value: string | number) => {
@@ -131,6 +208,30 @@ const LifestyleSurvey: React.FC = () => {
       ...prev,
       [key]: value,
     }));
+  };
+
+  // Calculate progress percentage
+  const calculateProgress = () => {
+    const totalQuestions = SURVEY_STEPS.reduce(
+      (sum, step) => sum + step.questions.length,
+      0,
+    );
+    let answeredQuestions = 0;
+
+    SURVEY_STEPS.forEach(step => {
+      step.questions.forEach(question => {
+        const value = surveyData[question.key as keyof LifestyleSurveyData];
+        if (value !== '' && value !== null && value !== undefined) {
+          if (question.type === 'range' && value !== 50) {
+            answeredQuestions += 1;
+          } else if (question.type === 'radio' && value !== '') {
+            answeredQuestions += 1;
+          }
+        }
+      });
+    });
+
+    return Math.round((answeredQuestions / totalQuestions) * 100);
   };
 
   // Navigate between steps
@@ -153,6 +254,10 @@ const LifestyleSurvey: React.FC = () => {
       // TODO: Replace with actual API call
       console.log('Survey submitted:', surveyData);
 
+      // Clear draft from localStorage on successful submission
+      localStorage.removeItem(STORAGE_KEY);
+      setShowDraftBanner(false);
+
       // Show success message
       console.log('Survey completed successfully!');
     } catch (error) {
@@ -161,6 +266,24 @@ const LifestyleSurvey: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Clear draft functionality
+  const clearDraft = () => {
+    // TODO: Add a proper confirmation modal instead of window.confirm
+    localStorage.removeItem(STORAGE_KEY);
+    setSurveyData({
+      sleepSchedule: '',
+      noiseTolerance: 50,
+      cleanliness: '',
+      studyHabits: '',
+      socialLevel: '',
+      guestPolicy: '',
+    });
+    setCurrentStep(0);
+    setLastSaved(null);
+    setShowDraftBanner(false);
+    console.log('Draft cleared');
   };
 
   // Check if current step is complete
@@ -189,6 +312,50 @@ const LifestyleSurvey: React.FC = () => {
               {' '}
               {totalSteps}
             </p>
+          </div>
+
+          {showDraftBanner && (
+            <div className="alert alert-info d-flex justify-content-between align-items-center py-2 mb-3">
+              <small>
+                📝 Draft restored
+              </small>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={clearDraft}
+              >
+                Clear Draft
+              </Button>
+            </div>
+          )}
+
+          <div className="mb-3">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <small className="text-muted">
+                Progress:
+                {' '}
+                {calculateProgress()}
+                %
+              </small>
+              {isClient && isSaving && (
+                <small className="text-muted">
+                  <span className="spinner-border spinner-border-sm me-1" />
+                  Saving...
+                </small>
+              )}
+              {isClient && !isSaving && lastSaved && (
+                <small className="text-success">
+                  ✓ Saved
+                  {' '}
+                  {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </small>
+              )}
+            </div>
+            <ProgressBar
+              now={calculateProgress()}
+              variant="success"
+              style={{ height: '8px' }}
+            />
           </div>
 
           <Card>
