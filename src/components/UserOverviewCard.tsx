@@ -20,11 +20,11 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
   bio,
   photoUrl,
 }) => (
-  <div className="border w-100">
+  <div className="border w-100 p-6 rounded-xl">
     {/* Profile Image - Centered at Top */}
     <div className="mb-6 flex text-center">
       <Image
-        src={photoUrl || '/johndoe.jpg'}
+        src={photoUrl || '/johndoe.jpg'} // Placeholder image
         alt={`${name}'s profile picture`}
         width={200}
         height={200}
@@ -33,7 +33,7 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
     </div>
 
     {/* Content - Below Image */}
-    <div className="w-full">
+    <div className="w-full mg-3 mb-4 mx-4">
       {/* Name + major */}
       <div>
         <h2 className="text-4xl font-bold">{name}</h2>
@@ -59,7 +59,7 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
         </p>
       </div>
 
-      {/* Edit Link */}
+      {/* Edit Profile Link */}
       <div className="mt-6">
         <Link
           href="/profile/edit"
