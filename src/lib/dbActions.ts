@@ -4,6 +4,7 @@ import { Stuff, Condition } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
+import { calculateCompatibility, calculateOverallScore } from './compatibility';
 
 /**
  * Adds a new stuff to the database.
@@ -90,5 +91,94 @@ export async function changePassword(credentials: { email: string; password: str
     data: {
       password,
     },
+  });
+}
+/**
+ * Gets a user profile by user ID
+ */
+export async function getUserProfile(userId: string) {
+  return prisma.userProfile.findUnique({
+    where: { id: userId },
+  });
+}
+
+/**
+ * Gets a match by match ID, including both user profiles
+ */
+export async function getMatch(matchId: string) {
+  return prisma.match.findUnique({
+    where: { id: matchId },
+    include: {
+      user1: true,
+      user2: true,
+    },
+  });
+}
+
+/**
+ * Creates a new match between two users
+ */
+export async function createMatch(user1Id: string, user2Id: string) {
+  // Get both profiles
+  const [user1, user2] = await Promise.all([
+    prisma.userProfile.findUnique({ where: { id: user1Id } }),
+    prisma.userProfile.findUnique({ where: { id: user2Id } }),
+  ]);
+
+  if (!user1 || !user2) {
+    throw new Error('User profiles not found');
+  }
+
+  // Calculate compatibility scores
+  const categoryScores = calculateCompatibility(user1, user2);
+  const overallScore = calculateOverallScore(categoryScores);
+
+  // Create the match
+  return prisma.match.create({
+    data: {
+      user1Id,
+      user2Id,
+      overallScore,
+      categoryScores: categoryScores as any, // Prisma Json type
+      status: 'pending',
+      icebreakers: [],
+    },
+  });
+}
+
+/**
+ * Updates a match with AI-generated content
+ */
+export async function updateMatchWithAI(
+  matchId: string,
+  report: string,
+  icebreakers: string[],
+) {
+  return prisma.match.update({
+    where: { id: matchId },
+    data: {
+      compatibilityReport: report,
+      icebreakers,
+      updatedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Gets all matches for a user
+ */
+export async function getMatchesByUserId(userId: string) {
+  return prisma.match.findMany({
+    where: {
+      OR: [
+        { user1Id: userId },
+        { user2Id: userId },
+      ],
+    },
+    include: {
+      user1: true,
+      user2: true,
+    },
+    orderBy: { createdAt: 'desc' },
   });
 }
