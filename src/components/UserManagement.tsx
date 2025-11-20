@@ -1,0 +1,33 @@
+/* eslint-disable react/button-has-type */
+import React, { Key } from 'react';
+
+export interface UserManagementProps {
+  // eslint-disable-next-line react/no-unused-prop-types
+  id: Key | null | undefined;
+  name: string;
+  email: string;
+  role: string;
+  activity: string;
+}
+
+const UserManagement: React.FC<UserManagementProps> = ({ name, email, role, activity }) => (
+  <tr>
+    <td>{name}</td>
+    <td>{email}</td>
+    <td>{role}</td>
+    <td>{activity}</td>
+    <td>
+      <button>Edit</button>
+      <button>Delete</button>
+    </td>
+  </tr>
+);
+
+// Mock data for the admin page (temporary, until Prisma is working)
+export const mockUsers: UserManagementProps[] = [
+  { id: '1', name: 'Alice', email: 'alice@hawaii.edu', role: 'ADMIN', activity: 'Online' },
+  { id: '2', name: 'Bob', email: 'bob@hawaii.edu', role: 'USER', activity: 'Last seen 2h ago' },
+  { id: '3', name: 'Carol', email: 'carol@hawaii.edu', role: 'USER', activity: 'Offline' },
+];
+
+export default UserManagement;
