@@ -35,12 +35,6 @@ interface RangeQuestion extends BaseQuestion {
 
 type Question = RadioQuestion | RangeQuestion;
 
-interface SurveyStep {
-  id: string;
-  title: string;
-  questions: Question[];
-}
-
 // Steps configuration
 const SURVEY_STEPS = [
   {
@@ -161,8 +155,6 @@ const LifestyleSurvey: React.FC = () => {
     }));
   };
 
-
-
   // Navigate between steps
   const goToNextStep = () => {
     if (currentStep < totalSteps - 1) {
@@ -184,10 +176,10 @@ const LifestyleSurvey: React.FC = () => {
       console.log('Survey submitted:', surveyData);
       
       // Show success message
-      alert('Survey completed successfully!');
+      console.log('Survey completed successfully!');
     } catch (error) {
       console.error('Error submitting survey:', error);
-      alert('Error submitting survey. Please try again.');
+      console.log('Error submitting survey. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -211,11 +203,15 @@ const LifestyleSurvey: React.FC = () => {
           <div className="text-center mb-4">
             <h2>Profile Setup</h2>
             <p className="text-muted">
-              Step {currentStep + 1} of {totalSteps}
+              Step
+              {' '}
+              {currentStep + 1}
+              {' '}
+              of
+              {' '}
+              {totalSteps}
             </p>
           </div>
-
-
 
           <Card>
             <Card.Body>
@@ -238,8 +234,12 @@ const LifestyleSurvey: React.FC = () => {
                             name={question.key}
                             label={option.label}
                             value={option.value}
-                            checked={surveyData[question.key as keyof LifestyleSurveyData] === option.value}
-                            onChange={(e) => handleInputChange(question.key as keyof LifestyleSurveyData, e.target.value)}
+                            checked={
+                              surveyData[question.key as keyof LifestyleSurveyData] === option.value
+                            }
+                            onChange={(e) =>
+                              handleInputChange(question.key as keyof LifestyleSurveyData, e.target.value)
+                            }
                             className="mb-2"
                           />
                         ))}
@@ -252,13 +252,18 @@ const LifestyleSurvey: React.FC = () => {
                           min={question.min}
                           max={question.max}
                           value={Number(surveyData[question.key as keyof LifestyleSurveyData])}
-                          onChange={(e) => handleInputChange(question.key as keyof LifestyleSurveyData, parseInt(e.target.value, 10))}
+                          onChange={(e) =>
+                            handleInputChange(
+                              question.key as keyof LifestyleSurveyData,
+                              parseInt(e.target.value, 10),
+                            )
+                          }
                           className="mb-3"
                         />
                         {question.labels && (
                           <div className="d-flex justify-content-between small text-muted">
-                            {question.labels.map((label, index) => (
-                              <span key={index}>{label}</span>
+                            {question.labels.map((label) => (
+                              <span key={label}>{label}</span>
                             ))}
                           </div>
                         )}
@@ -275,8 +280,8 @@ const LifestyleSurvey: React.FC = () => {
 
               {/* Navigation Buttons */}
               <div className="d-flex justify-content-between mt-4">
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   onClick={goToPreviousStep}
                   disabled={currentStep === 0}
                 >
@@ -284,16 +289,16 @@ const LifestyleSurvey: React.FC = () => {
                 </Button>
 
                 {currentStep === totalSteps - 1 ? (
-                  <Button 
-                    variant="primary" 
+                  <Button
+                    variant="primary"
                     onClick={handleSubmit}
                     disabled={!isStepComplete() || isSubmitting}
                   >
                     {isSubmitting ? 'Submitting...' : 'Complete Survey'}
                   </Button>
                 ) : (
-                  <Button 
-                    variant="primary" 
+                  <Button
+                    variant="primary"
                     onClick={goToNextStep}
                     disabled={!isStepComplete()}
                   >
@@ -303,8 +308,6 @@ const LifestyleSurvey: React.FC = () => {
               </div>
             </Card.Body>
           </Card>
-
-
         </Col>
       </Row>
     </Container>

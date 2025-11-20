@@ -2,7 +2,7 @@ import LifestyleSurvey from '@/components/LifestyleSurvey';
 
 /**
  * Profile Setup Page
- * 
+ *
  * This page allows users to complete their lifestyle questionnaire
  * for better roommate matching. The survey includes questions about:
  * - Sleep schedule preferences
@@ -11,7 +11,7 @@ import LifestyleSurvey from '@/components/LifestyleSurvey';
  * - Study habits
  * - Social preferences
  * - Budget considerations
- * 
+ *
  * Features:
  * - Multi-step wizard interface
  * - Progress tracking
