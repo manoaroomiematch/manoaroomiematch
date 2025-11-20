@@ -1,18 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  // for local development
-  // url      = env("DATABASE_URL")
-  // for Vercel
   url       = env("POSTGRES_PRISMA_URL")
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
@@ -22,18 +13,19 @@ enum Role {
   ADMIN
 }
 
-model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  password String
-  role     Role   @default(USER)
-}
-
 enum Condition {
   excellent
   good
   fair
   poor
+}
+
+model User {
+  id       Int          @id @default(autoincrement())
+  email    String       @unique
+  password String
+  role     Role         @default(USER)
+  profile  UserProfile? // ADDED THIS
 }
 
 model Stuff {
@@ -42,4 +34,52 @@ model Stuff {
   quantity  Int
   condition Condition @default(good)
   owner     String
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          Int      @unique
+  user            User     @relation(fields: [userId], references: [id])
+  name            String
+  email           String
+  photoUrl        String?
+  createdAt       DateTime @default(now())
+  
+  sleepSchedule   Int      @default(3)
+  cleanliness     Int      @default(3)
+  noiseLevel      Int      @default(3)
+  socialLevel     Int      @default(3)
+  guestFrequency  Int      @default(3)
+  temperature     Int      @default(3)
+  
+  smoking         Boolean  @default(false)
+  drinking        String   @default("occasionally")
+  pets            Boolean  @default(false)
+  petTypes        String[]
+  dietary         String[]
+  interests       String[]
+  workSchedule    String   @default("day")
+  
+  preferences     Json     @default("{}")
+  
+  matchesAsUser1  Match[]  @relation("User1Matches")
+  matchesAsUser2  Match[]  @relation("User2Matches")
+}
+
+model Match {
+  id                   String   @id @default(cuid())
+  user1Id              String
+  user2Id              String
+  overallScore         Int
+  categoryScores       Json
+  compatibilityReport  String?
+  icebreakers          String[]
+  status               String   @default("pending")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  user1                UserProfile @relation("User1Matches", fields: [user1Id], references: [id])
+  user2                UserProfile @relation("User2Matches", fields: [user2Id], references: [id])
+  
+  @@unique([user1Id, user2Id])
 }
