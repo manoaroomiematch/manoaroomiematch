@@ -5,10 +5,10 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
 import { PencilSquare, Trash } from 'react-bootstrap-icons';
-import AdminTable from '@/components/AdminTable';
 
 export interface Category {
-  id: number;
+  // eslint-disable-next-line react/no-unused-prop-types
+  id: number; // Used as key in parent component
   name: string;
   items: number;
   lastUpdated: string;
@@ -23,42 +23,27 @@ export const mockCategories: Category[] = [
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
-/* Renders the lifestyle categories table rows. */
-const LifestyleCategoriesTable: React.FC = () => (
-  <AdminTable>
-    <thead className="table-light">
-      <tr>
-        <th>Category</th>
-        <th>Items</th>
-        <th>Last Updated</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+/* Renders a single row for the lifestyle categories table. */
+const LifestyleCategoriesTable: React.FC<Category> = ({ name, items, lastUpdated }) => (
+  <tr>
+    <td>{capitalize(name)}</td>
+    <td>{items}</td>
+    <td>{lastUpdated}</td>
 
-    <tbody>
-      {mockCategories.map((cat) => (
-        <tr key={cat.id}>
-          <td>{capitalize(cat.name)}</td>
-          <td>{cat.items}</td>
-          <td>{cat.lastUpdated}</td>
+    <td className="d-flex gap-2">
+      <Button variant="primary" size="sm" className="rounded-pill d-flex align-items-center">
+        <PencilSquare className="me-1" />
+        {' '}
+        Edit
+      </Button>
 
-          <td className="d-flex gap-2">
-            <Button variant="primary" size="sm" className="rounded-pill d-flex align-items-center">
-              <PencilSquare className="me-1" />
-              {' '}
-              Edit
-            </Button>
-
-            <Button variant="danger" size="sm" className="rounded-pill d-flex align-items-center">
-              <Trash className="me-1" />
-              {' '}
-              Delete
-            </Button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </AdminTable>
+      <Button variant="danger" size="sm" className="rounded-pill d-flex align-items-center">
+        <Trash className="me-1" />
+        {' '}
+        Delete
+      </Button>
+    </td>
+  </tr>
 );
 
 export default LifestyleCategoriesTable;

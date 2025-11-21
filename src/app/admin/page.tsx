@@ -1,3 +1,5 @@
+'use client';
+
 /* eslint-disable react/no-unknown-property */
 /* eslint-disable react/button-has-type */
 /**
@@ -6,47 +8,112 @@
  * This page provides a simple overview of the admin interface.
  */
 
-'use client';
-
 import React, { useState } from 'react';
-import { Container, Table, Button, Form } from 'react-bootstrap';
-import { Check, Eye, PencilSquare, Trash, X } from 'react-bootstrap-icons';
-import { mockUsers } from '@/components/UserManagement';
-import { mockFlags } from '@/components/ContentModeration';
+import { Container, Button, Form } from 'react-bootstrap';
+
+import UserManagement, { mockUsers } from '@/components/UserManagementAdmin';
+import AdminSection from '@/components/AdminSection';
+import LifestyleCategoriesTable, { mockCategories } from '@/components/LifestyleCategoryAdmin';
+import ContentModerationTable, { mockFlags } from '@/components/ContentModerationAdmin';
+import AdminTable from '@/components/AdminTable';
 
 const AdminPage: React.FC = () => {
+  /** Shared filter state */
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [activityFilter, setActivityFilter] = useState('');
+  const [userSort, setUserSort] = useState('');
+
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  const filteredUsers = mockUsers.filter((user) => {
+  /** CONTENT MODERATION FILTERS */
+  const [moderationSearch, setModerationSearch] = useState('');
+  const [reasonFilter, setReasonFilter] = useState('');
+  const [moderationSort, setModerationSort] = useState('');
+  const [moderationPage, setModerationPage] = useState(1);
+
+  /** LIFESTYLE CATEGORIES FILTERS */
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categorySort, setCategorySort] = useState('');
+  const [categoryPage, setCategoryPage] = useState(1);
+
+  /** USER MANAGEMENT FILTERS */
+  let filteredUsers = mockUsers.filter((user) => {
     // eslint-disable-next-line max-len
     const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter ? user.role === roleFilter : true;
-    const matchesActivity = activityFilter ? user.activity === activityFilter : true;
-    return matchesSearch && matchesRole && matchesActivity;
+    return matchesSearch && matchesRole;
   });
 
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
+  // Apply sorting for users
+  if (userSort === 'NameA') {
+    filteredUsers = [...filteredUsers].sort((a, b) => a.name.localeCompare(b.name));
+  } else if (userSort === 'NameZ') {
+    filteredUsers = [...filteredUsers].sort((a, b) => b.name.localeCompare(a.name));
+  }
+
+  const totalPagesUsers = Math.ceil(filteredUsers.length / pageSize);
   const shownUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+
+  /** CONTENT MODERATION FILTERS */
+  let filteredFlags = mockFlags.filter((flag) => {
+    const matchesSearch = flag.user.toLowerCase().includes(moderationSearch.toLowerCase());
+    const matchesReason = reasonFilter ? flag.reason === reasonFilter : true;
+    return matchesSearch && matchesReason;
+  });
+
+  // Apply sorting
+  if (moderationSort === 'UserA') {
+    filteredFlags = [...filteredFlags].sort((a, b) => a.user.localeCompare(b.user));
+  } else if (moderationSort === 'UserZ') {
+    filteredFlags = [...filteredFlags].sort((a, b) => b.user.localeCompare(a.user));
+  } else if (moderationSort === 'DateNew') {
+    filteredFlags = [...filteredFlags].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  } else if (moderationSort === 'DateOld') {
+    filteredFlags = [...filteredFlags].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }
+
+  const totalPagesModeration = Math.ceil(filteredFlags.length / pageSize);
+  const shownFlags = filteredFlags.slice((moderationPage - 1) * pageSize, moderationPage * pageSize);
+
+  /** LIFESTYLE CATEGORIES FILTERS */
+  let filteredCategories = mockCategories.filter((category) => {
+    const matchesSearch = category.name.toLowerCase().includes(categorySearch.toLowerCase());
+    return matchesSearch;
+  });
+
+  // Apply sorting for categories
+  if (categorySort === 'NameA') {
+    filteredCategories = [...filteredCategories].sort((a, b) => a.name.localeCompare(b.name));
+  } else if (categorySort === 'NameZ') {
+    filteredCategories = [...filteredCategories].sort((a, b) => b.name.localeCompare(a.name));
+  } else if (categorySort === 'ItemsLow') {
+    filteredCategories = [...filteredCategories].sort((a, b) => a.items - b.items);
+  } else if (categorySort === 'ItemsHigh') {
+    filteredCategories = [...filteredCategories].sort((a, b) => b.items - a.items);
+  } else if (categorySort === 'DateNew') {
+    // eslint-disable-next-line max-len
+    filteredCategories = [...filteredCategories].sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
+  } else if (categorySort === 'DateOld') {
+    // eslint-disable-next-line max-len
+    filteredCategories = [...filteredCategories].sort((a, b) => new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime());
+  }
+
+  const totalPagesCategories = Math.ceil(filteredCategories.length / pageSize);
+  const shownCategories = filteredCategories.slice((categoryPage - 1) * pageSize, categoryPage * pageSize);
 
   return (
     <main>
       <Container className="py-4">
         <h1 className="mb-4">Admin Home</h1>
 
-        {/* User Management Section */}
-        <section className="mb-5">
-          <h2 className="mb-3">User Management</h2>
-
-          {/* Search + Filters */}
-          <div className="d-flex gap-3 mb-3 align-items-center flex-wrap">
+        {/* USER MANAGEMENT */}
+        <AdminSection title="User Management" page={page} totalPages={totalPagesUsers} onPageChange={setPage}>
+          <div className="d-flex gap-3 mb-3 flex-wrap">
             <Form.Control
               style={{ maxWidth: '280px' }}
               type="text"
-              placeholder="Search users by name or email..."
+              placeholder="Search users..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -63,15 +130,15 @@ const AdminPage: React.FC = () => {
               }}
             >
               <option value="">Filter by role</option>
-              <option value="Admin">Admin</option>
-              <option value="User">User</option>
+              <option value="ADMIN">Admin</option>
+              <option value="USER">User</option>
             </Form.Select>
 
             <Form.Select
               style={{ maxWidth: '180px' }}
-              value={activityFilter}
+              value={userSort}
               onChange={(e) => {
-                setActivityFilter(e.target.value);
+                setUserSort(e.target.value);
                 setPage(1);
               }}
             >
@@ -79,13 +146,13 @@ const AdminPage: React.FC = () => {
               <option value="NameA">Name A-Z</option>
               <option value="NameZ">Name Z-A</option>
             </Form.Select>
-            {/* Right side: Add User button */}
+
             <Button variant="success" className="rounded-pill px-4">
               Add User
             </Button>
           </div>
-          {/* User Management Table */}
-          <Table hover className="table-rounded shadow-sm">
+
+          <AdminTable>
             <thead className="table-light">
               <tr>
                 <th>Name</th>
@@ -95,157 +162,154 @@ const AdminPage: React.FC = () => {
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {shownUsers.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.role}</td>
-                  <td>{user.activity}</td>
-                  <td className="d-flex gap-2">
-                    <Button variant="primary" size="sm" className="rounded-pill d-flex align-items-center">
-                      <PencilSquare className="me-1" />
-                      {' '}
-                      Edit
-                    </Button>
-                    <Button variant="danger" size="sm" className="rounded-pill d-flex align-items-center">
-                      <Trash className="me-1" />
-                      {' '}
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
+              {shownUsers.map((u) => (
+                <UserManagement key={u.id} {...u} />
               ))}
             </tbody>
-          </Table>
+          </AdminTable>
+        </AdminSection>
 
-          {/* Pagination */}
-          <div className="d-flex justify-content-end mt-2 gap-2">
-            <Button variant="light" disabled={page === 1} onClick={() => setPage(page - 1)}>
-              Previous
-            </Button>
-
-            {[...Array(totalPages)].map((_, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <Button key={i} variant={page === i + 1 ? 'primary' : 'outline-primary'} onClick={() => setPage(i + 1)}>
-                {i + 1}
-              </Button>
-            ))}
-
-            <Button variant="light" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-              Next
-            </Button>
-          </div>
-        </section>
-        {/* Content Moderation Section */}
-        <section className="mb-5">
-          <h2 className="mb-3">Content Moderation</h2>
-
-          {/* Search + Filters */}
-          <div className="d-flex gap-3 mb-3 align-items-center flex-wrap">
+        {/* CONTENT MODERATION */}
+        <AdminSection
+          title="Content Moderation"
+          page={moderationPage}
+          totalPages={totalPagesModeration}
+          onPageChange={setModerationPage}
+        >
+          <div className="d-flex gap-3 mb-3 flex-wrap">
             <Form.Control
               style={{ maxWidth: '280px' }}
               type="text"
-              placeholder="Search content by user or keyword..."
-              value={search}
+              placeholder="Search by user..."
+              value={moderationSearch}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
+                setModerationSearch(e.target.value);
+                setModerationPage(1);
+              }}
+            />
+
+            <Form.Select
+              style={{ maxWidth: '200px' }}
+              value={reasonFilter}
+              onChange={(e) => {
+                setReasonFilter(e.target.value);
+                setModerationPage(1);
+              }}
+            >
+              <option value="">Filter by reason</option>
+              <option value="Spam">Spam</option>
+              <option value="Inappropriate content">Inappropriate content</option>
+              <option value="Harassment">Harassment</option>
+            </Form.Select>
+
+            <Form.Select
+              style={{ maxWidth: '180px' }}
+              value={moderationSort}
+              onChange={(e) => {
+                setModerationSort(e.target.value);
+                setModerationPage(1);
+              }}
+            >
+              <option value="">Sort by</option>
+              <option value="UserA">User A-Z</option>
+              <option value="UserZ">User Z-A</option>
+              <option value="DateNew">Date (Newest)</option>
+              <option value="DateOld">Date (Oldest)</option>
+            </Form.Select>
+          </div>
+
+          <AdminTable>
+            <thead className="table-light">
+              <tr>
+                <th>User</th>
+                <th>Flag Reason</th>
+                <th>Flagged Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {shownFlags.map((flag) => (
+                <ContentModerationTable key={flag.id} {...flag} />
+              ))}
+            </tbody>
+          </AdminTable>
+        </AdminSection>
+
+        {/* LIFESTYLE CATEGORIES */}
+        <AdminSection
+          title="Lifestyle Categories"
+          page={categoryPage}
+          totalPages={totalPagesCategories}
+          onPageChange={setCategoryPage}
+        >
+          <div className="d-flex gap-3 mb-3 flex-wrap">
+            <Form.Control
+              style={{ maxWidth: '280px' }}
+              type="text"
+              placeholder="Search categories..."
+              value={categorySearch}
+              onChange={(e) => {
+                setCategorySearch(e.target.value);
+                setCategoryPage(1);
               }}
             />
 
             <Form.Select
               style={{ maxWidth: '180px' }}
-              value={roleFilter}
+              value={categorySort}
               onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Filter by date</option>
-              <option value="Newest">Newest</option>
-              <option value="Oldest">Oldest</option>
-            </Form.Select>
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={activityFilter}
-              onChange={(e) => {
-                setActivityFilter(e.target.value);
-                setPage(1);
+                setCategorySort(e.target.value);
+                setCategoryPage(1);
               }}
             >
               <option value="">Sort by</option>
-              <option value="NameA">Reason A-Z</option>
-              <option value="NameZ">Reason Z-A</option>
+              <option value="NameA">Name A-Z</option>
+              <option value="NameZ">Name Z-A</option>
+              <option value="ItemsLow">Items (Low-High)</option>
+              <option value="ItemsHigh">Items (High-Low)</option>
+              <option value="DateNew">Date (Newest)</option>
+              <option value="DateOld">Date (Oldest)</option>
             </Form.Select>
+
+            <Button variant="success" className="rounded-pill px-4">
+              Add Category
+            </Button>
           </div>
-          {/* Content Moderation Table */}
-          <Table hover className="table-rounded shadow-sm">
+
+          <AdminTable>
             <thead className="table-light">
               <tr>
-                <th>User</th>
-                <th>Reason Flagged</th>
-                <th>Date</th>
+                <th>Category</th>
+                <th>Items</th>
+                <th>Last Updated</th>
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
-              {mockFlags.map((flag) => (
-                <tr key={flag.id}>
-                  <td>{flag.user}</td>
-                  <td>{flag.reason}</td>
-                  <td>{flag.date}</td>
-                  <td className="d-flex gap-2">
-                    <Button variant="success" size="sm" className="rounded-pill d-flex align-items-center">
-                      <Eye className="me-1" />
-                      {' '}
-                    </Button>
-                    <Button variant="primary" size="sm" className="rounded-pill d-flex align-items-center">
-                      <Check className="me-1" />
-                      {' '}
-                    </Button>
-                    <Button variant="danger" size="sm" className="rounded-pill d-flex align-items-center">
-                      <X className="me-1" />
-                      {' '}
-                    </Button>
-                  </td>
-                </tr>
+              {shownCategories.map((cat) => (
+                <LifestyleCategoriesTable key={cat.id} {...cat} />
               ))}
             </tbody>
-          </Table>
-
-          {/* Pagination */}
-          <div className="d-flex justify-content-end mt-2 gap-2">
-            <Button variant="light" disabled={page === 1} onClick={() => setPage(page - 1)}>
-              Previous
-            </Button>
-
-            {[...Array(totalPages)].map((_, i) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <Button key={i} variant={page === i + 1 ? 'primary' : 'outline-primary'} onClick={() => setPage(i + 1)}>
-                {i + 1}
-              </Button>
-            ))}
-
-            <Button variant="light" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-              Next
-            </Button>
-          </div>
-        </section>
+          </AdminTable>
+        </AdminSection>
       </Container>
 
+      {/* Keep table-rounded CSS */}
       <style jsx>
         {`
-          .table-rounded {
-            border-radius: 0.75rem;
-            overflow: hidden;
-          }
-          .table-rounded th,
-          .table-rounded td {
-            vertical-align: middle;
-          }
-        `}
+        .table-rounded {
+          border-radius: 0.75rem;
+          overflow: hidden;
+        }
+        .table-rounded th,
+        .table-rounded td {
+          vertical-align: middle;
+        }
+      `}
       </style>
     </main>
   );
