@@ -3,6 +3,8 @@
  * A user management component to display user information in a table row.
  */
 import React, { Key } from 'react';
+import { Button } from 'react-bootstrap';
+import { PencilSquare, Trash } from 'react-bootstrap-icons';
 
 export interface UserManagementProps {
   // eslint-disable-next-line react/no-unused-prop-types
@@ -20,9 +22,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ name, email, role, acti
     <td>{email}</td>
     <td>{role}</td>
     <td>{activity}</td>
-    <td>
-      <button>Edit</button>
-      <button>Delete</button>
+    <td className="d-flex gap-2">
+      <Button variant="primary" size="sm" className="rounded-pill d-flex align-items-center">
+        <PencilSquare className="me-1" />
+        {' '}
+        Edit
+      </Button>
+
+      <Button variant="danger" size="sm" className="rounded-pill d-flex align-items-center">
+        <Trash className="me-1" />
+        {' '}
+        Delete
+      </Button>
     </td>
   </tr>
 );
