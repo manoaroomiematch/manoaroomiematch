@@ -79,7 +79,7 @@ const NavBar: React.FC = () => {
           <Nav>
             {session ? (
               <NavDropdown id="login-dropdown" title={currentUser} className="nav-login-dropdown">
-                <NavDropdown.Item id="login-dropdown-edit-profile" as={Link} href="/edit-profile">
+                <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
                   <PencilSquare />
                   {' '}
                   Edit Profile
@@ -93,7 +93,7 @@ const NavBar: React.FC = () => {
                   {' '}
                   Sign Out
                 </NavDropdown.Item>
-                <NavDropdown.Item id="login-dropdown-change-password" as={Link} href="/auth/change-password">
+                <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
                   <Lock />
                   {' '}
                   Change Password
@@ -101,12 +101,12 @@ const NavBar: React.FC = () => {
               </NavDropdown>
             ) : (
               <NavDropdown id="login-dropdown" title="Login" className="nav-login-dropdown">
-                <NavDropdown.Item id="login-dropdown-sign-in" as={Link} href="/auth/signin">
+                <NavDropdown.Item id="login-dropdown-sign-in" href="/auth/signin">
                   <PersonFill />
                   {' '}
                   Sign in
                 </NavDropdown.Item>
-                <NavDropdown.Item id="login-dropdown-sign-up" as={Link} href="/auth/signup">
+                <NavDropdown.Item id="login-dropdown-sign-up" href="/auth/signup">
                   <PersonPlusFill />
                   {' '}
                   Sign up
