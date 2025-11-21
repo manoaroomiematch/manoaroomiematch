@@ -151,3 +151,81 @@ body {
     max-width: 100%;
   }
 }
+
+/* ===== USER HOME PAGE STYLES ===== */
+/* Styles for the User Home dashboard page */
+
+main {
+  background-color: #f8f9fa;
+}
+
+/* User Profile Overview Card */
+.user-profile-overview {
+  border: none;
+  border-radius: 12px;
+}
+
+.user-profile-overview .profile-photo-container {
+  flex-shrink: 0;
+}
+
+.user-profile-overview .quick-stats {
+  padding: 1rem 0;
+  border-top: 1px solid #e9ecef;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.user-profile-overview .stat-value {
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.user-profile-overview .stat-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* Compatibility Highlights Card */
+.compatibility-highlights {
+  border: none;
+  border-radius: 12px;
+}
+
+.compatibility-circle {
+  width: 120px;
+  height: 120px;
+}
+
+.compatibility-highlights .bg-light {
+  background-color: #f8f9fa !important;
+  border-radius: 8px;
+}
+
+/* Quick Matches List Card */
+.quick-matches-list {
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 2rem; /* Add space below the matches card */
+  max-height: fit-content; /* Prevent stretching */
+}
+
+.quick-matches-list .card-body {
+  height: auto !important; /* Override any height constraints */
+}
+
+.quick-matches-list .match-item {
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.quick-matches-list .match-item:hover {
+  background-color: #e9ecef !important;
+  border-color: #dee2e6;
+}
+
+/* Responsive adjustments for home page */
+@media (max-width: 991px) {
+  .user-home-page .row {
+    flex-direction: column;
+  }
+}
