@@ -434,7 +434,7 @@ const LifestyleSurvey: React.FC = () => {
 
                 {currentStep === totalSteps - 1 ? (
                   <Button
-                    variant="primary"
+                    variant="success"
                     onClick={handleSubmit}
                     disabled={!isStepComplete() || isSubmitting}
                   >
@@ -442,7 +442,7 @@ const LifestyleSurvey: React.FC = () => {
                   </Button>
                 ) : (
                   <Button
-                    variant="primary"
+                    variant="success"
                     onClick={goToNextStep}
                     disabled={!isStepComplete()}
                   >

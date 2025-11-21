@@ -126,7 +126,7 @@ const BrowseMatches: React.FC = () => {
             {/* Toggle between grid and list view */}
             <ButtonGroup aria-label="View mode toggle">
               <Button
-                variant={viewMode === 'grid' ? 'primary' : 'outline-primary'}
+                variant={viewMode === 'grid' ? 'success' : 'outline-success'}
                 onClick={() => setViewMode('grid')}
                 aria-label="Grid view"
               >
@@ -134,7 +134,7 @@ const BrowseMatches: React.FC = () => {
                 Grid
               </Button>
               <Button
-                variant={viewMode === 'list' ? 'primary' : 'outline-primary'}
+                variant={viewMode === 'list' ? 'success' : 'outline-success'}
                 onClick={() => setViewMode('list')}
                 aria-label="List view"
               >

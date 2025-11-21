@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Card, Button } from 'react-bootstrap';
+import { PersonCircle } from 'react-bootstrap-icons';
 
 interface UserOverviewCardProps {
   name: string;
@@ -20,56 +22,60 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
   bio,
   photoUrl,
 }) => (
-  <div className="border w-100 p-6 rounded-xl">
-    {/* Profile Image - Centered at Top */}
-    <div className="mb-6 flex text-center">
-      <Image
-        src={photoUrl || '/johndoe.jpg'} // Placeholder image
-        alt={`${name}'s profile picture`}
-        width={200}
-        height={200}
-        className="py-6"
-      />
-    </div>
+  <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
+    <Card.Body className="p-4">
+      {/* Profile Image - Centered at Top */}
+      <div className="text-center mb-4">
+        {photoUrl ? (
+          <Image
+            src={photoUrl}
+            alt={`${name}'s profile picture`}
+            width={150}
+            height={150}
+            className="rounded-circle"
+            style={{ objectFit: 'cover' }}
+          />
+        ) : (
+          <PersonCircle size={150} className="text-secondary" />
+        )}
+      </div>
 
-    {/* Content - Below Image */}
-    <div className="w-full mg-3 mb-4 mx-4">
-      {/* Name + major */}
-      <div>
-        <h2 className="text-4xl font-bold">{name}</h2>
-        <p className="text-gray-600 text-xl mt-1">{major}</p>
+      {/* Content - Below Image */}
+      <div className="text-center">
+        {/* Name + major */}
+        <h2 className="fw-bold mb-1">{name}</h2>
+        <p className="text-muted mb-3">{major}</p>
       </div>
 
       {/* Details */}
-      <div className="mt-6 space-y-3 text-gray-700 text-xl">
-        <p>
+      <div className="mt-3">
+        <p className="mb-2">
           <strong>Year:</strong>
           {' '}
           {year}
         </p>
-        <p>
+        <p className="mb-2">
           <strong>Age:</strong>
           {' '}
           {age}
         </p>
-        <p>
+        <p className="mb-2">
           <strong>Bio:</strong>
           {' '}
           {bio}
         </p>
       </div>
 
-      {/* Edit Profile Link */}
-      <div className="mt-6">
-        <Link
-          href="/profile/edit"
-          className="text-blue-600 hover:underline font-medium text-xl"
-        >
-          Edit Profile
+      {/* Edit Profile Button */}
+      <div className="mt-4">
+        <Link href="/lifestyle-survey" passHref legacyBehavior>
+          <Button variant="success" className="w-100">
+            Edit Profile
+          </Button>
         </Link>
       </div>
-    </div>
-  </div>
+    </Card.Body>
+  </Card>
 );
 
 export default UserOverviewCard;
