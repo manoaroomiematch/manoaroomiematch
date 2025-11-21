@@ -62,30 +62,44 @@ const Home = () => {
           <div className={styles.heroBackground} />
           <div className={styles.heroOverlay}>
             <div className={styles.heroContent}>
-              <div className={styles.brandingSection}>
-                <h2 className={styles.subtitle}>MĀNOA</h2>
-                <h3 className={styles.brandSubtitle}>ROOMIEMATCH</h3>
-              </div>
+              {/* Hero heading only - branding removed to avoid duplication */}
+              <h1 className={styles.heroHeading}>Find the Perfect Roommate</h1>
 
-              <h1 className={styles.heroTitle}>
-                Find the
-                <br />
-                Perfect Roommate
-              </h1>
-
-              <p className={styles.heroDescription}>
+              <p className={styles.heroTagline}>
                 Connecting students in Mānoa with compatible roommates for a better living experience.
               </p>
 
-              <Link href="/auth/signin" className="text-decoration-none">
-                <button
-                  type="button"
-                  className={styles.ctaButton}
-                  aria-label="Start Matching button"
-                >
-                  Start Matching
-                </button>
-              </Link>
+              {/* Small info cards moved into hero */}
+              <div className={styles.heroInfoContainer}>
+                <div className={styles.heroInfoCard}>
+                  <h4>Profile Creation</h4>
+                  <p>
+                    Quick lifestyle survey
+                    <br />
+                    <span className={styles.noWrap}>(6-10 questions)</span>
+                  </p>
+                </div>
+                <div className={styles.heroInfoCard}>
+                  <h4>Browse Matches</h4>
+                  <p>Filter by preferences, dorm, and budget</p>
+                </div>
+                <div className={styles.heroInfoCard}>
+                  <h4>Connect</h4>
+                  <p>Use our messaging tools to start conversations</p>
+                </div>
+              </div>
+
+              <div className={styles.heroCtaWrap}>
+                <Link href="/auth/signin" className="text-decoration-none">
+                  <button
+                    type="button"
+                    className={styles.ctaButton}
+                    aria-label="Start Matching button"
+                  >
+                    Start Matching
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -124,7 +138,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Second CTA placed above Sign Up Prompt */}
         <section className={styles.ctaSection}>
           <div className={styles.ctaContainer}>
             <h2 className={styles.ctaTitle}>Ready to Find Your Perfect Match?</h2>
@@ -140,24 +154,6 @@ const Home = () => {
                 Start Matching Now
               </button>
             </Link>
-          </div>
-        </section>
-
-        {/* Footer Info Section */}
-        <section className={styles.infoSection}>
-          <div className={styles.infoContainer}>
-            <div className={styles.infoCard}>
-              <h3>Profile Creation</h3>
-              <p>Quick lifestyle survey (6-10 questions)</p>
-            </div>
-            <div className={styles.infoCard}>
-              <h3>Browse Matches</h3>
-              <p>Filter by preferences, dorm, and budget</p>
-            </div>
-            <div className={styles.infoCard}>
-              <h3>Connect</h3>
-              <p>Use our messaging tools to start conversations</p>
-            </div>
           </div>
         </section>
 

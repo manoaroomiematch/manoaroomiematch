@@ -281,3 +281,29 @@ main {
 .navbar-light .navbar-nav .nav-link:hover {
   color: #198754;
 }
+
+/* Ensure navbar sits above page content to avoid being blocked */
+.navbar {
+  position: relative;
+  z-index: 2000;
+}
+
+/* Login / Dropdown animations */
+.nav-login-dropdown .dropdown-toggle,
+.navbar-light .navbar-nav .nav-link {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+.nav-login-dropdown .dropdown-toggle:hover,
+.navbar-light .navbar-nav .nav-link:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(25, 135, 84, 0.12);
+  color: #146c43 !important;
+}
+
+/* Slight pulsing on focus for accessibility */
+.nav-login-dropdown .dropdown-toggle:focus,
+.navbar-light .navbar-nav .nav-link:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.25rem rgba(25,135,84,0.12);
+}
