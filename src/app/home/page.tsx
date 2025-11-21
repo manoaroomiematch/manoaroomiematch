@@ -66,7 +66,7 @@ const UserHomePage = () => {
     school: 'University of Hawaiʻi at Mānoa',
     program: 'Biology',
     year: 'Junior',
-    photoUrl: '', // Empty for now - will show placeholder
+    photoUrl: currentUserEmail === 'john@foo.com' ? '/johndoe.jpg' : '', // Placeholder for john@foo.com
     surveyCompletion: 100,
     matchesFound: 12,
   };
