@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { Container, Row, Col, Button } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { FaUsers, FaChartLine, FaShieldAlt, FaLightbulb } from 'react-icons/fa';
 import styles from './page.module.css';
 
 /** The Landing page - redirects to home if user is logged in */
@@ -22,66 +22,153 @@ const Home = () => {
   // Show loading state while checking authentication
   if (status === 'loading') {
     return (
-      <main>
-        <Container className="min-vh-100 d-flex align-items-center justify-content-center">
-          <div className="text-center">
-            <p>Loading...</p>
-          </div>
-        </Container>
+      <main className={styles.landingPage}>
+        <div className={styles.loadingContainer}>
+          <p>Loading...</p>
+        </div>
       </main>
     );
   }
 
+  const features = [
+    {
+      icon: FaUsers,
+      title: 'Smart Matching',
+      description: 'Find compatible roommates using our transparent compatibility algorithm.',
+    },
+    {
+      icon: FaChartLine,
+      title: 'Profile Creation',
+      description: 'Quick lifestyle survey to share your preferences and living habits.',
+    },
+    {
+      icon: FaShieldAlt,
+      title: 'Verified Profiles',
+      description: 'UH authentication ensures real students in your community.',
+    },
+    {
+      icon: FaLightbulb,
+      title: 'AI Assistance',
+      description: 'Optional AI-powered message templates to start conversations.',
+    },
+  ];
+
   // Show landing page only for non-authenticated users
   if (status === 'unauthenticated') {
     return (
-      <main>
-        <Container id="landing-page" fluid className={`${styles.heroSection} py-5`}>
-          <Row className="align-items-center justify-content-center min-vh-100">
-            <Col lg={8} md={10} xs={12} className="text-center">
-              {/* Logo/Branding */}
-              <div className={styles.brandingSection}>
-                <h2 className={styles.subtitle}>MĀNOA</h2>
-                <h3 className={styles.brandSubtitle}>ROOMIEMATCH</h3>
-              </div>
+      <main className={styles.landingPage}>
+        {/* Hero Section */}
+        <section className={styles.heroSection}>
+          <div className={styles.heroBackground} />
+          <div className={styles.heroOverlay}>
+            <div className={styles.heroContent}>
+              {/* Hero heading only - branding removed to avoid duplication */}
+              <h1 className={styles.heroHeading}>Find the Perfect Roommate</h1>
 
-              {/* Hero Heading */}
-              <h1 className={styles.heroTitle}>
-                Find the
-                <br />
-                Perfect Roommate
-              </h1>
-
-              {/* Hero Description */}
-              <p className={styles.heroDescription}>
+              <p className={styles.heroTagline}>
                 Connecting students in Mānoa with compatible roommates for a better living experience.
               </p>
 
-              {/* CTA Button */}
-              <Link href="/auth/signin" className="text-decoration-none">
-                <Button
-                  className={styles.ctaButton}
-                  aria-label="Start Matching button - Begin finding your perfect roommate"
-                  role="button"
-                  tabIndex={0}
-                >
-                  Start Matching
-                </Button>
-              </Link>
-
-              {/* Sign Up Link */}
-              <div className={styles.secondaryCta}>
-                <p className={styles.smallText}>
-                  Don&apos;t have an account?
-                  {' '}
-                  <Link href="/auth/signup" className={styles.link}>
-                    Sign up
-                  </Link>
-                </p>
+              {/* Small info cards moved into hero */}
+              <div className={styles.heroInfoContainer}>
+                <div className={styles.heroInfoCard}>
+                  <h4>Profile Creation</h4>
+                  <p>
+                    Quick lifestyle survey
+                    <br />
+                    <span className={styles.noWrap}>(6-10 questions)</span>
+                  </p>
+                </div>
+                <div className={styles.heroInfoCard}>
+                  <h4>Browse Matches</h4>
+                  <p>Filter by preferences, dorm, and budget</p>
+                </div>
+                <div className={styles.heroInfoCard}>
+                  <h4>Connect</h4>
+                  <p>Use our messaging tools to start conversations</p>
+                </div>
               </div>
-            </Col>
-          </Row>
-        </Container>
+
+              <div className={styles.heroCtaWrap}>
+                <Link href="/auth/signin" className="text-decoration-none">
+                  <button
+                    type="button"
+                    className={styles.ctaButton}
+                    aria-label="Start Matching button"
+                  >
+                    Start Matching
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Overview Section */}
+        <section className={styles.overviewSection}>
+          <div className={styles.overviewContainer}>
+            <h2 className={styles.sectionTitle}>What is Mānoa RoomieMatch?</h2>
+            <p className={styles.overviewText}>
+              Every semester, hundreds of UH Mānoa students struggle to find compatible roommates.
+              Mānoa RoomieMatch makes it easy with a fast, transparent, and UH-specific matching platform.
+              We combine lifestyle data with optional AI assistance to help you find your perfect roommate
+              and avoid conflicts before they start.
+            </p>
+          </div>
+        </section>
+
+        {/* Key Features Section */}
+        <section className={styles.featuresSection}>
+          <div className={styles.featuresContainer}>
+            <h2 className={styles.sectionTitle}>Key Features</h2>
+            <div className={styles.featuresGrid}>
+              {features.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={feature.title} className={styles.featureCard}>
+                    <div className={styles.featureIcon}>
+                      <Icon />
+                    </div>
+                    <h3 className={styles.featureTitle}>{feature.title}</h3>
+                    <p className={styles.featureDescription}>{feature.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Second CTA placed above Sign Up Prompt */}
+        <section className={styles.ctaSection}>
+          <div className={styles.ctaContainer}>
+            <h2 className={styles.ctaTitle}>Ready to Find Your Perfect Match?</h2>
+            <p className={styles.ctaSubtitle}>
+              Start your journey to finding the ideal roommate today.
+            </p>
+            <Link href="/auth/signin" className="text-decoration-none">
+              <button
+                type="button"
+                className={styles.ctaButtonLarge}
+                aria-label="Start Matching"
+              >
+                Start Matching Now
+              </button>
+            </Link>
+          </div>
+        </section>
+
+        {/* Sign Up Prompt */}
+        <section className={styles.signupPromptSection}>
+          <div className={styles.signupPromptContainer}>
+            <p className={styles.signupPromptText}>
+              Don&apos;t have an account?
+              {' '}
+              <Link href="/auth/signup" className={styles.signupLink}>
+                Sign up now
+              </Link>
+            </p>
+          </div>
+        </section>
       </main>
     );
   }

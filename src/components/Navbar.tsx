@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare } from 'react-bootstrap-icons';
@@ -78,31 +78,37 @@ const NavBar: React.FC = () => {
           </Nav>
           <Nav>
             {session ? (
-              <NavDropdown id="login-dropdown" title={currentUser}>
-                <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
+              <NavDropdown id="login-dropdown" title={currentUser} className="nav-login-dropdown">
+                <NavDropdown.Item id="login-dropdown-edit-profile" as={Link} href="/edit-profile">
                   <PencilSquare />
                   {' '}
                   Edit Profile
                 </NavDropdown.Item>
-                <NavDropdown.Item id="login-dropdown-sign-out" href="/api/auth/signout">
+                <NavDropdown.Item
+                  id="login-dropdown-sign-out"
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  role="button"
+                >
                   <BoxArrowRight />
                   {' '}
                   Sign Out
                 </NavDropdown.Item>
-                <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
+                <NavDropdown.Item id="login-dropdown-change-password" as={Link} href="/auth/change-password">
                   <Lock />
                   {' '}
                   Change Password
                 </NavDropdown.Item>
               </NavDropdown>
             ) : (
-              <NavDropdown id="login-dropdown" title="Login">
-                <NavDropdown.Item id="login-dropdown-sign-in" href="/auth/signin">
+              <NavDropdown id="login-dropdown" title="Login" className="nav-login-dropdown">
+                <NavDropdown.Item id="login-dropdown-sign-in" as={Link} href="/auth/signin">
                   <PersonFill />
+                  {' '}
                   Sign in
                 </NavDropdown.Item>
-                <NavDropdown.Item id="login-dropdown-sign-up" href="/auth/signup">
+                <NavDropdown.Item id="login-dropdown-sign-up" as={Link} href="/auth/signup">
                   <PersonPlusFill />
+                  {' '}
                   Sign up
                 </NavDropdown.Item>
               </NavDropdown>
