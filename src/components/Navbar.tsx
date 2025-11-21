@@ -5,7 +5,7 @@
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
-import { BoxArrowRight, Lock, PersonFill, PersonPlusFill } from 'react-bootstrap-icons';
+import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare } from 'react-bootstrap-icons';
 import Image from 'next/image';
 
 const NavBar: React.FC = () => {
@@ -47,8 +47,16 @@ const NavBar: React.FC = () => {
                   >
                     Lifestyle Survey
                   </Nav.Link>,
-                  <Nav.Link id="browse-matches-nav" href="/profile" key="profile" active={pathName === '/matches'}>
+                  <Nav.Link id="profile-nav" href="/profile" key="profile" active={pathName === '/profile'}>
                   My Profile
+                  </Nav.Link>,
+                  <Nav.Link
+                    id="edit-profile-nav"
+                    href="/edit-profile"
+                    key="edit-profile"
+                    active={pathName === '/edit-profile'}
+                  >
+                  Edit Profile
                   </Nav.Link>,
                 ]
               : ''}
@@ -71,12 +79,19 @@ const NavBar: React.FC = () => {
           <Nav>
             {session ? (
               <NavDropdown id="login-dropdown" title={currentUser}>
+                <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
+                  <PencilSquare />
+                  {' '}
+                  Edit Profile
+                </NavDropdown.Item>
                 <NavDropdown.Item id="login-dropdown-sign-out" href="/api/auth/signout">
                   <BoxArrowRight />
+                  {' '}
                   Sign Out
                 </NavDropdown.Item>
                 <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
                   <Lock />
+                  {' '}
                   Change Password
                 </NavDropdown.Item>
               </NavDropdown>

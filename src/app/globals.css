@@ -269,3 +269,15 @@ main {
 .form-range:focus::-ms-thumb {
   box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
 }
+
+/* ===== NAVBAR STYLES ===== */
+/* Override Bootstrap's default blue active link color with green */
+
+.navbar-light .navbar-nav .nav-link.active {
+  color: #198754 !important;
+  font-weight: 600;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+  color: #198754;
+}

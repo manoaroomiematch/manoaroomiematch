@@ -68,7 +68,7 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
 
       {/* Edit Profile Button */}
       <div className="mt-4">
-        <Link href="/lifestyle-survey" passHref legacyBehavior>
+        <Link href="/edit-profile" passHref legacyBehavior>
           <Button variant="success" className="w-100">
             Edit Profile
           </Button>
