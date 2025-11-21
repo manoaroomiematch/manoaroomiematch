@@ -1,39 +1,35 @@
 'use client';
 
+import { Card, Row, Col, Badge } from 'react-bootstrap';
+
 const CompatibilityCard: React.FC = () => (
-  <div className="border w-full max-w-4xl mx-auto w-100">
-    <h2 className="font-semibold font-size-46 mb-6 my-4 text-center">Compatibility Highlights</h2>
+  <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
+    <Card.Body className="p-4">
+      <h2 className="fw-bold mb-4 text-center">Compatibility Highlights</h2>
 
-    <div
-      className="
-          grid
-          grid-cols-1
-          sm:grid-cols-2
-          lg:grid-cols-2
-          gap-6
-        "
-    >
-      {/* Shared Interests */}
-      <div className=" p-6">
-        <h3 className="text-lg font-semibold mb-4 mx-4">Interests</h3>
-        <ul className="list-disc list-inside text-gray-700 space-y-1">
-          <li>Coding</li>
-          <li>Hiking</li>
-          <li>Matcha Lattes</li>
-        </ul>
-      </div>
+      <Row className="g-4">
+        {/* Shared Interests */}
+        <Col xs={12} sm={6}>
+          <h5 className="fw-semibold mb-3">Interests</h5>
+          <div className="d-flex flex-wrap gap-2">
+            <Badge bg="light" text="dark" className="px-3 py-2">Coding</Badge>
+            <Badge bg="light" text="dark" className="px-3 py-2">Hiking</Badge>
+            <Badge bg="light" text="dark" className="px-3 py-2">Matcha Lattes</Badge>
+          </div>
+        </Col>
 
-      {/* Complementary Traits */}
-      <div className="p-6">
-        <h3 className="text-lg font-semibold mb-4 mx-4">Personalities</h3>
-        <ul className="list-disc list-inside text-gray-700 space-y-1">
-          <li>Adventurous</li>
-          <li>Creative Thinker</li>
-          <li>Good Listener</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+        {/* Complementary Traits */}
+        <Col xs={12} sm={6}>
+          <h5 className="fw-semibold mb-3">Personalities</h5>
+          <div className="d-flex flex-wrap gap-2">
+            <Badge bg="light" text="dark" className="px-3 py-2">Adventurous</Badge>
+            <Badge bg="light" text="dark" className="px-3 py-2">Creative Thinker</Badge>
+            <Badge bg="light" text="dark" className="px-3 py-2">Good Listener</Badge>
+          </div>
+        </Col>
+      </Row>
+    </Card.Body>
+  </Card>
 );
 
 export default CompatibilityCard;

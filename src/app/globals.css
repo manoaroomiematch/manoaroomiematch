@@ -229,3 +229,43 @@ main {
     flex-direction: column;
   }
 }
+
+/* ===== FORM STYLES ===== */
+/* Override Bootstrap's default blue form check colors with green */
+
+/* Change radio button checked state to green */
+.form-check-input:checked {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+/* Change focus ring to green */
+.form-check-input:focus {
+  border-color: #198754;
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+/* Change range slider (if used) to green */
+.form-range::-webkit-slider-thumb {
+  background-color: #198754;
+}
+
+.form-range::-moz-range-thumb {
+  background-color: #198754;
+}
+
+.form-range::-ms-thumb {
+  background-color: #198754;
+}
+
+.form-range:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+.form-range:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+.form-range:focus::-ms-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}

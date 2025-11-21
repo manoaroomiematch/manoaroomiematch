@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { PersonCircle, StarFill } from 'react-bootstrap-icons';
+import { PersonCircle, StarFill, Star } from 'react-bootstrap-icons';
+import { Card, Row, Col, Button } from 'react-bootstrap';
 
 interface Match {
   id: number;
@@ -41,68 +42,67 @@ const matches: Match[] = [
 ];
 
 const MatchesCardOverview: React.FC = () => (
-  <div>
-    <h2 className="font-semibold mb-4">Your Matches</h2>
+  <div className="my-4">
+    <h2 className="fw-bold mb-4">Your Matches</h2>
 
-    {/* ⭐ SAME STYLE — JUST FORCED TO 3 COLUMNS ⭐ */}
-    <div className="grid grid-cols-3 gap-6">
+    <Row className="g-4">
+      {matches.map((match) => {
+        const isHighMatch = match.matchPercentage >= 80;
 
-      {matches.map((match) => (
-        <div
-          key={match.id}
-          className="match-card bg-white border rounded-xl shadow-sm overflow-hidden d-flex flex-column"
-        >
-          {/* PHOTO SECTION */}
-          <div className="match-photo-container w-100 position-relative" style={{ height: '180px' }}>
-            {match.photoUrl ? (
-              <Image
-                src={match.photoUrl}
-                alt={`${match.name} photo`}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="
-              match-photo-placeholder
-              absolute inset-0 d-flex flex-columns
-              justify-content-center
-              align-items-center"
-              >
-                <PersonCircle size={80} className="text-gray-400" />
+        return (
+          <Col key={match.id} xs={12} sm={6} lg={4}>
+            <Card className="match-card match-card-grid shadow-sm h-100">
+              {/* PHOTO SECTION */}
+              <div className="match-photo-container">
+                {match.photoUrl ? (
+                  <Image
+                    src={match.photoUrl}
+                    alt={`${match.name} photo`}
+                    fill
+                    className="match-photo"
+                    style={{ objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div className="match-photo-placeholder">
+                    <PersonCircle size={120} className="text-secondary" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* CONTENT */}
-          <div className="p-4">
-            <h3 className="match-name">{match.name}</h3>
-            <p className="match-major">{match.major}</p>
+              {/* CONTENT */}
+              <Card.Body>
+                <Card.Title className="match-name">{match.name}</Card.Title>
+                <Card.Subtitle className="mb-2 text-muted match-major">
+                  {match.major}
+                </Card.Subtitle>
 
-            <p className="match-traits mt-2">{match.traits.join(' · ')}</p>
+                <Card.Text className="match-traits">
+                  {match.traits.join(' · ')}
+                </Card.Text>
 
-            <div className="match-percentage mt-2 d-flex justify-content-center align-items-center">
-              <StarFill size={18} className="text-yellow-500 mr-1" />
-              <span className="font-semibold">
-                {match.matchPercentage}
-                % Match
-              </span>
-            </div>
+                <div className="match-percentage">
+                  {isHighMatch ? (
+                    <StarFill className="text-warning me-1" size={20} />
+                  ) : (
+                    <Star className="text-warning me-1" size={20} />
+                  )}
+                  <strong>
+                    {match.matchPercentage}
+                    % Match
+                  </strong>
+                </div>
 
-            <Link
-              href={`/comparison/${match.id}?userId=user-123`}
-              className="
-                mt-3 block
-                text-blue-600
-                font-medium px-3 py-2 rounded-lg text-center
-                hover:bg-blue-50 transition
-              "
-            >
-              View Details
-            </Link>
-          </div>
-        </div>
-      ))}
-    </div>
+                <Link href={`/comparison/${match.id}?userId=user-123`} passHref legacyBehavior>
+                  <Button variant="success" className="mt-3 w-100">
+                    View Details
+                  </Button>
+                </Link>
+              </Card.Body>
+            </Card>
+          </Col>
+        );
+      })}
+    </Row>
   </div>
 );
 
