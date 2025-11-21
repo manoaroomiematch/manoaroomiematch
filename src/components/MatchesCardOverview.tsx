@@ -89,7 +89,7 @@ const MatchesCardOverview: React.FC = () => (
             </div>
 
             <Link
-              href={`/profile/${match.id}`}
+              href={`/comparison/${match.id}?userId=user-123`}
               className="
                 mt-3 block
                 text-blue-600

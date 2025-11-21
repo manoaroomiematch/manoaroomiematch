@@ -100,9 +100,9 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, viewMode }) => {
           </div>
 
           {/* View Details Button */}
-          {/* TODO: Update href to actual profile detail page route once implemented */}
-          {/* Expected route: /profile/{id} or /matches/{id} */}
-          <Link href={`/profile/${match.id}`} passHref legacyBehavior>
+          {/* Links to the match comparison page with detailed compatibility breakdown */}
+          {/* TODO: Replace 'user-123' with actual current user ID from session/auth */}
+          <Link href={`/comparison/${match.id}?userId=user-123`} passHref legacyBehavior>
             <Button variant="outline-primary" className="mt-3 w-100">
               View Details
             </Button>
