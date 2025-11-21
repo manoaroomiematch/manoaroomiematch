@@ -104,8 +104,8 @@ const UserHomePage = () => {
   ];
 
   const handleEditProfile = () => {
-    // TODO: Navigate to profile edit page or open modal
-    window.location.href = '/lifestyle-survey';
+    // Navigate to edit profile page
+    window.location.href = '/edit-profile';
   };
 
   return (
