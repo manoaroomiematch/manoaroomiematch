@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { FaUsers, FaChartLine, FaShieldAlt, FaLightbulb } from 'react-icons/fa';
+import { People, BarChartLine, ShieldCheck, Lightbulb } from 'react-bootstrap-icons';
 import styles from './page.module.css';
 
 /** The Landing page - redirects to home if user is logged in */
@@ -32,22 +32,22 @@ const Home = () => {
 
   const features = [
     {
-      icon: FaUsers,
+      icon: People,
       title: 'Smart Matching',
       description: 'Find compatible roommates using our transparent compatibility algorithm.',
     },
     {
-      icon: FaChartLine,
+      icon: BarChartLine,
       title: 'Profile Creation',
       description: 'Quick lifestyle survey to share your preferences and living habits.',
     },
     {
-      icon: FaShieldAlt,
+      icon: ShieldCheck,
       title: 'Verified Profiles',
       description: 'UH authentication ensures real students in your community.',
     },
     {
-      icon: FaLightbulb,
+      icon: Lightbulb,
       title: 'AI Assistance',
       description: 'Optional AI-powered message templates to start conversations.',
     },
