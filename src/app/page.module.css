@@ -1,32 +1,116 @@
+/* Landing Page - Full Page Container */
+.landingPage {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.loadingContainer {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
+  font-size: 1.125rem;
+  color: #555;
+}
+
 /* Hero Section */
 .heroSection {
-  background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
   position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
-.heroSection::before {
-  content: '';
+.heroBackground {
   position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(74, 144, 77, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4a904d 0%, #2d5a2f 50%, #1f3a21 100%);
+  z-index: 0;
 }
 
-/* Branding Section */
+.heroBackground::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="15" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="20" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="50" r="10" fill="rgba(255,255,255,0.05)"/></svg>');
+  background-size: 300px 300px;
+  animation: slideBackground 20s linear infinite;
+}
+
+@keyframes slideBackground {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(300px, 300px);
+  }
+}
+
+.heroOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.heroContent {
+  text-align: center;
+  color: white;
+  max-width: 700px;
+  padding: 2rem;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .brandingSection {
   margin-bottom: 2rem;
+  animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .subtitle {
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 2px;
-  color: #4a904d;
+  color: rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
   margin: 0;
 }
@@ -35,106 +119,371 @@
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #2d5a2f;
+  color: rgba(255, 255, 255, 0.95);
   text-transform: uppercase;
   margin-top: 0.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 }
 
-/* Hero Title */
 .heroTitle {
   font-size: 3.5rem;
   font-weight: 700;
-  color: #1f3a21;
+  color: white;
   line-height: 1.2;
   margin-bottom: 1.5rem;
   word-spacing: 100vw;
+  animation: slideDown 0.8s ease-out 0.2s both;
 }
 
-/* Hero Description */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .heroDescription {
   font-size: 1.125rem;
-  color: #555555;
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
   margin-bottom: 2.5rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  animation: slideDown 0.8s ease-out 0.4s both;
 }
 
-/* CTA Button */
 .ctaButton {
-  background-color: #4a904d !important;
-  border: none !important;
-  color: white !important;
-  padding: 0.875rem 2.5rem !important;
-  font-size: 1.125rem !important;
-  font-weight: 600 !important;
-  border-radius: 0.5rem !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(74, 144, 77, 0.2) !important;
+  background-color: white;
+  color: #4a904d;
+  border: none;
+  padding: 0.875rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
   cursor: pointer;
-  display: inline-block;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.8s ease-out 0.6s both;
 }
 
 .ctaButton:hover {
-  background-color: #3d7540 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(74, 144, 77, 0.3) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  background-color: #f0f0f0;
 }
 
 .ctaButton:active {
-  transform: translateY(0) !important;
-  box-shadow: 0 2px 8px rgba(74, 144, 77, 0.2) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .ctaButton:focus {
-  outline: 2px solid #4a904d;
+  outline: 2px solid white;
   outline-offset: 2px;
 }
 
-/* Secondary CTA */
-.secondaryCta {
-  margin-top: 1.5rem;
+/* Overview Section - Color Block 1 (Light Gray) */
+.overviewSection {
+  background: linear-gradient(to bottom, #f9f9f9, #f0f0f0);
+  padding: 4rem 2rem;
+  animation: fadeIn 1s ease-out;
 }
 
-.smallText {
+.overviewContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f3a21;
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: slideDown 0.8s ease-out;
+}
+
+.overviewText {
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: #333;
+  text-align: center;
+  animation: slideDown 0.8s ease-out 0.2s both;
+}
+
+/* Key Features Section - Color Block 2 (Green) */
+.featuresSection {
+  background: linear-gradient(135deg, #4a904d 0%, #3d7540 100%);
+  padding: 4rem 2rem;
+  color: white;
+}
+
+.featuresContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.featureCard {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  animation: slideUp 0.8s ease-out both;
+  backdrop-filter: blur(10px);
+}
+
+.featureCard:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.featureCard:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.featureCard:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.featureCard:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.featureCard:hover {
+  transform: translateY(-10px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.featureIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.featureTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.featureDescription {
   font-size: 0.95rem;
-  color: #777777;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* CTA Section - Color Block 3 (White) */
+.ctaSection {
+  background: linear-gradient(to bottom, #ffffff, #f5f5f5);
+  padding: 4rem 2rem;
+  text-align: center;
+  animation: fadeIn 1s ease-out;
+}
+
+.ctaContainer {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.ctaTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f3a21;
+  margin-bottom: 1rem;
+  animation: slideDown 0.8s ease-out;
+}
+
+.ctaSubtitle {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 2rem;
+  animation: slideDown 0.8s ease-out 0.2s both;
+}
+
+.ctaButtonLarge {
+  background-color: #4a904d;
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(74, 144, 77, 0.3);
+  animation: slideDown 0.8s ease-out 0.4s both;
+}
+
+.ctaButtonLarge:hover {
+  background-color: #3d7540;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(74, 144, 77, 0.4);
+}
+
+.ctaButtonLarge:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(74, 144, 77, 0.2);
+}
+
+/* Info Section - Color Block 4 (Light Gray) */
+.infoSection {
+  background: linear-gradient(to bottom, #f0f0f0, #e8e8e8);
+  padding: 4rem 2rem;
+}
+
+.infoContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.infoCard {
+  background: white;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: slideUp 0.8s ease-out both;
+}
+
+.infoCard:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.infoCard:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.infoCard:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.infoCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.infoCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f3a21;
+  margin-bottom: 0.75rem;
+}
+
+.infoCard p {
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Sign Up Prompt Section - Footer */
+.signupPromptSection {
+  background: #1f3a21;
+  padding: 2rem;
+  text-align: center;
+}
+
+.signupPromptContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.signupPromptText {
+  font-size: 1.0625rem;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
 }
 
-.link {
-  color: #4a904d;
+.signupLink {
+  color: white;
   text-decoration: none;
   font-weight: 600;
-  transition: color 0.2s ease;
+  border-bottom: 2px solid white;
+  transition: all 0.3s ease;
 }
 
-.link:hover {
-  color: #3d7540;
-  text-decoration: underline;
+.signupLink:hover {
+  color: #4a904d;
+  border-color: #4a904d;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .heroTitle {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
   }
 
   .heroDescription {
     font-size: 1rem;
   }
 
-  .ctaButton {
-    padding: 0.75rem 2rem !important;
-    font-size: 1rem !important;
+  .sectionTitle {
+    font-size: 2rem;
+  }
+
+  .featuresGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .ctaSection {
+    padding: 3rem 1.5rem;
+  }
+
+  .ctaTitle {
+    font-size: 2rem;
+  }
+
+  .overviewSection,
+  .featuresSection,
+  .infoSection {
+    padding: 3rem 1.5rem;
   }
 }
 
 @media (max-width: 576px) {
   .heroTitle {
-    font-size: 1.875rem;
+    font-size: 1.75rem;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
   }
 
   .brandSubtitle {
@@ -146,8 +495,24 @@
   }
 
   .ctaButton {
-    padding: 0.65rem 1.75rem !important;
-    font-size: 0.95rem !important;
+    padding: 0.65rem 1.75rem;
+    font-size: 0.95rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.5rem;
+  }
+
+  .overviewText {
+    font-size: 0.95rem;
+  }
+
+  .heroContent {
+    padding: 1rem;
+  }
+
+  .infoContainer {
+    grid-template-columns: 1fr;
   }
 }
 
