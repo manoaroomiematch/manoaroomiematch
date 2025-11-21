@@ -78,7 +78,11 @@ const Home = () => {
               </p>
 
               <Link href="/auth/signin" className="text-decoration-none">
-                <button className={styles.ctaButton} aria-label="Start Matching button">
+                <button
+                  type="button"
+                  className={styles.ctaButton}
+                  aria-label="Start Matching button"
+                >
                   Start Matching
                 </button>
               </Link>
@@ -104,10 +108,10 @@ const Home = () => {
           <div className={styles.featuresContainer}>
             <h2 className={styles.sectionTitle}>Key Features</h2>
             <div className={styles.featuresGrid}>
-              {features.map((feature, index) => {
+              {features.map((feature) => {
                 const Icon = feature.icon;
                 return (
-                  <div key={index} className={styles.featureCard}>
+                  <div key={feature.title} className={styles.featureCard}>
                     <div className={styles.featureIcon}>
                       <Icon />
                     </div>
@@ -128,7 +132,11 @@ const Home = () => {
               Start your journey to finding the ideal roommate today.
             </p>
             <Link href="/auth/signin" className="text-decoration-none">
-              <button className={styles.ctaButtonLarge} aria-label="Start Matching">
+              <button
+                type="button"
+                className={styles.ctaButtonLarge}
+                aria-label="Start Matching"
+              >
                 Start Matching Now
               </button>
             </Link>
