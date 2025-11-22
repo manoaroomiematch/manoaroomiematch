@@ -6,6 +6,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Card, Button, Spinner, ListGroup } from 'react-bootstrap';
 
 interface IcebreakersBoxProps {
   matchId: string;
@@ -31,45 +32,111 @@ export default function IcebreakersBox({ matchId, icebreakers }: IcebreakersBoxP
     }
   };
 
+  const defaultQuestions = [
+    "What's your ideal living environment?",
+    'How do you like to spend your weekends?',
+    "What's important to you in a roommate?",
+  ];
+
+  const displayQuestions = questions.length > 0 ? questions : defaultQuestions;
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-semibold text-gray-800 mb-4">
-        Conversation Starters
-      </h3>
-
-      {questions.length === 0 && !loading && (
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">
-            Get personalized questions to break the ice
-          </p>
-          <button
-            onClick={generateIcebreakers}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+    <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
+      <Card.Body className="p-4">
+        {/* Header */}
+        <div className="d-flex align-items-center gap-3 mb-4">
+          <div
+            className="bg-success rounded d-flex align-items-center justify-content-center"
+            style={{ width: '40px', height: '40px', flexShrink: 0 }}
           >
-            Generate Questions
-          </button>
+            <i className="bi bi-chat-dots text-white" style={{ fontSize: '1.25rem' }} />
+          </div>
+          <div>
+            <h4 className="fw-bold mb-0">Conversation Starters</h4>
+            <small className="text-muted">Break the ice with these questions</small>
+          </div>
         </div>
-      )}
 
-      {loading && (
-        <div className="text-center py-8">
-          <div className="animate-spin w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full mx-auto" />
-          <p className="text-gray-600 mt-4">Creating questions...</p>
-        </div>
-      )}
+        {/* Content Area */}
+        {loading ? (
+          <div className="text-center py-5">
+            <Spinner animation="border" variant="success" className="mb-3" />
+            <p className="text-muted mb-0">Creating conversation starters...</p>
+            <small className="text-muted">Personalizing questions for you</small>
+          </div>
+        ) : (
+          <>
+            <ListGroup className="mb-3">
+              {displayQuestions.map((question, idx) => (
+                <ListGroup.Item
+                  key={idx}
+                  className="d-flex align-items-start gap-3 border-success border-2 bg-light mb-2"
+                  style={{ borderRadius: '8px' }}
+                >
+                  <div
+                    className="bg-success text-white rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      fontSize: '0.875rem',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {idx + 1}
+                  </div>
+                  <div className="flex-grow-1 pt-1">
+                    <p className="mb-0 fw-medium">{question}</p>
+                  </div>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="text-success p-0"
+                    onClick={() => copyToClipboard(question)}
+                    title="Copy question"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <i className="bi bi-clipboard" style={{ fontSize: '1.25rem' }} />
+                  </Button>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
 
-      {questions.length > 0 && !loading && (
-        <ul className="space-y-3">
-          {questions.map((question, idx) => (
-            <li key={idx} className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
-              <span className="flex-shrink-0 w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                {idx + 1}
-              </span>
-              <p className="text-gray-700 text-sm pt-0.5">{question}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+            {questions.length === 0 && (
+              <div className="text-center">
+                <Button
+                  variant="outline-success"
+                  onClick={generateIcebreakers}
+                >
+                  Generate Personalized Questions
+                </Button>
+                <p className="text-muted small mt-2 mb-0">
+                  Get AI-powered questions based on your compatibility
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Footer Tip */}
+        {!loading && (
+          <Card className="bg-light border-0 mt-3">
+            <Card.Body className="p-3">
+              <div className="d-flex align-items-start gap-2 small">
+                <i className="bi bi-info-circle text-success" style={{ fontSize: '1.25rem', flexShrink: 0 }} />
+                <p className="mb-0">
+                  <strong>Pro tip:</strong>
+                  {' '}
+                  Use these questions to start a conversation and learn more about your potential roommate&apos;s living preferences.
+                </p>
+              </div>
+            </Card.Body>
+          </Card>
+        )}
+      </Card.Body>
+    </Card>
   );
 }
