@@ -6,9 +6,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { ComparisonData } from '@/types';
-import MatchHeader from '@/components/MatchHeader';
-import CategoryScoreCard from '@/components/CategoryScorecard';
+import SideBySideComparison from '@/components/SideBySideComparison';
 import CompatibilityReportBox from '@/components/CompatibilityReport';
 import IcebreakersBox from '@/components/Icebreakers';
 
@@ -48,77 +48,111 @@ export default function ComparisonPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-lg">Loading comparison...</div>
-      </div>
+      <main className="bg-light min-vh-100">
+        <Container className="py-5">
+          <div className="text-center">
+            <div className="spinner-border text-success" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Loading comparison...</p>
+          </div>
+        </Container>
+      </main>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-red-600">
-          Error:
-          {error || 'No data available'}
-        </div>
-      </div>
+      <main className="bg-light min-vh-100">
+        <Container className="py-5">
+          <Row className="justify-content-center">
+            <Col md={6}>
+              <Card className="shadow-sm border-0">
+                <Card.Body className="text-center p-5">
+                  <div className="text-danger mb-3">
+                    <i className="bi bi-exclamation-circle" style={{ fontSize: '3rem' }} />
+                  </div>
+                  <h2>Error Loading Match</h2>
+                  <p className="text-muted">{error || 'No data available'}</p>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header with both users and overall score */}
-        <MatchHeader
-          currentUser={data.currentUser}
-          matchUser={data.matchUser}
-          overallScore={data.match.overallScore}
-        />
+    <main className="bg-light py-4">
+      <Container className="py-4 pb-5 mb-5">
+        {/* Page Title with Score */}
+        <Row className="justify-content-center mb-4">
+          <Col md={10} lg={8} className="text-center">
+            <Card className="shadow border-success border-2 mb-4" style={{ borderRadius: '50px' }}>
+              <Card.Body className="py-3 px-5">
+                <div className="d-flex align-items-center justify-content-center gap-3">
+                  <h1 className="display-3 fw-bold text-success mb-0">
+                    {data.match.overallScore}
+                    %
+                  </h1>
+                  <div className="text-start">
+                    <div className="text-muted small">Overall</div>
+                    <div className="text-muted small">Compatibility</div>
+                  </div>
+                </div>
+              </Card.Body>
+            </Card>
+            <h1 className="fw-bold mb-2">Match Details</h1>
+            <p className="text-muted">Review your compatibility analysis and conversation starters</p>
+          </Col>
+        </Row>
 
-        {/* Category Comparisons */}
-        <div className="mt-8 space-y-4">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Compatibility Breakdown
-          </h2>
-
-          {data.categoryBreakdown.map((category, idx) => (
-            <CategoryScoreCard
-              key={idx}
-              category={category.category}
-              yourValue={category.yourValue}
-              theirValue={category.theirValue}
-              compatibility={category.compatibility}
-              description={category.description}
+        {/* Side-by-Side Comparison */}
+        <Row className="mb-4">
+          <Col>
+            <SideBySideComparison
+              currentUser={data.currentUser}
+              matchUser={data.matchUser}
+              categoryBreakdown={data.categoryBreakdown}
+              overallScore={data.match.overallScore}
             />
-          ))}
-        </div>
+          </Col>
+        </Row>
 
-        {/* AI-Generated Content Section */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CompatibilityReportBox
-            matchId={matchId}
-            report={data.match.compatibilityReport || undefined}
-          />
-
-          <IcebreakersBox
-            matchId={matchId}
-            icebreakers={data.match.icebreakers}
-          />
-        </div>
+        {/* Two Column Layout for Report and Icebreakers */}
+        <Row className="g-4 mb-4">
+          <Col lg={6}>
+            <CompatibilityReportBox
+              matchId={matchId}
+              report={data.match.compatibilityReport || undefined}
+            />
+          </Col>
+          <Col lg={6}>
+            <IcebreakersBox
+              matchId={matchId}
+              icebreakers={data.match.icebreakers}
+            />
+          </Col>
+        </Row>
 
         {/* Action buttons */}
-        <div className="mt-8 flex justify-center gap-4">
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-            Accept Match
-          </button>
-          <button className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
-            Pass
-          </button>
-          <button className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-            Save for Later
-          </button>
-        </div>
-      </div>
-    </div>
+        <Row className="mt-4">
+          <Col className="text-center">
+            <div className="d-flex flex-column flex-sm-row justify-content-center gap-3">
+              <Button variant="success" size="lg" className="px-5">
+                Accept Match
+              </Button>
+              <Button variant="outline-secondary" size="lg" className="px-5">
+                Save for Later
+              </Button>
+              <Button variant="outline-danger" size="lg" className="px-5">
+                Pass
+              </Button>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </main>
   );
 }
