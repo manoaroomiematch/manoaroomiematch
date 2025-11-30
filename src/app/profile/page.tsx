@@ -16,7 +16,7 @@ const ProfilePage = () => (
             year="Junior"
             age={20}
             major="Computer Science"
-            bio="I love coding, hiking, and matcha lattes."
+            bio="I love coding and hiking."
             photoUrl="/johndoe.jpg"
           />
         </Col>

@@ -13,27 +13,20 @@ enum Role {
   ADMIN
 }
 
-enum Condition {
-  excellent
-  good
-  fair
-  poor
-}
-
 model User {
-  id       Int          @id @default(autoincrement())
-  email    String       @unique
-  password String
-  role     Role         @default(USER)
-  profile  UserProfile? // ADDED THIS
-}
-
-model Stuff {
-  id        Int       @id @default(autoincrement())
-  name      String
-  quantity  Int
-  condition Condition @default(good)
-  owner     String
+  id              Int              @id @default(autoincrement())
+  email           String           @unique
+  password        String
+  role            Role             @default(USER)
+  profile         UserProfile?
+  
+  // New relations from ER diagram
+  flags_reported  Flag[]           @relation("ReportedByUser")
+  flags_against   Flag[]           @relation("ReportedUser")
+  notifications   Notification[]
+  responses       LifestyleResponse[]
+  sentMessages    Message[]        @relation("Sender")
+  recdMessages    Message[]        @relation("Receiver")
 }
 
 model UserProfile {
@@ -41,6 +34,8 @@ model UserProfile {
   userId          Int      @unique
   user            User     @relation(fields: [userId], references: [id])
   name            String
+  firstName       String?  // Added
+  lastName        String?  // Added
   email           String
   photoUrl        String?
   createdAt       DateTime @default(now())
@@ -80,6 +75,96 @@ model Match {
   
   user1                UserProfile @relation("User1Matches", fields: [user1Id], references: [id])
   user2                UserProfile @relation("User2Matches", fields: [user2Id], references: [id])
-  
+  aiExplanation        AIExplanation?
+
   @@unique([user1Id, user2Id])
 }
+
+// --- New Models from ER Diagram ---
+
+model Flag {
+  id               Int      @id @default(autoincrement())
+  reported_by_user_id Int
+  reported_user_id Int
+  reason           String
+  status           String
+  created_at       DateTime @default(now())
+
+  reported_by_user User @relation("ReportedByUser", fields: [reported_by_user_id], references: [id])
+  reported_user    User @relation("ReportedUser", fields: [reported_user_id], references: [id])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  user        User     @relation(fields: [user_id], references: [id])
+  type        String
+  content     String
+  is_read     Boolean  @default(false)
+  created_at  DateTime @default(now())
+}
+
+model AIExplanation {
+  id                    Int      @id @default(autoincrement())
+  match_id              String   @unique
+  match                 Match    @relation(fields: [match_id], references: [id])
+  strengths_text        String?
+  conflicts_text        String?
+  suggestions_text      String?
+  first_message_template String?
+  created_at            DateTime @default(now())
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  senderId    Int
+  receiverId  Int
+  content     String
+  sentAt      DateTime @default(now())
+
+  sender   User @relation("Sender", fields: [senderId], references: [id])
+  receiver User @relation("Receiver", fields: [receiverId], references: [id])
+}
+
+model LifestyleCategory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  is_active   Boolean  @default(true)
+  questions   LifestyleQuestion[]
+}
+
+model LifestyleQuestion {
+  id            Int      @id @default(autoincrement())
+  category_id   Int
+  category      LifestyleCategory @relation(fields: [category_id], references: [id])
+  question_text String
+  input_type    String
+  order_index   Int
+  is_active     Boolean  @default(true)
+  options       LifestyleOption[]
+  responses     LifestyleResponse[]
+}
+
+model LifestyleOption {
+  id          Int      @id @default(autoincrement())
+  question_id Int
+  question    LifestyleQuestion @relation(fields: [question_id], references: [id])
+  label       String
+  value       String
+  order_index Int
+  responses   LifestyleResponse[]
+}
+
+model LifestyleResponse {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  user        User     @relation(fields: [user_id], references: [id])
+  question_id Int
+  question    LifestyleQuestion @relation(fields: [question_id], references: [id])
+  option_id   Int?
+  option      LifestyleOption? @relation(fields: [option_id], references: [id])
+  free_text   String?
+  created_at  DateTime @default(now())
+}
+
