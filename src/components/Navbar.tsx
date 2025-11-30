@@ -5,7 +5,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
-import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare } from 'react-bootstrap-icons';
+import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, Envelope } from 'react-bootstrap-icons';
 import Image from 'next/image';
 
 const NavBar: React.FC = () => {
@@ -57,6 +57,10 @@ const NavBar: React.FC = () => {
                     active={pathName === '/edit-profile'}
                   >
                   Edit Profile
+                  </Nav.Link>,
+                  <Nav.Link id="messages-nav" href="/messages" key="messages" active={pathName === '/messages'}>
+                    <Envelope className="me-1" />
+                    Messages
                   </Nav.Link>,
                 ]
               : ''}
