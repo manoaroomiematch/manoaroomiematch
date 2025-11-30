@@ -68,13 +68,25 @@ export async function deleteStuff(id: number) {
  * Creates a new user in the database.
  * @param credentials, an object with the following properties: email, password.
  */
-export async function createUser(credentials: { email: string; password: string }) {
+export async function createUser(credentials: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}) {
   // console.log(`createUser data: ${JSON.stringify(credentials, null, 2)}`);
   const password = await hash(credentials.password, 10);
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email: credentials.email,
       password,
+      name: `${credentials.firstName} ${credentials.lastName}`,
+    },
+  });
+  await prisma.profile.create({
+    data: {
+      userId: user.id,
+      bio: '',
     },
   });
 }

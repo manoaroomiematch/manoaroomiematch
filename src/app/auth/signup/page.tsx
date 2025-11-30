@@ -4,10 +4,14 @@ import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
-import { Card, Col, Container, Button, Form, Row } from 'react-bootstrap';
+import { Card, Col, Container, Button, Form, Row, Alert } from 'react-bootstrap';
 import { createUser } from '@/lib/dbActions';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 type SignUpForm = {
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -16,7 +20,11 @@ type SignUpForm = {
 
 /** The sign up page. */
 const SignUp = () => {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
   const validationSchema = Yup.object().shape({
+    firstName: Yup.string().required('First Name is required'),
+    lastName: Yup.string().required('Last Name is required'),
     email: Yup.string().required('Email is required').email('Email is invalid'),
     password: Yup.string()
       .required('Password is required')
@@ -37,10 +45,27 @@ const SignUp = () => {
   });
 
   const onSubmit = async (data: SignUpForm) => {
-    // console.log(JSON.stringify(data, null, 2));
-    await createUser(data);
-    // After creating, signIn with redirect to the add page
-    await signIn('credentials', { callbackUrl: '/add', ...data });
+    setError(null);
+    try {
+      await createUser(data);
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (result?.ok) {
+        router.push('/lifestyle-survey');
+      } else {
+        setError(result?.error || 'An unknown error occurred during sign in.');
+      }
+    } catch (e: any) {
+      if (e.message.includes('Unique constraint failed')) {
+        setError('A user with this email already exists.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
+    }
   };
 
   return (
@@ -51,7 +76,32 @@ const SignUp = () => {
             <h1 className="text-center">Sign Up</h1>
             <Card>
               <Card.Body>
+                {error && <Alert variant="danger">{error}</Alert>}
                 <Form onSubmit={handleSubmit(onSubmit)}>
+                  <Row>
+                    <Col>
+                      <Form.Group className="form-group">
+                        <Form.Label>First Name</Form.Label>
+                        <input
+                          type="text"
+                          {...register('firstName')}
+                          className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
+                        />
+                        <div className="invalid-feedback">{errors.firstName?.message}</div>
+                      </Form.Group>
+                    </Col>
+                    <Col>
+                      <Form.Group className="form-group">
+                        <Form.Label>Last Name</Form.Label>
+                        <input
+                          type="text"
+                          {...register('lastName')}
+                          className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
+                        />
+                        <div className="invalid-feedback">{errors.lastName?.message}</div>
+                      </Form.Group>
+                    </Col>
+                  </Row>
                   <Form.Group className="form-group">
                     <Form.Label>Email</Form.Label>
                     <input
