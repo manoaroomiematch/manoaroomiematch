@@ -3,8 +3,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Container, Row, Col, Card, ListGroup, Form, Button, Badge } from 'react-bootstrap';
-import { Search, PersonCircle, Send } from 'react-bootstrap-icons';
+import { Container, Row, Col, Card, ListGroup, Form, Button, Badge, Dropdown } from 'react-bootstrap';
+// eslint-disable-next-line max-len
+import {
+  Search,
+  PersonCircle,
+  Send,
+  ThreeDotsVertical,
+  PersonFill,
+  ShieldX,
+  ExclamationTriangle,
+} from 'react-bootstrap-icons';
 
 /**
  * Messages Page Component (Mockup)
@@ -235,6 +244,12 @@ const MessagesPage = () => {
   const currentMessages = mockMessages[selectedConversation] || [];
   const selectedConvInfo = mockConversations.find((c) => c.id === selectedConversation);
 
+  // Determine online status based on conversation
+  // TODO: Replace with actual online status from API
+  const getOnlineStatus = (conversationId: string) =>
+    // Kai (1) and Leilani (2) are online, Noa (3) and Makani (4) are offline
+    // eslint-disable-next-line implicit-arrow-linebreak
+    (['1', '2'].includes(conversationId) ? 'Online' : 'Offline');
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement actual message sending via API
@@ -245,9 +260,7 @@ const MessagesPage = () => {
   return (
     <main className="bg-light py-4">
       <Container className="py-4">
-        <h1 className="mb-4">
-          Messages
-        </h1>
+        <h1 className="mb-4">Messages</h1>
 
         <Row className="g-3">
           {/* LEFT COLUMN - Conversations List */}
@@ -312,12 +325,61 @@ const MessagesPage = () => {
             <Card className="shadow-sm" style={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
               {/* Conversation Header */}
               <Card.Header className="bg-white border-bottom py-3">
-                <div className="d-flex align-items-center">
-                  <PersonCircle size={40} color="#6c757d" className="me-3" />
-                  <div>
-                    <h5 className="mb-0">{selectedConvInfo?.name}</h5>
-                    <small className="text-muted">Online</small>
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-center">
+                    <PersonCircle size={40} color="#6c757d" className="me-3" />
+                    <div>
+                      <h5 className="mb-0">{selectedConvInfo?.name}</h5>
+                      <small className="text-muted">{getOnlineStatus(selectedConversation)}</small>
+                    </div>
                   </div>
+                  {/* Dropdown menu for conversation actions */}
+                  <Dropdown align="end">
+                    <Dropdown.Toggle
+                      as="button"
+                      className="btn btn-link text-dark p-0 border-0"
+                      style={{ boxShadow: 'none', background: 'none' }}
+                      bsPrefix="custom-dropdown"
+                    >
+                      <ThreeDotsVertical size={20} />
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                      {/* TODO: Replace with actual user profile link when API is ready
+                          This should link to /profile/{userId} or similar endpoint */}
+                      <Dropdown.Item
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          console.log(`View profile for: ${selectedConvInfo?.name}`);
+                          // TODO: Navigate to actual profile page: router.push(`/profile/${selectedConvInfo?.userId}`);
+                        }}
+                      >
+                        <PersonFill className="me-2" />
+                        View Profile
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item
+                        className="text-warning"
+                        onClick={() => {
+                          console.log(`Block user: ${selectedConvInfo?.name}`);
+                          // TODO: Implement block user functionality
+                        }}
+                      >
+                        <ShieldX className="me-2" />
+                        Block User
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        className="text-danger"
+                        onClick={() => {
+                          console.log(`Report user: ${selectedConvInfo?.name}`);
+                          // TODO: Implement report user functionality
+                        }}
+                      >
+                        <ExclamationTriangle className="me-2" />
+                        Report User
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </div>
               </Card.Header>
 
