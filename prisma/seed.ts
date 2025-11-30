@@ -30,6 +30,8 @@ async function main() {
       create: {
         userId: user.id,
         name,
+        firstName,
+        lastName,
         email: account.email,
       },
     });
