@@ -6,17 +6,42 @@ import { calculateCompatibility, calculateOverallScore } from './compatibility';
 
 /**
  * Creates a new user in the database.
- * @param credentials, an object with the following properties: email, password.
+ * @param credentials, an object with the following properties: email, password, firstName, lastName.
  */
-export async function createUser(credentials: { email: string; password: string }) {
+export async function createUser(credentials: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}) {
   // console.log(`createUser data: ${JSON.stringify(credentials, null, 2)}`);
   const password = await hash(credentials.password, 10);
-  await prisma.user.create({
-    data: {
-      email: credentials.email,
-      password,
-    },
-  });
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email: credentials.email,
+          password,
+        },
+      });
+
+      await tx.userProfile.create({
+        data: {
+          userId: user.id,
+          email: credentials.email,
+          firstName: credentials.firstName,
+          lastName: credentials.lastName,
+          name: `${credentials.firstName} ${credentials.lastName}`,
+        },
+      });
+    });
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      throw new Error('Email already exists');
+    }
+    throw error;
+  }
 }
 
 /**
