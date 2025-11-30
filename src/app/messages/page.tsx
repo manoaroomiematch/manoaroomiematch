@@ -1,18 +1,22 @@
+/* eslint-disable max-len */
 /* eslint-disable react/jsx-indent, @typescript-eslint/indent */
 
 'use client';
 
 import { useState } from 'react';
 import { Container, Row, Col, Card, ListGroup, Form, Button, Badge, Dropdown } from 'react-bootstrap';
-// eslint-disable-next-line max-len
 import {
   Search,
   PersonCircle,
   Send,
-  ThreeDotsVertical,
   PersonFill,
   ShieldX,
   ExclamationTriangle,
+  PlusCircle,
+  EnvelopeFill,
+  BellSlash,
+  Pin,
+  Trash,
 } from 'react-bootstrap-icons';
 
 /**
@@ -268,18 +272,28 @@ const MessagesPage = () => {
             <Card className="shadow-sm" style={{ height: '70vh' }}>
               <Card.Header className="bg-white border-bottom">
                 <Form.Group className="mb-0">
-                  <div className="position-relative">
-                    <Search
-                      className="position-absolute"
-                      style={{ left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6c757d' }}
-                    />
-                    <Form.Control
-                      type="text"
-                      placeholder="Search conversations..."
-                      className="ps-5"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="position-relative flex-grow-1">
+                      <Search
+                        className="position-absolute"
+                        style={{ left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#6c757d' }}
+                      />
+                      <Form.Control
+                        type="text"
+                        placeholder="Search conversations..."
+                        className="ps-5"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant="link"
+                      className="p-0 text-primary flex-shrink-0"
+                      onClick={() => console.log('New message')}
+                      title="New message"
+                    >
+                      <PlusCircle size={20} />
+                    </Button>
                   </div>
                 </Form.Group>
               </Card.Header>
@@ -288,23 +302,39 @@ const MessagesPage = () => {
                   {mockConversations.map((conversation) => (
                     <ListGroup.Item
                       key={conversation.id}
-                      action
                       active={selectedConversation === conversation.id}
                       onClick={() => setSelectedConversation(conversation.id)}
                       className="border-0 px-3 py-3"
                       style={{ cursor: 'pointer' }}
                     >
                       <div className="d-flex align-items-start">
-                        <div className="me-3">
+                        <div className="me-3 position-relative">
                           <PersonCircle size={50} color="#6c757d" />
+                          {/* Green dot indicator for online status */}
+                          {getOnlineStatus(conversation.id) === 'Online' && (
+                            <span
+                              className="position-absolute rounded-circle bg-success border border-white"
+                              style={{
+                                width: '14px',
+                                height: '14px',
+                                bottom: '2px',
+                                right: '2px',
+                                borderWidth: '2px',
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="flex-grow-1" style={{ minWidth: 0 }}>
                           <div className="d-flex justify-content-between align-items-baseline mb-1">
-                            <h6 className="mb-0 fw-semibold text-truncate">{conversation.name}</h6>
+                            <h6 className={`mb-0 text-truncate ${conversation.unread ? 'fw-bold text-dark' : 'fw-semibold'}`}>
+                              {conversation.name}
+                            </h6>
                             <small className="text-muted ms-2 flex-shrink-0">{conversation.timestamp}</small>
                           </div>
                           <div className="d-flex justify-content-between align-items-center">
-                            <p className="mb-0 text-muted small text-truncate">{conversation.lastMessage}</p>
+                            <p className={`mb-0 small text-truncate ${conversation.unread ? 'text-dark fw-semibold' : 'text-muted'}`}>
+                              {conversation.lastMessage}
+                            </p>
                             {conversation.unread && (
                               <Badge bg="primary" pill className="ms-2 flex-shrink-0">
                                 New
@@ -312,6 +342,59 @@ const MessagesPage = () => {
                             )}
                           </div>
                         </div>
+                        {/* Dropdown menu for conversation actions */}
+                        <Dropdown align="end" onClick={(e) => e.stopPropagation()} drop="down">
+                          <Dropdown.Toggle
+                            as="div"
+                            className="text-muted p-0 border-0 ms-2"
+                            style={{ boxShadow: 'none', background: 'none', textDecoration: 'none', cursor: 'pointer' }}
+                            id={`conversation-dropdown-${conversation.id}`}
+                          />
+                          <Dropdown.Menu>
+                            <Dropdown.Item
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`Mark as unread: ${conversation.name}`);
+                                // TODO: Implement mark as unread functionality
+                              }}
+                            >
+                              <EnvelopeFill className="me-2" />
+                              Mark as Unread
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`Mute: ${conversation.name}`);
+                                // TODO: Implement mute functionality
+                              }}
+                            >
+                              <BellSlash className="me-2" />
+                              Mute
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`Pin: ${conversation.name}`);
+                                // TODO: Implement pin functionality
+                              }}
+                            >
+                              <Pin className="me-2" />
+                              Pin
+                            </Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item
+                              className="text-danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`Delete: ${conversation.name}`);
+                                // TODO: Implement delete functionality
+                              }}
+                            >
+                              <Trash className="me-2" />
+                              Delete
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
                       </div>
                     </ListGroup.Item>
                   ))}
@@ -325,61 +408,61 @@ const MessagesPage = () => {
             <Card className="shadow-sm" style={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
               {/* Conversation Header */}
               <Card.Header className="bg-white border-bottom py-3">
-                <div className="d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center">
+                  <PersonCircle size={40} color="#6c757d" className="me-3" />
                   <div className="d-flex align-items-center">
-                    <PersonCircle size={40} color="#6c757d" className="me-3" />
                     <div>
-                      <h5 className="mb-0">{selectedConvInfo?.name}</h5>
+                      <div className="d-flex align-items-center">
+                        <h5 className="mb-0 me-1">{selectedConvInfo?.name}</h5>
+                        {/* Dropdown menu for conversation actions */}
+                        <Dropdown align="start" drop="down">
+                          <Dropdown.Toggle
+                            as="div"
+                            className="text-dark p-0 border-0"
+                            style={{ boxShadow: 'none', background: 'none', textDecoration: 'none', cursor: 'pointer' }}
+                            id="conversation-header-dropdown"
+                          />
+                          <Dropdown.Menu>
+                            {/* TODO: Replace with actual user profile link when API is ready
+                                This should link to /profile/{userId} or similar endpoint */}
+                            <Dropdown.Item
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                console.log(`View profile for: ${selectedConvInfo?.name}`);
+                                // TODO: Navigate to actual profile page: router.push(`/profile/${selectedConvInfo?.userId}`);
+                              }}
+                            >
+                              <PersonFill className="me-2" />
+                              View Profile
+                            </Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item
+                              className="text-warning"
+                              onClick={() => {
+                                console.log(`Block user: ${selectedConvInfo?.name}`);
+                                // TODO: Implement block user functionality
+                              }}
+                            >
+                              <ShieldX className="me-2" />
+                              Block User
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              className="text-danger"
+                              onClick={() => {
+                                console.log(`Report user: ${selectedConvInfo?.name}`);
+                                // TODO: Implement report user functionality
+                              }}
+                            >
+                              <ExclamationTriangle className="me-2" />
+                              Report User
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </div>
                       <small className="text-muted">{getOnlineStatus(selectedConversation)}</small>
                     </div>
                   </div>
-                  {/* Dropdown menu for conversation actions */}
-                  <Dropdown align="end">
-                    <Dropdown.Toggle
-                      as="button"
-                      className="btn btn-link text-dark p-0 border-0"
-                      style={{ boxShadow: 'none', background: 'none' }}
-                      bsPrefix="custom-dropdown"
-                    >
-                      <ThreeDotsVertical size={20} />
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                      {/* TODO: Replace with actual user profile link when API is ready
-                          This should link to /profile/{userId} or similar endpoint */}
-                      <Dropdown.Item
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          console.log(`View profile for: ${selectedConvInfo?.name}`);
-                          // TODO: Navigate to actual profile page: router.push(`/profile/${selectedConvInfo?.userId}`);
-                        }}
-                      >
-                        <PersonFill className="me-2" />
-                        View Profile
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item
-                        className="text-warning"
-                        onClick={() => {
-                          console.log(`Block user: ${selectedConvInfo?.name}`);
-                          // TODO: Implement block user functionality
-                        }}
-                      >
-                        <ShieldX className="me-2" />
-                        Block User
-                      </Dropdown.Item>
-                      <Dropdown.Item
-                        className="text-danger"
-                        onClick={() => {
-                          console.log(`Report user: ${selectedConvInfo?.name}`);
-                          // TODO: Implement report user functionality
-                        }}
-                      >
-                        <ExclamationTriangle className="me-2" />
-                        Report User
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
                 </div>
               </Card.Header>
 
@@ -397,7 +480,6 @@ const MessagesPage = () => {
                         </div>
                       )}
                       <div
-                        // eslint-disable-next-line max-len
                         className={`d-flex mb-3 ${message.isCurrentUser ? 'justify-content-end' : 'justify-content-start'}`}
                       >
                         <div
