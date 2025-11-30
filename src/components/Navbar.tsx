@@ -4,8 +4,8 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
-import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare } from 'react-bootstrap-icons';
+import { Container, Nav, Navbar, NavDropdown, Badge } from 'react-bootstrap';
+import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots } from 'react-bootstrap-icons';
 import Image from 'next/image';
 
 const NavBar: React.FC = () => {
@@ -14,6 +14,18 @@ const NavBar: React.FC = () => {
   const userWithRole = session?.user as { email: string; randomKey: string };
   const role = userWithRole?.randomKey;
   const pathName = usePathname();
+
+  /**
+   * Tracks the number of unread messages for the current user.
+   * This is currently using mock data for demonstration purposes.
+   *
+   * When implementing the real messaging system, this should be replaced with
+   * an API call to fetch the actual count from your database, something like:
+   * const { data: unreadCount } = useSWR('/api/messages/unread');
+   *
+   * The notification badge will automatically show/hide based on this value.
+   */
+  const unreadMessageCount = 1; // Mock data - replace with actual API call
   return (
     <Navbar bg="light" expand="lg">
       <Container>
@@ -57,6 +69,39 @@ const NavBar: React.FC = () => {
                     active={pathName === '/edit-profile'}
                   >
                   Edit Profile
+                  </Nav.Link>,
+                  // Messages navigation link with unread notification badge.
+                  // The chat bubble icon is slightly larger (size 20) to make it more visible.
+                  // When there are unread messages, a small red circle with the count appears
+                  // in the top-right corner of the icon - this helps users quickly see when
+                  // they have new messages waiting for them.
+                  <Nav.Link id="messages-nav" href="/messages" key="messages" active={pathName === '/messages'}>
+                    <span className="position-relative">
+                      <ChatDots className="me-1" size={20} />
+                      {/* Notification badge - only shows when there are unread messages.
+                          The badge is positioned absolutely so it floats on top of the icon,
+                          giving that classic "notification dot" look you see in most messaging apps. */}
+                      {unreadMessageCount > 0 && (
+                        <Badge
+                          bg="danger"
+                          pill
+                          className="position-absolute"
+                          style={{
+                            top: '-8px',
+                            right: '-8px',
+                            fontSize: '0.65rem',
+                            minWidth: '18px',
+                            height: '18px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0 5px',
+                          }}
+                        >
+                          {unreadMessageCount}
+                        </Badge>
+                      )}
+                    </span>
                   </Nav.Link>,
                 ]
               : ''}
