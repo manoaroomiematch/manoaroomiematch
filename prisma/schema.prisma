@@ -19,7 +19,8 @@ model User {
   password        String
   role            Role             @default(USER)
   profile         UserProfile?
-  newProfile      Profile?
+  
+  // New relations from ER diagram
   flags_reported  Flag[]           @relation("ReportedByUser")
   flags_against   Flag[]           @relation("ReportedUser")
   notifications   Notification[]
@@ -33,6 +34,8 @@ model UserProfile {
   userId          Int      @unique
   user            User     @relation(fields: [userId], references: [id])
   name            String
+  firstName       String?  // Added
+  lastName        String?  // Added
   email           String
   photoUrl        String?
   createdAt       DateTime @default(now())
@@ -77,17 +80,7 @@ model Match {
   @@unique([user1Id, user2Id])
 }
 
-model Profile {
-  id                      Int      @id @default(autoincrement())
-  userId                  Int      @unique
-  user                    User     @relation(fields: [userId], references: [id])
-  bio                     String?
-  gender                  String?
-  preferred_roommate_gender String?
-  preferred_dorm          String?
-  move_in_date            DateTime?
-  profile_photo_url       String?
-}
+// --- New Models from ER Diagram ---
 
 model Flag {
   id               Int      @id @default(autoincrement())

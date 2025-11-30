@@ -1,4 +1,4 @@
-import { PrismaClient, Role, Condition } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { hash } from 'bcrypt';
 import * as config from '../config/settings.development.json';
 
@@ -10,7 +10,7 @@ async function main() {
   config.defaultAccounts.forEach(async (account) => {
     const role = account.role as Role || Role.USER;
     console.log(`  Creating user: ${account.email} with role: ${role}`);
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: account.email },
       update: {},
       create: {
@@ -19,23 +19,22 @@ async function main() {
         role,
       },
     });
-    // console.log(`  Created user: ${user.email} with role: ${user.role}`);
-  });
-  for (const data of config.defaultData) {
-    const condition = data.condition as Condition || Condition.good;
-    console.log(`  Adding stuff: ${JSON.stringify(data)}`);
-    // eslint-disable-next-line no-await-in-loop
-    await prisma.stuff.upsert({
-      where: { id: config.defaultData.indexOf(data) + 1 },
+
+    // Create a profile for the user if it doesn't exist
+    const firstName = account.firstName || account.email.split('@')[0];
+    const lastName = account.lastName || 'User';
+    const name = `${firstName} ${lastName}`;
+    await prisma.userProfile.upsert({
+      where: { userId: user.id },
       update: {},
       create: {
-        name: data.name,
-        quantity: data.quantity,
-        owner: data.owner,
-        condition,
+        userId: user.id,
+        name,
+        email: account.email,
       },
     });
-  }
+    // console.log(`  Created user: ${user.email} with role: ${user.role}`);
+  });
 }
 main()
   .then(() => prisma.$disconnect())
