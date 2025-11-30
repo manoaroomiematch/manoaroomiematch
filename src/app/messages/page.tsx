@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { Container, Row, Col, Card, ListGroup, Form, Button, Badge } from 'react-bootstrap';
-import { Search, Envelope, PersonCircle, Send } from 'react-bootstrap-icons';
+import { Search, PersonCircle, Send } from 'react-bootstrap-icons';
 
 /**
  * Messages Page Component (Mockup)
@@ -76,7 +76,7 @@ const mockConversations: MockConversation[] = [
     id: '4',
     name: 'Makani Lee',
     lastMessage: 'Do you have any pets?',
-    timestamp: 'Last week',
+    timestamp: '11/21/25',
     unread: false,
   },
 ];
@@ -176,7 +176,7 @@ const mockMessages: { [key: string]: MockMessage[] } = {
       senderName: 'You',
       content: 'Hi Makani! I saw we matched. Wanted to ask about your living preferences.',
       timestamp: '4:15 PM',
-      date: 'Last Wednesday',
+      date: 'Wed, Nov 20',
       isCurrentUser: true,
     },
     {
@@ -185,7 +185,7 @@ const mockMessages: { [key: string]: MockMessage[] } = {
       senderName: 'Makani Lee',
       content: 'Hi! Sure, what would you like to know?',
       timestamp: '5:30 PM',
-      date: 'Last Wednesday',
+      date: 'Wed, Nov 20',
       isCurrentUser: false,
     },
     {
@@ -194,7 +194,7 @@ const mockMessages: { [key: string]: MockMessage[] } = {
       senderName: 'You',
       content: 'Do you have any pets?',
       timestamp: '5:45 PM',
-      date: 'Last Wednesday',
+      date: 'Wed, Nov 20',
       isCurrentUser: true,
     },
     {
@@ -203,7 +203,7 @@ const mockMessages: { [key: string]: MockMessage[] } = {
       senderName: 'Makani Lee',
       content: 'No pets, but I love animals! Are you thinking of getting one?',
       timestamp: '6:00 PM',
-      date: 'Last Wednesday',
+      date: 'Wed, Nov 20',
       isCurrentUser: false,
     },
     {
@@ -212,7 +212,7 @@ const mockMessages: { [key: string]: MockMessage[] } = {
       senderName: 'You',
       content: "Not right away, but maybe in the future. What's your ideal study/sleep schedule?",
       timestamp: '10:20 AM',
-      date: 'Last Thursday',
+      date: 'Thu, Nov 21',
       isCurrentUser: true,
     },
     {
@@ -221,7 +221,7 @@ const mockMessages: { [key: string]: MockMessage[] } = {
       senderName: 'Makani Lee',
       content: "I'm definitely a morning person! Usually study from 8 AM to 3 PM, and I'm in bed by 10 PM.",
       timestamp: '11:05 AM',
-      date: 'Last Thursday',
+      date: 'Thu, Nov 21',
       isCurrentUser: false,
     },
   ],
@@ -246,7 +246,6 @@ const MessagesPage = () => {
     <main className="bg-light py-4">
       <Container className="py-4">
         <h1 className="mb-4">
-          <Envelope className="me-2" />
           Messages
         </h1>
 
@@ -379,6 +378,7 @@ const MessagesPage = () => {
                       <Send />
                     </Button>
                   </div>
+                  {/* Remove note when messaging functionality is implemented */}
                   <small className="text-muted d-block mt-2">
                     * Messaging functionality coming soon - currently non-functional mockup
                   </small>
