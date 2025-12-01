@@ -7,19 +7,19 @@ import { PersonCircle } from 'react-bootstrap-icons';
 
 interface UserOverviewCardProps {
   name: string;
-  year: string;
-  age: number;
-  major: string;
-  bio: string;
-  photoUrl: string;
+  year?: string;
+  major?: string;
+  graduationYear?: number;
+  email: string;
+  photoUrl?: string;
 }
 
 const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
   name,
   year,
-  age,
   major,
-  bio,
+  graduationYear,
+  email,
   photoUrl,
 }) => (
   <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
@@ -44,32 +44,35 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
       <div className="text-center">
         {/* Name + major */}
         <h2 className="fw-bold mb-1">{name}</h2>
-        <p className="text-muted mb-3">{major}</p>
+        <p className="text-muted mb-3">{major || 'Major not set'}</p>
       </div>
 
       {/* Details */}
-      <div className="mt-3">
+      <div className="mt-4">
+        {year && (
+          <p className="mb-2">
+            <strong>Year:</strong>
+            {' '}
+            {year}
+          </p>
+        )}
+        {graduationYear && (
+          <p className="mb-2">
+            <strong>Graduation:</strong>
+            {' '}
+            {graduationYear}
+          </p>
+        )}
         <p className="mb-2">
-          <strong>Year:</strong>
+          <strong>Email:</strong>
           {' '}
-          {year}
-        </p>
-        <p className="mb-2">
-          <strong>Age:</strong>
-          {' '}
-          {age}
-        </p>
-        <p className="mb-2">
-          <strong>Bio:</strong>
-          {' '}
-          {bio}
+          {email}
         </p>
       </div>
 
-      {/* Edit Profile Button */}
-      <div className="mt-4">
+      <div className="mt-4 d-grid">
         <Link href="/edit-profile" passHref legacyBehavior>
-          <Button variant="success" className="w-100">
+          <Button variant="success" size="lg">
             Edit Profile
           </Button>
         </Link>

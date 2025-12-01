@@ -14,7 +14,7 @@ const SignIn = () => {
     const email = target.email.value;
     const password = target.password.value;
     const result = await signIn('credentials', {
-      callbackUrl: '/home',
+      callbackUrl: '/profile',
       email,
       password,
     });

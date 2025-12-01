@@ -38,6 +38,9 @@ model UserProfile {
   lastName        String?  // Added
   email           String
   photoUrl        String?
+  major           String?
+  classStanding   String?
+  graduationYear  Int?
   createdAt       DateTime @default(now())
   
   sleepSchedule   Int      @default(3)
