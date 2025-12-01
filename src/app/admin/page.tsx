@@ -96,50 +96,51 @@ const AdminPage: React.FC = () => {
   const [categoryPage, setCategoryPage] = useState(1);
 
   /** Fetch data from API - replaces all hard-coded mock data */
-  // This effect runs once when the component mounts and the user is authenticated as admin
-  useEffect(() => {
+  const fetchAdminData = async () => {
     // Only fetch data if user is authenticated and is admin
     if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch users from database (replaces mockUsers)
-        const usersResponse = await fetch('/api/admin/users');
-        if (!usersResponse.ok) {
-          throw new Error(`Failed to fetch users: ${usersResponse.statusText}`);
-        }
-        const usersData = await usersResponse.json();
-        setUsers(usersData.users || []);
-
-        // Fetch flags from database (replaces mockFlags)
-        const flagsResponse = await fetch('/api/admin/flags');
-        if (!flagsResponse.ok) {
-          throw new Error(`Failed to fetch flags: ${flagsResponse.statusText}`);
-        }
-        const flagsData = await flagsResponse.json();
-        setFlags(flagsData.flags || []);
-
-        // Fetch categories from database (replaces mockCategories)
-        const categoriesResponse = await fetch('/api/admin/categories');
-        if (!categoriesResponse.ok) {
-          throw new Error(`Failed to fetch categories: ${categoriesResponse.statusText}`);
-        }
-        const categoriesData = await categoriesResponse.json();
-        setCategories(categoriesData.categories || []);
-      } catch (err) {
-        console.error('Error fetching admin data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load data');
-      } finally {
-        setLoading(false);
+      // Fetch users from database (replaces mockUsers)
+      const usersResponse = await fetch('/api/admin/users');
+      if (!usersResponse.ok) {
+        throw new Error(`Failed to fetch users: ${usersResponse.statusText}`);
       }
-    };
+      const usersData = await usersResponse.json();
+      setUsers(usersData.users || []);
 
-    fetchData();
+      // Fetch flags from database (replaces mockFlags)
+      const flagsResponse = await fetch('/api/admin/flags');
+      if (!flagsResponse.ok) {
+        throw new Error(`Failed to fetch flags: ${flagsResponse.statusText}`);
+      }
+      const flagsData = await flagsResponse.json();
+      setFlags(flagsData.flags || []);
+
+      // Fetch categories from database (replaces mockCategories)
+      const categoriesResponse = await fetch('/api/admin/categories');
+      if (!categoriesResponse.ok) {
+        throw new Error(`Failed to fetch categories: ${categoriesResponse.statusText}`);
+      }
+      const categoriesData = await categoriesResponse.json();
+      setCategories(categoriesData.categories || []);
+    } catch (err) {
+      console.error('Error fetching admin data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** Initial data load on component mount */
+  useEffect(() => {
+    fetchAdminData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status]);
 
   /** Handle flag resolution - calls API endpoint to update flag status */
@@ -248,7 +249,17 @@ const AdminPage: React.FC = () => {
   return (
     <main>
       <Container className="py-4">
-        <h1 className="mb-4">Admin Home</h1>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1>Admin Home</h1>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={fetchAdminData}
+            disabled={loading}
+          >
+            {loading ? 'Refreshing...' : 'Refresh Data'}
+          </button>
+        </div>
 
         {error && (
           <Alert variant="danger" dismissible onClose={() => setError(null)}>
