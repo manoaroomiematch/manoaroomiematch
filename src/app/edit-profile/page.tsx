@@ -18,10 +18,6 @@ import { updateUserProfile, getProfileByEmail } from '@/lib/dbActions';
  * - Academic information (major, class standing, graduation year)
  * - Link to Lifestyle Survey for preferences
  *
- * TODO: Connect to backend API to save profile data
- * TODO: Implement actual image upload functionality
- * TODO: Fetch existing user data from database
- * TODO: Add form validation
  */
 
 const EditProfilePage = () => {
@@ -43,6 +39,13 @@ const EditProfilePage = () => {
     major: isJohnDoe ? 'Computer Science' : '',
     classStanding: isJohnDoe ? 'Junior' : '',
     graduationYear: '',
+    smoking: false,
+    drinking: 'occasionally',
+    pets: false,
+    petTypes: '',
+    dietary: '',
+    interests: '',
+    workSchedule: 'day',
   });
 
   const [profilePhoto, setProfilePhoto] = useState<string>(
@@ -62,11 +65,18 @@ const EditProfilePage = () => {
               firstName: profile.firstName || '',
               lastName: profile.lastName || '',
               email: profile.email,
-              pronouns: '', // Not in DB yet
-              bio: '', // Not in DB yet
+              pronouns: profile.pronouns || '',
+              bio: profile.bio || '',
               major: profile.major || '',
               classStanding: profile.classStanding || '',
               graduationYear: profile.graduationYear?.toString() || '',
+              smoking: profile.smoking || false,
+              drinking: profile.drinking || 'occasionally',
+              pets: profile.pets || false,
+              petTypes: profile.petTypes?.join(', ') || '',
+              dietary: profile.dietary?.join(', ') || '',
+              interests: profile.interests?.join(', ') || '',
+              workSchedule: profile.workSchedule || 'day',
             });
             // if (profile.photoUrl) setProfilePhoto(profile.photoUrl);
           }
@@ -87,7 +97,7 @@ const EditProfilePage = () => {
   // Handle input changes
   const handleInputChange = (
     field: string,
-    value: string,
+    value: string | boolean,
   ) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -131,6 +141,15 @@ const EditProfilePage = () => {
         major: formData.major,
         classStanding: formData.classStanding,
         graduationYear: formData.graduationYear ? parseInt(formData.graduationYear, 10) : undefined,
+        smoking: formData.smoking,
+        drinking: formData.drinking,
+        pets: formData.pets,
+        petTypes: formData.petTypes.split(',').map((s) => s.trim()).filter((s) => s),
+        dietary: formData.dietary.split(',').map((s) => s.trim()).filter((s) => s),
+        interests: formData.interests.split(',').map((s) => s.trim()).filter((s) => s),
+        workSchedule: formData.workSchedule,
+        pronouns: formData.pronouns,
+        bio: formData.bio,
       });
       // eslint-disable-next-line no-alert
       alert('Profile saved successfully!');
@@ -272,7 +291,7 @@ const EditProfilePage = () => {
 
                     <Col xs={12}>
                       <Form.Group>
-                        <Form.Label>About Me</Form.Label>
+                        <Form.Label>Bio</Form.Label>
                         <Form.Control
                           as="textarea"
                           rows={4}
@@ -349,6 +368,105 @@ const EditProfilePage = () => {
                           placeholder="e.g., 2025"
                           min="2024"
                           max="2030"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+
+              {/* Lifestyle & Preferences Section */}
+              <Card className="shadow-sm mb-4" style={{ border: 'none', borderRadius: '12px' }}>
+                <Card.Body className="p-4">
+                  <h4 className="fw-bold mb-3">Lifestyle & Preferences</h4>
+
+                  <Row className="g-3">
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label>Work Schedule</Form.Label>
+                        <Form.Select
+                          value={formData.workSchedule}
+                          onChange={(e) => handleInputChange('workSchedule', e.target.value)}
+                        >
+                          <option value="day">Day</option>
+                          <option value="night">Night</option>
+                          <option value="mixed">Mixed</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group>
+                        <Form.Label>Drinking Habits</Form.Label>
+                        <Form.Select
+                          value={formData.drinking}
+                          onChange={(e) => handleInputChange('drinking', e.target.value)}
+                        >
+                          <option value="frequently">Frequently</option>
+                          <option value="occasionally">Occasionally</option>
+                          <option value="never">Never</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group className="d-flex align-items-center h-100">
+                        <Form.Check
+                          type="checkbox"
+                          id="smoking"
+                          label="Do you smoke?"
+                          checked={formData.smoking}
+                          onChange={(e) => handleInputChange('smoking', e.target.checked)}
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col md={6}>
+                      <Form.Group className="d-flex align-items-center h-100">
+                        <Form.Check
+                          type="checkbox"
+                          id="pets"
+                          label="Do you have pets?"
+                          checked={formData.pets}
+                          onChange={(e) => handleInputChange('pets', e.target.checked)}
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col xs={12}>
+                      <Form.Group>
+                        <Form.Label>Pet Types (if any)</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={formData.petTypes}
+                          onChange={(e) => handleInputChange('petTypes', e.target.value)}
+                          placeholder="e.g., Dog, Cat, Hamster (comma separated)"
+                          disabled={!formData.pets}
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col xs={12}>
+                      <Form.Group>
+                        <Form.Label>Dietary Preferences</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={formData.dietary}
+                          onChange={(e) => handleInputChange('dietary', e.target.value)}
+                          placeholder="e.g., Vegetarian, Vegan, Gluten-free (comma separated)"
+                        />
+                      </Form.Group>
+                    </Col>
+
+                    <Col xs={12}>
+                      <Form.Group>
+                        <Form.Label>Interests & Hobbies</Form.Label>
+                        <Form.Control
+                          as="textarea"
+                          rows={3}
+                          value={formData.interests}
+                          onChange={(e) => handleInputChange('interests', e.target.value)}
+                          placeholder="e.g., Hiking, Gaming, Cooking, Reading (comma separated)"
                         />
                       </Form.Group>
                     </Col>

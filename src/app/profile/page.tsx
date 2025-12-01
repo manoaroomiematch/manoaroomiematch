@@ -3,6 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { redirect } from 'next/navigation';
 import UserOverviewCard from '@/components/UserOverviewCard';
 import CompatibilityCard from '@/components/CompatibilityCard';
+import AboutMeCard from '@/components/AboutMeCard';
 import MatchesCardOverview from '@/components/MatchesCardOverview';
 import { getProfileByEmail } from '@/lib/dbActions';
 import authOptions from '@/lib/authOptions';
@@ -28,9 +29,9 @@ const ProfilePage = async () => {
   return (
     <main className="bg-light py-4">
       <Container className="py-4 pb-5 mb-5">
-        <Row className="g-4 mb-4">
+        <Row className="g-4 mb-4 align-items-stretch">
           {/* LEFT COLUMN */}
-          <Col lg={4} md={12}>
+          <Col lg={4} md={12} className="d-flex flex-column">
             <UserOverviewCard
               name={profile.name}
               year={profile.classStanding || undefined}
@@ -38,11 +39,21 @@ const ProfilePage = async () => {
               graduationYear={profile.graduationYear || undefined}
               email={profile.email}
               photoUrl={profile.photoUrl || undefined}
+              pronouns={profile.pronouns || undefined}
+              bio={profile.bio || undefined}
             />
           </Col>
 
           {/* RIGHT COLUMN */}
           <Col lg={8} md={12}>
+            <AboutMeCard
+              workSchedule={profile.workSchedule}
+              smoking={profile.smoking}
+              drinking={profile.drinking}
+              pets={profile.pets}
+              petTypes={profile.petTypes}
+              dietary={profile.dietary}
+            />
             <CompatibilityCard
               interests={profile.interests}
               lifestyle={{

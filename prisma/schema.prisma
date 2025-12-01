@@ -36,6 +36,8 @@ model UserProfile {
   name            String
   firstName       String?  // Added
   lastName        String?  // Added
+  pronouns        String?
+  bio             String?
   email           String
   photoUrl        String?
   major           String?

@@ -30,7 +30,7 @@ const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ interests = [], l
   }
 
   return (
-    <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
+    <Card className="shadow-sm" style={{ border: 'none', borderRadius: '12px' }}>
       <Card.Body className="p-4">
         <h2 className="fw-bold mb-4 text-center">Compatibility Highlights</h2>
 
