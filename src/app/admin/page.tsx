@@ -8,16 +8,74 @@
  * This page provides a simple overview of the admin interface.
  */
 
-import React, { useState } from 'react';
-import { Container, Button, Form } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Button, Form, Alert } from 'react-bootstrap';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
-import UserManagement, { mockUsers } from '@/components/UserManagementAdmin';
+import UserManagement from '@/components/UserManagementAdmin';
 import AdminSection from '@/components/AdminSection';
-import LifestyleCategoriesTable, { mockCategories } from '@/components/LifestyleCategoryAdmin';
-import ContentModerationTable, { mockFlags } from '@/components/ContentModerationAdmin';
+import LifestyleCategoriesTable from '@/components/LifestyleCategoryAdmin';
+import ContentModerationTable from '@/components/ContentModerationAdmin';
 import AdminTable from '@/components/AdminTable';
+import LoadingSpinner from '@/components/LoadingSpinner';
+
+// NOTE: All mock data has been removed. This admin page now fetches live data
+// from the database via three admin-only API endpoints:
+// - GET /api/admin/users - Returns all users with their profile information
+// - GET /api/admin/flags - Returns all content moderation flags
+// - GET /api/admin/categories - Returns all lifestyle categories with question counts
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  activity: string;
+}
+
+interface Flag {
+  id: number;
+  user: string;
+  reportedBy: string;
+  reason: string;
+  status: string;
+  date: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  items: number;
+  lastUpdated: string;
+}
 
 const AdminPage: React.FC = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  /** Data state - fetched from API endpoints instead of hard-coded mock data */
+  const [users, setUsers] = useState<User[]>([]);
+  const [flags, setFlags] = useState<Flag[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  /** Check admin access - redirect non-admin users */
+  // This provides client-side protection in addition to the server-side
+  // API endpoint protection
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (session?.user?.randomKey !== 'ADMIN') {
+      router.push('/not-authorized');
+    }
+  }, [session, status, router]);
+
   /** Shared filter state */
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -37,8 +95,82 @@ const AdminPage: React.FC = () => {
   const [categorySort, setCategorySort] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
 
+  /** Fetch data from API - replaces all hard-coded mock data */
+  // This effect runs once when the component mounts and the user is authenticated as admin
+  useEffect(() => {
+    // Only fetch data if user is authenticated and is admin
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') {
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch users from database (replaces mockUsers)
+        const usersResponse = await fetch('/api/admin/users');
+        if (!usersResponse.ok) {
+          throw new Error(`Failed to fetch users: ${usersResponse.statusText}`);
+        }
+        const usersData = await usersResponse.json();
+        setUsers(usersData.users || []);
+
+        // Fetch flags from database (replaces mockFlags)
+        const flagsResponse = await fetch('/api/admin/flags');
+        if (!flagsResponse.ok) {
+          throw new Error(`Failed to fetch flags: ${flagsResponse.statusText}`);
+        }
+        const flagsData = await flagsResponse.json();
+        setFlags(flagsData.flags || []);
+
+        // Fetch categories from database (replaces mockCategories)
+        const categoriesResponse = await fetch('/api/admin/categories');
+        if (!categoriesResponse.ok) {
+          throw new Error(`Failed to fetch categories: ${categoriesResponse.statusText}`);
+        }
+        const categoriesData = await categoriesResponse.json();
+        setCategories(categoriesData.categories || []);
+      } catch (err) {
+        console.error('Error fetching admin data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [session, status]);
+
+  /** Handle flag resolution - calls API endpoint to update flag status */
+  // This function is passed to ContentModerationTable components to handle
+  // resolve/deactivate button clicks
+  const handleResolveFlag = async (flagId: number, action: 'resolve' | 'deactivate') => {
+    try {
+      const response = await fetch('/api/admin/resolve-flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ flagId, action }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${action} flag`);
+      }
+
+      // Refresh flags data to show updated status
+      const flagsResponse = await fetch('/api/admin/flags');
+      const flagsData = await flagsResponse.json();
+      setFlags(flagsData.flags || []);
+    } catch (err) {
+      console.error(`Error ${action}ing flag:`, err);
+      setError(`Failed to ${action} flag. Please try again.`);
+    }
+  };
+
   /** USER MANAGEMENT FILTERS */
-  let filteredUsers = mockUsers.filter((user) => {
+  let filteredUsers = users.filter((user) => {
     // eslint-disable-next-line max-len
     const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
     const matchesRole = roleFilter ? user.role === roleFilter : true;
@@ -56,7 +188,7 @@ const AdminPage: React.FC = () => {
   const shownUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
 
   /** CONTENT MODERATION FILTERS */
-  let filteredFlags = mockFlags.filter((flag) => {
+  let filteredFlags = flags.filter((flag) => {
     const matchesSearch = flag.user.toLowerCase().includes(moderationSearch.toLowerCase());
     const matchesReason = reasonFilter ? flag.reason === reasonFilter : true;
     return matchesSearch && matchesReason;
@@ -77,7 +209,7 @@ const AdminPage: React.FC = () => {
   const shownFlags = filteredFlags.slice((moderationPage - 1) * pageSize, moderationPage * pageSize);
 
   /** LIFESTYLE CATEGORIES FILTERS */
-  let filteredCategories = mockCategories.filter((category) => {
+  let filteredCategories = categories.filter((category) => {
     const matchesSearch = category.name.toLowerCase().includes(categorySearch.toLowerCase());
     return matchesSearch;
   });
@@ -102,10 +234,29 @@ const AdminPage: React.FC = () => {
   const totalPagesCategories = Math.ceil(filteredCategories.length / pageSize);
   const shownCategories = filteredCategories.slice((categoryPage - 1) * pageSize, categoryPage * pageSize);
 
+  if (loading) {
+    return (
+      <main>
+        <Container className="py-4 text-center">
+          <LoadingSpinner />
+          <p className="mt-3">Loading admin data...</p>
+        </Container>
+      </main>
+    );
+  }
+
   return (
     <main>
       <Container className="py-4">
         <h1 className="mb-4">Admin Home</h1>
+
+        {error && (
+          <Alert variant="danger" dismissible onClose={() => setError(null)}>
+            <strong>Error:</strong>
+            {' '}
+            {error}
+          </Alert>
+        )}
 
         {/* USER MANAGEMENT */}
         <AdminSection title="User Management" page={page} totalPages={totalPagesUsers} onPageChange={setPage}>
@@ -232,7 +383,7 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownFlags.map((flag) => (
-                <ContentModerationTable key={flag.id} {...flag} />
+                <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
               ))}
             </tbody>
           </AdminTable>
