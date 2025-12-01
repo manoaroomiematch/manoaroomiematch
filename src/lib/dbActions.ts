@@ -54,6 +54,15 @@ export async function updateUserProfile(email: string, data: {
   classStanding?: string;
   graduationYear?: number;
   photoUrl?: string;
+  smoking?: boolean;
+  drinking?: string;
+  pets?: boolean;
+  petTypes?: string[];
+  dietary?: string[];
+  interests?: string[];
+  workSchedule?: string;
+  pronouns?: string;
+  bio?: string;
 }) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
