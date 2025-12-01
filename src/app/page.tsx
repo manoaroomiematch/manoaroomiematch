@@ -12,10 +12,10 @@ const Home = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Redirect logged-in users to the home page
+  // Redirect logged-in users to the profile page
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      router.push('/home');
+      router.push('/profile');
     }
   }, [status, session, router]);
 

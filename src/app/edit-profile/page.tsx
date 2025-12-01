@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
 import { PersonCircle, Upload, Trash } from 'react-bootstrap-icons';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { updateUserProfile, getProfileByEmail } from '@/lib/dbActions';
 
 /**
  * Edit Profile Page
@@ -47,7 +48,35 @@ const EditProfilePage = () => {
   const [profilePhoto, setProfilePhoto] = useState<string>(
     isJohnDoe ? '/johndoe.jpg' : '',
   );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  // Fetch profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (currentUserEmail) {
+        try {
+          const profile = await getProfileByEmail(currentUserEmail);
+          if (profile) {
+            setFormData({
+              firstName: profile.firstName || '',
+              lastName: profile.lastName || '',
+              email: profile.email,
+              pronouns: '', // Not in DB yet
+              bio: '', // Not in DB yet
+              major: profile.major || '',
+              classStanding: profile.classStanding || '',
+              graduationYear: profile.graduationYear?.toString() || '',
+            });
+            // if (profile.photoUrl) setProfilePhoto(profile.photoUrl);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      }
+    };
+    fetchProfile();
+  }, [currentUserEmail]);
 
   // Redirect to sign-in if not authenticated
   if (status === 'unauthenticated') {
@@ -92,13 +121,24 @@ const EditProfilePage = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // TODO: Implement API call to save profile data
-    console.log('Form data:', formData);
-    console.log('Photo file:', photoFile);
-    // eslint-disable-next-line no-alert
-    alert('Profile saved! (This is a placeholder - backend integration needed)');
+    // console.log('Photo file (not implemented):', photoFile);
+    try {
+      await updateUserProfile(currentUserEmail, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        major: formData.major,
+        classStanding: formData.classStanding,
+        graduationYear: formData.graduationYear ? parseInt(formData.graduationYear, 10) : undefined,
+      });
+      // eslint-disable-next-line no-alert
+      alert('Profile saved successfully!');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      // eslint-disable-next-line no-alert
+      alert('Failed to save profile.');
+    }
   };
 
   // Loading state

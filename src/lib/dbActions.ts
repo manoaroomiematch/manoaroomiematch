@@ -45,6 +45,33 @@ export async function createUser(credentials: {
 }
 
 /**
+ * Updates a user's profile information.
+ */
+export async function updateUserProfile(email: string, data: {
+  firstName?: string;
+  lastName?: string;
+  major?: string;
+  classStanding?: string;
+  graduationYear?: number;
+  photoUrl?: string;
+}) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const updateData: any = { ...data };
+  if (data.firstName && data.lastName) {
+    updateData.name = `${data.firstName} ${data.lastName}`;
+  }
+
+  await prisma.userProfile.update({
+    where: { userId: user.id },
+    data: updateData,
+  });
+}
+
+/**
  * Changes the password of an existing user in the database.
  * @param credentials, an object with the following properties: email, password.
  */
@@ -58,6 +85,17 @@ export async function changePassword(credentials: { email: string; password: str
     },
   });
 }
+/**
+ * Gets a user profile by email
+ */
+export async function getProfileByEmail(email: string) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { profile: true },
+  });
+  return user?.profile;
+}
+
 /**
  * Gets a user profile by user ID
  */
