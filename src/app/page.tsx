@@ -157,18 +157,6 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Sign Up Prompt */}
-        <section className={styles.signupPromptSection}>
-          <div className={styles.signupPromptContainer}>
-            <p className={styles.signupPromptText}>
-              Don&apos;t have an account?
-              {' '}
-              <Link href="/auth/signup" className={styles.signupLink}>
-                Sign up now
-              </Link>
-            </p>
-          </div>
-        </section>
       </main>
     );
   }
