@@ -1,3 +1,6 @@
+/* eslint-disable no-alert */
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 'use client';
 
 /* eslint-disable react/no-unknown-property */
@@ -51,6 +54,24 @@ interface Category {
 }
 
 const AdminPage: React.FC = () => {
+  /** Delete user handler */
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    try {
+      const response = await fetch('/api/admin/users/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+      // Remove user from local state
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+    } catch (err) {
+      setError('Error deleting user.');
+    }
+  };
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -328,7 +349,7 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownUsers.map((u) => (
-                <UserManagement key={u.id} {...u} />
+                <UserManagement key={u.id} {...u} onDelete={handleDeleteUser} />
               ))}
             </tbody>
           </AdminTable>
