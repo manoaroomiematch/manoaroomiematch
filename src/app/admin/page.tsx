@@ -172,8 +172,14 @@ const AdminPage: React.FC = () => {
 
   /** USER MANAGEMENT FILTERS */
   let filteredUsers = users.filter((user) => {
-    // eslint-disable-next-line max-len
-    const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
+    // Support searching by first or last name, as well as full name and email
+    const searchLower = search.toLowerCase();
+    const [firstName, ...rest] = user.name.split(' ');
+    const lastName = rest.length > 0 ? rest[rest.length - 1] : '';
+    const matchesSearch = user.name.toLowerCase().includes(searchLower)
+      || user.email.toLowerCase().includes(searchLower)
+      || firstName.toLowerCase().includes(searchLower)
+      || lastName.toLowerCase().includes(searchLower);
     const matchesRole = roleFilter ? user.role === roleFilter : true;
     return matchesSearch && matchesRole;
   });
@@ -240,7 +246,6 @@ const AdminPage: React.FC = () => {
       <main>
         <Container className="py-4 text-center">
           <LoadingSpinner />
-          <p className="mt-3">Loading admin data...</p>
         </Container>
       </main>
     );
@@ -275,7 +280,7 @@ const AdminPage: React.FC = () => {
             <Form.Control
               style={{ maxWidth: '280px' }}
               type="text"
-              placeholder="Search users..."
+              placeholder="Search user..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -308,10 +313,6 @@ const AdminPage: React.FC = () => {
               <option value="NameA">Name A-Z</option>
               <option value="NameZ">Name Z-A</option>
             </Form.Select>
-
-            <Button variant="success" className="rounded-pill px-4">
-              Add User
-            </Button>
           </div>
 
           <AdminTable>
