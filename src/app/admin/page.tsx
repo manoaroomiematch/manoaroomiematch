@@ -1,3 +1,6 @@
+/* eslint-disable no-alert */
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 'use client';
 
 /* eslint-disable react/no-unknown-property */
@@ -19,6 +22,10 @@ import LifestyleCategoriesTable from '@/components/LifestyleCategoryAdmin';
 import ContentModerationTable from '@/components/ContentModerationAdmin';
 import AdminTable from '@/components/AdminTable';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import UserProfileModal from '@/components/UserProfileModal';
+import CategoryModal from '@/components/CategoryModal';
+import DeleteCategoryModal from '@/components/DeleteCategoryModal';
+import DeleteUserModal from '@/components/DeleteUserModal';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -51,6 +58,86 @@ interface Category {
 }
 
 const AdminPage: React.FC = () => {
+  // Modal state for add/delete category
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [deleteCategoryId, setDeleteCategoryId] = useState<number | null>(null);
+  const [deleteCategoryName, setDeleteCategoryName] = useState<string>('');
+  const [categoryModalError, setCategoryModalError] = useState<string | null>(null);
+
+  // Add category handler for modal
+  const handleAddCategory = async (name: string) => {
+    try {
+      const response = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) throw new Error('Failed to add category');
+      const { category } = await response.json();
+      setCategories((prev) => [
+        ...prev,
+        {
+          id: category.id,
+          name: category.name,
+          items: 0,
+          lastUpdated: new Date().toISOString().split('T')[0],
+        },
+      ]);
+      setCategoryModalError(null);
+    } catch (err) {
+      setCategoryModalError('Error adding category.');
+      throw err;
+    }
+  };
+
+  // Delete category handler for modal
+  const handleDeleteCategory = async () => {
+    if (!deleteCategoryId) return;
+    try {
+      const response = await fetch('/api/admin/categories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deleteCategoryId }),
+      });
+      if (!response.ok) throw new Error('Failed to delete category');
+      setCategories((prev) => prev.filter((cat) => cat.id !== deleteCategoryId));
+      setCategoryModalError(null);
+      setShowDeleteCategoryModal(false);
+    } catch (err) {
+      setCategoryModalError('Error deleting category.');
+    }
+  };
+  // Modal state for user deletion
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [deleteUserName, setDeleteUserName] = useState<string>('');
+  const [userModalError, setUserModalError] = useState<string | null>(null);
+
+  // Delete user handler for modal
+  const handleDeleteUser = async () => {
+    if (!deleteUserId) return;
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deleteUserId }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
+      setUserModalError(null);
+      setShowDeleteUserModal(false);
+    } catch (err) {
+      setUserModalError('Error deleting user.');
+    }
+  };
+  /** View user profile handler */
+  const handleViewUser = (email: string) => {
+    setSelectedUserEmail(email);
+    setShowProfileModal(true);
+  };
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -60,6 +147,8 @@ const AdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   /** Check admin access - redirect non-admin users */
   // This provides client-side protection in addition to the server-side
@@ -172,8 +261,14 @@ const AdminPage: React.FC = () => {
 
   /** USER MANAGEMENT FILTERS */
   let filteredUsers = users.filter((user) => {
-    // eslint-disable-next-line max-len
-    const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase());
+    // Support searching by first or last name, as well as full name and email
+    const searchLower = search.toLowerCase();
+    const [firstName, ...rest] = user.name.split(' ');
+    const lastName = rest.length > 0 ? rest[rest.length - 1] : '';
+    const matchesSearch = user.name.toLowerCase().includes(searchLower)
+      || user.email.toLowerCase().includes(searchLower)
+      || firstName.toLowerCase().includes(searchLower)
+      || lastName.toLowerCase().includes(searchLower);
     const matchesRole = roleFilter ? user.role === roleFilter : true;
     return matchesSearch && matchesRole;
   });
@@ -240,7 +335,6 @@ const AdminPage: React.FC = () => {
       <main>
         <Container className="py-4 text-center">
           <LoadingSpinner />
-          <p className="mt-3">Loading admin data...</p>
         </Container>
       </main>
     );
@@ -275,7 +369,7 @@ const AdminPage: React.FC = () => {
             <Form.Control
               style={{ maxWidth: '280px' }}
               type="text"
-              placeholder="Search users..."
+              placeholder="Search user..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -308,10 +402,6 @@ const AdminPage: React.FC = () => {
               <option value="NameA">Name A-Z</option>
               <option value="NameZ">Name Z-A</option>
             </Form.Select>
-
-            <Button variant="success" className="rounded-pill px-4">
-              Add User
-            </Button>
           </div>
 
           <AdminTable>
@@ -327,7 +417,16 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownUsers.map((u) => (
-                <UserManagement key={u.id} {...u} />
+                <UserManagement
+                  key={u.id}
+                  {...u}
+                  onDelete={() => {
+                    setDeleteUserId(u.id);
+                    setDeleteUserName(u.name);
+                    setShowDeleteUserModal(true);
+                  }}
+                  onView={handleViewUser}
+                />
               ))}
             </tbody>
           </AdminTable>
@@ -436,7 +535,11 @@ const AdminPage: React.FC = () => {
               <option value="DateOld">Date (Oldest)</option>
             </Form.Select>
 
-            <Button variant="success" className="rounded-pill px-4">
+            <Button
+              variant="success"
+              className="rounded-pill px-4"
+              onClick={() => setShowAddCategoryModal(true)}
+            >
               Add Category
             </Button>
           </div>
@@ -453,12 +556,55 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownCategories.map((cat) => (
-                <LifestyleCategoriesTable key={cat.id} {...cat} />
+                <LifestyleCategoriesTable
+                  key={cat.id}
+                  {...cat}
+                  onDelete={() => {
+                    setDeleteCategoryId(cat.id);
+                    setDeleteCategoryName(cat.name);
+                    setShowDeleteCategoryModal(true);
+                  }}
+                />
               ))}
             </tbody>
           </AdminTable>
         </AdminSection>
       </Container>
+
+      {/* Add Category Modal */}
+      <CategoryModal
+        show={showAddCategoryModal}
+        onHide={() => {
+          setShowAddCategoryModal(false);
+          setCategoryModalError(null);
+        }}
+        onSubmit={handleAddCategory}
+        error={categoryModalError}
+      />
+
+      {/* Delete Category Modal */}
+      <DeleteCategoryModal
+        show={showDeleteCategoryModal}
+        onHide={() => {
+          setShowDeleteCategoryModal(false);
+          setCategoryModalError(null);
+        }}
+        onConfirm={handleDeleteCategory}
+        categoryName={deleteCategoryName}
+        error={categoryModalError}
+      />
+
+      {/* Delete User Modal */}
+      <DeleteUserModal
+        show={showDeleteUserModal}
+        onHide={() => {
+          setShowDeleteUserModal(false);
+          setUserModalError(null);
+        }}
+        onConfirm={handleDeleteUser}
+        userName={deleteUserName}
+        error={userModalError}
+      />
 
       {/* Keep table-rounded CSS */}
       <style jsx>
@@ -473,6 +619,13 @@ const AdminPage: React.FC = () => {
         }
       `}
       </style>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        email={selectedUserEmail}
+        show={showProfileModal}
+        onHide={() => setShowProfileModal(false)}
+      />
     </main>
   );
 };

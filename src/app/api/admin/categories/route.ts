@@ -5,6 +5,63 @@ import { prisma } from '@/lib/prisma';
 import authOptions from '@/lib/authOptions';
 
 /**
+ * DELETE /api/admin/categories
+ * Deletes a lifestyle category by id (admin only)
+ * Expects JSON body: { id: number }
+ */
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.randomKey !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await req.json();
+    if (!id) {
+      return NextResponse.json({ error: 'Missing category id' }, { status: 400 });
+    }
+
+    await prisma.lifestyleCategory.delete({ where: { id: Number(id) } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * POST /api/admin/categories
+ * Adds a new lifestyle category (admin only)
+ * Expects JSON body: { name: string, description?: string }
+ */
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.randomKey !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { name, description } = await req.json();
+    if (!name) {
+      return NextResponse.json({ error: 'Missing category name' }, { status: 400 });
+    }
+
+    const newCategory = await prisma.lifestyleCategory.create({
+      data: {
+        name,
+        description,
+      },
+    });
+
+    return NextResponse.json({ category: newCategory });
+  } catch (error) {
+    console.error('Error adding category:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
  * GET /api/admin/categories
  * Returns all lifestyle categories with question counts
  * Admin-only endpoint
