@@ -73,7 +73,7 @@ const AdminPage: React.FC = () => {
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
     try {
-      const response = await fetch('/api/admin/users/delete', {
+      const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),

@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 /* eslint-disable react/button-has-type */
 /**
  * A user management component to display lifestyle categories in a table.
@@ -22,7 +23,8 @@ interface CategoryRowProps extends Category {
   onDelete?: (id: number) => void;
 }
 
-const LifestyleCategoriesTable: React.FC<CategoryRowProps> = ({ id, name, items, lastUpdated, onDelete }) => (
+// eslint-disable-next-line max-len
+const LifestyleCategoriesTable: React.FC<CategoryRowProps> = ({ id, name, items, lastUpdated, onDelete = undefined }) => (
   <tr>
     <td>{capitalize(name)}</td>
     <td>{items}</td>
@@ -40,9 +42,5 @@ const LifestyleCategoriesTable: React.FC<CategoryRowProps> = ({ id, name, items,
     </td>
   </tr>
 );
-
-LifestyleCategoriesTable.defaultProps = {
-  onDelete: undefined,
-};
 
 export default LifestyleCategoriesTable;
