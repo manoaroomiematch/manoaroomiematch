@@ -25,6 +25,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import UserProfileModal from '@/components/UserProfileModal';
 import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
+import DeleteUserModal from '@/components/DeleteUserModal';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -107,22 +108,29 @@ const AdminPage: React.FC = () => {
       setCategoryModalError('Error deleting category.');
     }
   };
-  /** Delete user handler */
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+  // Modal state for user deletion
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [deleteUserName, setDeleteUserName] = useState<string>('');
+  const [userModalError, setUserModalError] = useState<string | null>(null);
+
+  // Delete user handler for modal
+  const handleDeleteUser = async () => {
+    if (!deleteUserId) return;
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: deleteUserId }),
       });
       if (!response.ok) {
         throw new Error('Failed to delete user');
       }
-      // Remove user from local state
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
+      setUserModalError(null);
+      setShowDeleteUserModal(false);
     } catch (err) {
-      setError('Error deleting user.');
+      setUserModalError('Error deleting user.');
     }
   };
   /** View user profile handler */
@@ -409,7 +417,16 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownUsers.map((u) => (
-                <UserManagement key={u.id} {...u} onDelete={handleDeleteUser} onView={handleViewUser} />
+                <UserManagement
+                  key={u.id}
+                  {...u}
+                  onDelete={() => {
+                    setDeleteUserId(u.id);
+                    setDeleteUserName(u.name);
+                    setShowDeleteUserModal(true);
+                  }}
+                  onView={handleViewUser}
+                />
               ))}
             </tbody>
           </AdminTable>
@@ -575,6 +592,18 @@ const AdminPage: React.FC = () => {
         onConfirm={handleDeleteCategory}
         categoryName={deleteCategoryName}
         error={categoryModalError}
+      />
+
+      {/* Delete User Modal */}
+      <DeleteUserModal
+        show={showDeleteUserModal}
+        onHide={() => {
+          setShowDeleteUserModal(false);
+          setUserModalError(null);
+        }}
+        onConfirm={handleDeleteUser}
+        userName={deleteUserName}
+        error={userModalError}
       />
 
       {/* Keep table-rounded CSS */}
