@@ -85,18 +85,23 @@ export async function POST(req: Request) {
     }
 
     const { id } = await req.json();
-    if (!id) {
-      return NextResponse.json({ error: 'Missing user id' }, { status: 400 });
+    if (!id || typeof id !== 'string') {
+      return NextResponse.json({ error: 'Missing or invalid user id' }, { status: 400 });
     }
 
-    // Delete user from database (convert id to Int)
-    await prisma.user.delete({ where: { id: Number(id) } });
-    // Optionally delete related profile, etc.
+    const userId = Number(id);
+    if (Number.isNaN(userId)) {
+      return NextResponse.json({ error: 'Invalid user id format' }, { status: 400 });
+    }
+
+    // Delete user profile first using userId: Number(id)
     try {
-      await (prisma as any).userProfile.delete({ where: { userId: id } });
+      await (prisma as any).userProfile.delete({ where: { userId } });
     } catch (err) {
       // Ignore if profile doesn't exist
     }
+    // Delete user from database
+    await prisma.user.delete({ where: { id: userId } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
