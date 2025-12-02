@@ -22,6 +22,7 @@ import LifestyleCategoriesTable from '@/components/LifestyleCategoryAdmin';
 import ContentModerationTable from '@/components/ContentModerationAdmin';
 import AdminTable from '@/components/AdminTable';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import UserProfileModal from '@/components/UserProfileModal';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -87,6 +88,11 @@ const AdminPage: React.FC = () => {
       setError('Error deleting user.');
     }
   };
+  /** View user profile handler */
+  const handleViewUser = (email: string) => {
+    setSelectedUserEmail(email);
+    setShowProfileModal(true);
+  };
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -96,6 +102,8 @@ const AdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   /** Check admin access - redirect non-admin users */
   // This provides client-side protection in addition to the server-side
@@ -364,7 +372,7 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownUsers.map((u) => (
-                <UserManagement key={u.id} {...u} onDelete={handleDeleteUser} />
+                <UserManagement key={u.id} {...u} onDelete={handleDeleteUser} onView={handleViewUser} />
               ))}
             </tbody>
           </AdminTable>
@@ -537,6 +545,13 @@ const AdminPage: React.FC = () => {
         }
       `}
       </style>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        email={selectedUserEmail}
+        show={showProfileModal}
+        onHide={() => setShowProfileModal(false)}
+      />
     </main>
   );
 };

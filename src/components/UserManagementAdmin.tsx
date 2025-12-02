@@ -13,10 +13,11 @@ export interface UserManagementProps {
   role: string;
   activity: string;
   onDelete: (id: string) => void;
+  onView: (email: string) => void;
 }
 
 /* Renders a single row in the User Management table. See admin/page.tsx. */
-const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, activity, onDelete }) => (
+const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, activity, onDelete, onView }) => (
   <tr>
     <td>{name}</td>
     <td>{email}</td>
@@ -25,10 +26,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, 
     <td className="d-flex gap-2">
       {/* View Profile Button that navigates to the user's profile page */}
       <Button
-        variant="info"
+        variant="primary"
         size="sm"
         className="rounded-pill d-flex align-items-center"
-        href={`/profile/${encodeURIComponent(id)}`}
+        onClick={() => onView(email)}
       >
         View
       </Button>
