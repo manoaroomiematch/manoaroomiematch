@@ -19,6 +19,7 @@ const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({ show, onHide,
       {error && <div className="alert alert-danger">{error}</div>}
       <p>
         Are you sure you want to delete the category
+        {' '}
         <strong>{categoryName}</strong>
         ? This action cannot be undone.
       </p>
