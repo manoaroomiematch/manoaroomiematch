@@ -23,6 +23,8 @@ import ContentModerationTable from '@/components/ContentModerationAdmin';
 import AdminTable from '@/components/AdminTable';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import UserProfileModal from '@/components/UserProfileModal';
+import CategoryModal from '@/components/CategoryModal';
+import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -55,19 +57,54 @@ interface Category {
 }
 
 const AdminPage: React.FC = () => {
-  /** Delete category handler */
-  const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) return;
+  // Modal state for add/delete category
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [deleteCategoryId, setDeleteCategoryId] = useState<number | null>(null);
+  const [deleteCategoryName, setDeleteCategoryName] = useState<string>('');
+  const [categoryModalError, setCategoryModalError] = useState<string | null>(null);
+
+  // Add category handler for modal
+  const handleAddCategory = async (name: string) => {
+    try {
+      const response = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) throw new Error('Failed to add category');
+      const { category } = await response.json();
+      setCategories((prev) => [
+        ...prev,
+        {
+          id: category.id,
+          name: category.name,
+          items: 0,
+          lastUpdated: new Date().toISOString().split('T')[0],
+        },
+      ]);
+      setCategoryModalError(null);
+    } catch (err) {
+      setCategoryModalError('Error adding category.');
+      throw err;
+    }
+  };
+
+  // Delete category handler for modal
+  const handleDeleteCategory = async () => {
+    if (!deleteCategoryId) return;
     try {
       const response = await fetch('/api/admin/categories', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: deleteCategoryId }),
       });
       if (!response.ok) throw new Error('Failed to delete category');
-      setCategories((prev) => prev.filter((cat) => cat.id !== id));
+      setCategories((prev) => prev.filter((cat) => cat.id !== deleteCategoryId));
+      setCategoryModalError(null);
+      setShowDeleteCategoryModal(false);
     } catch (err) {
-      setError('Error deleting category.');
+      setCategoryModalError('Error deleting category.');
     }
   };
   /** Delete user handler */
@@ -484,30 +521,7 @@ const AdminPage: React.FC = () => {
             <Button
               variant="success"
               className="rounded-pill px-4"
-              onClick={async () => {
-                const name = window.prompt('Enter new category name:');
-                if (!name) return;
-                try {
-                  const response = await fetch('/api/admin/categories', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name }),
-                  });
-                  if (!response.ok) throw new Error('Failed to add category');
-                  const { category } = await response.json();
-                  setCategories((prev) => [
-                    ...prev,
-                    {
-                      id: category.id,
-                      name: category.name,
-                      items: 0,
-                      lastUpdated: new Date().toISOString().split('T')[0],
-                    },
-                  ]);
-                } catch (err) {
-                  setError('Error adding category.');
-                }
-              }}
+              onClick={() => setShowAddCategoryModal(true)}
             >
               Add Category
             </Button>
@@ -525,12 +539,43 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownCategories.map((cat) => (
-                <LifestyleCategoriesTable key={cat.id} {...cat} onDelete={handleDeleteCategory} />
+                <LifestyleCategoriesTable
+                  key={cat.id}
+                  {...cat}
+                  onDelete={() => {
+                    setDeleteCategoryId(cat.id);
+                    setDeleteCategoryName(cat.name);
+                    setShowDeleteCategoryModal(true);
+                  }}
+                />
               ))}
             </tbody>
           </AdminTable>
         </AdminSection>
       </Container>
+
+      {/* Add Category Modal */}
+      <CategoryModal
+        show={showAddCategoryModal}
+        onHide={() => {
+          setShowAddCategoryModal(false);
+          setCategoryModalError(null);
+        }}
+        onSubmit={handleAddCategory}
+        error={categoryModalError}
+      />
+
+      {/* Delete Category Modal */}
+      <DeleteCategoryModal
+        show={showDeleteCategoryModal}
+        onHide={() => {
+          setShowDeleteCategoryModal(false);
+          setCategoryModalError(null);
+        }}
+        onConfirm={handleDeleteCategory}
+        categoryName={deleteCategoryName}
+        error={categoryModalError}
+      />
 
       {/* Keep table-rounded CSS */}
       <style jsx>
