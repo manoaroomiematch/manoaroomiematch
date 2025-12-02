@@ -54,6 +54,21 @@ interface Category {
 }
 
 const AdminPage: React.FC = () => {
+  /** Delete category handler */
+  const handleDeleteCategory = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this category? This action cannot be undone.')) return;
+    try {
+      const response = await fetch('/api/admin/categories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) throw new Error('Failed to delete category');
+      setCategories((prev) => prev.filter((cat) => cat.id !== id));
+    } catch (err) {
+      setError('Error deleting category.');
+    }
+  };
   /** Delete user handler */
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
@@ -458,7 +473,34 @@ const AdminPage: React.FC = () => {
               <option value="DateOld">Date (Oldest)</option>
             </Form.Select>
 
-            <Button variant="success" className="rounded-pill px-4">
+            <Button
+              variant="success"
+              className="rounded-pill px-4"
+              onClick={async () => {
+                const name = window.prompt('Enter new category name:');
+                if (!name) return;
+                try {
+                  const response = await fetch('/api/admin/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                  });
+                  if (!response.ok) throw new Error('Failed to add category');
+                  const { category } = await response.json();
+                  setCategories((prev) => [
+                    ...prev,
+                    {
+                      id: category.id,
+                      name: category.name,
+                      items: 0,
+                      lastUpdated: new Date().toISOString().split('T')[0],
+                    },
+                  ]);
+                } catch (err) {
+                  setError('Error adding category.');
+                }
+              }}
+            >
               Add Category
             </Button>
           </div>
@@ -475,7 +517,7 @@ const AdminPage: React.FC = () => {
 
             <tbody>
               {shownCategories.map((cat) => (
-                <LifestyleCategoriesTable key={cat.id} {...cat} />
+                <LifestyleCategoriesTable key={cat.id} {...cat} onDelete={handleDeleteCategory} />
               ))}
             </tbody>
           </AdminTable>
