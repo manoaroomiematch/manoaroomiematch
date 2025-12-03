@@ -1,4 +1,4 @@
-[![ci-nextjs-application-template](https://github.com/ics-software-engineering/nextjs-application-template/actions/workflows/ci.yml/badge.svg)](https://github.com/ics-software-engineering/nextjs-application-template/actions/workflows/ci.yml)
+[![ci-manoaroomiematch](https://github.com/manoaroomiematch/manoaroomiematch/actions/workflows/ci-manoaroomiematch.yml/badge.svg)](https://github.com/manoaroomiematch/manoaroomiematch/actions/workflows/ci-manoaroomiematch.yml)
 
 For details, please see http://ics-software-engineering.github.io/nextjs-application-template/.
 
