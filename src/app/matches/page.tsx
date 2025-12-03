@@ -2,9 +2,11 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Container, Row, Col, ButtonGroup, Button } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Container, Row, Col, ButtonGroup, Button, Alert } from 'react-bootstrap';
 import { Grid3x3GapFill, ListUl } from 'react-bootstrap-icons';
+import { Match, UserProfile } from '@prisma/client';
+import { useSession } from 'next-auth/react';
 import MatchCard, { MatchData } from '@/components/MatchCard';
 
 /**
@@ -15,108 +17,144 @@ import MatchCard, { MatchData } from '@/components/MatchCard';
  * - Toggle between grid and list layouts
  * - Display match cards with profile info
  * - Responsive design for mobile/desktop
+ * - Fetches real matches from the API with loading and error states
  *
- * TODO: Replace mock data with actual API call to fetch matches from database
  * TODO: Add filtering options (by major, traits, match percentage, etc.)
  * TODO: Add sorting options (by match percentage, name, etc.)
  * TODO: Add pagination or infinite scroll for large datasets
- * TODO: Add loading state while fetching data
- * TODO: Add error handling for failed data fetches
  */
 
-/**
- * MOCK DATA - Placeholder for development
- * TODO: Remove this once the backend API endpoint is ready
- * Expected API endpoint: /api/matches or similar
- * Expected response format: Array<MatchData>
- */
-const mockMatches: MatchData[] = [
-  {
-    id: 1,
-    name: 'Kai Nakamura',
-    major: 'Computer Science',
-    traits: ['Night Owl', 'Tidy', 'Introvert'],
-    matchPercentage: 92,
-    // photoUrl: '/images/profiles/kai.jpg', // Uncomment when images are available
-  },
-  {
-    id: 2,
-    name: 'Leilani Santos',
-    major: 'Biology',
-    traits: ['Early Bird', 'Clean', 'Friendly'],
-    matchPercentage: 88,
-    // photoUrl: '/images/profiles/leilani.jpg',
-  },
-  {
-    id: 3,
-    name: 'Noa Tanaka',
-    major: 'Business',
-    traits: ['Organized', 'Social', 'Gym Enthusiast'],
-    matchPercentage: 85,
-    // photoUrl: '/images/profiles/noa.jpg',
-  },
-  {
-    id: 4,
-    name: 'Makani Lee',
-    major: 'Engineering',
-    traits: ['Studious', 'Quiet', 'Morning Person'],
-    matchPercentage: 78,
-  },
-  {
-    id: 5,
-    name: 'Alana Wong',
-    major: 'Psychology',
-    traits: ['Creative', 'Easygoing', 'Music Lover'],
-    matchPercentage: 75,
-  },
-  {
-    id: 6,
-    name: 'Kenji Martinez',
-    major: 'Marine Biology',
-    traits: ['Adventurous', 'Outdoorsy', 'Flexible'],
-    matchPercentage: 72,
-  },
-];
+type MatchWithProfiles = Match & { user1: UserProfile; user2: UserProfile };
+
+const sleepLabels = ['Early Bird', 'Morning Person', 'Flexible', 'Evening Person', 'Night Owl'];
+const cleanlinessLabels = ['Relaxed', 'Casual', 'Moderate', 'Tidy', 'Very Clean'];
+const socialLabels = ['Homebody', 'Occasional', 'Balanced', 'Social', 'Very Social'];
+
+const getLabel = (labels: string[], value?: number | null) => {
+  if (!value) return null;
+  return labels[value - 1] || null;
+};
+
+const buildTraits = (profile: UserProfile) => {
+  const traits = [
+    getLabel(sleepLabels, profile.sleepSchedule),
+    getLabel(cleanlinessLabels, profile.cleanliness),
+    getLabel(socialLabels, profile.socialLevel),
+  ].filter(Boolean) as string[];
+
+  const interests = profile.interests?.slice(0, 2) || [];
+
+  return traits.concat(interests).slice(0, 5);
+};
+
+const buildMatchCard = (
+  match: MatchWithProfiles,
+  currentProfileId: string | null,
+): MatchData | null => {
+  let otherUser = match.user1;
+
+  if (currentProfileId) {
+    otherUser = match.user1Id === currentProfileId ? match.user2 : match.user1;
+  }
+
+  if (!otherUser) return null;
+
+  const traits = buildTraits(otherUser);
+
+  return {
+    id: match.id,
+    name: otherUser.name,
+    major: otherUser.major || 'Major not specified',
+    traits: traits.length > 0 ? traits : ['No traits available'],
+    matchPercentage: match.overallScore,
+    photoUrl: otherUser.photoUrl || undefined,
+  };
+};
 
 /**
  * Main BrowseMatches Component
  * Renders the match browsing interface with view toggle
  */
 const BrowseMatches: React.FC = () => {
+  const { status } = useSession();
   // State to track current view mode (grid or list)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [matches, setMatches] = useState<MatchData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
 
-  /**
-   * TODO: Implement actual data fetching
-   * Example using useEffect and fetch:
-   *
-   * const [matches, setMatches] = useState<MatchData[]>([]);
-   * const [loading, setLoading] = useState(true);
-   * const [error, setError] = useState<string | null>(null);
-   *
-   * useEffect(() => {
-   *   const fetchMatches = async () => {
-   *     try {
-   *       const response = await fetch('/api/matches');
-   *       if (!response.ok) throw new Error('Failed to fetch matches');
-   *       const data = await response.json();
-   *       setMatches(data);
-   *     } catch (err) {
-   *       setError(err.message);
-   *     } finally {
-   *       setLoading(false);
-   *     }
-   *   };
-   *   fetchMatches();
-   * }, []);
-   */
+  const fetchMatches = useMemo(
+    () => async () => {
+      setLoading(true);
+      setError(null);
 
-  // Currently using mock data
-  const matches = mockMatches;
+      try {
+        const response = await fetch('/api/matches');
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error || 'Failed to load matches');
+        }
+
+        const { matches: apiMatches, currentProfileId: profileId } = payload as {
+          matches: MatchWithProfiles[];
+          currentProfileId: string | null;
+        };
+
+        setCurrentProfileId(profileId);
+
+        const formattedMatches = apiMatches
+          .map((match) => buildMatchCard(match, profileId))
+          .filter((match): match is MatchData => match !== null);
+
+        setMatches(formattedMatches);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to load matches';
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchMatches();
+    }
+
+    if (status === 'unauthenticated') {
+      setError('Please sign in to view your matches.');
+    }
+  }, [fetchMatches, status]);
+
+  if (status === 'loading' || loading) {
+    return (
+      <main>
+        <Container className="py-5 text-center">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading matches...</span>
+          </div>
+          <p className="mt-3">Loading matches...</p>
+        </Container>
+      </main>
+    );
+  }
 
   return (
     <main>
       <Container fluid className="py-4">
+        {error && (
+          <Row className="mb-3">
+            <Col>
+              <Alert variant="danger" className="mb-0">
+                {error}
+              </Alert>
+            </Col>
+          </Row>
+        )}
+
         {/* Page Header with View Toggle */}
         <Row className="mb-4 align-items-center">
           <Col xs={12} md={6}>
@@ -165,7 +203,11 @@ const BrowseMatches: React.FC = () => {
           ) : (
             // Empty state when no matches are found
             <Col xs={12} className="text-center py-5">
-              <p className="text-muted">No matches found. Try adjusting your preferences!</p>
+              <p className="text-muted">
+                {currentProfileId
+                  ? 'No matches found. Try adjusting your preferences!'
+                  : 'No matches to display yet.'}
+              </p>
               {/* TODO: Add link to preferences/profile page */}
             </Col>
           )}
