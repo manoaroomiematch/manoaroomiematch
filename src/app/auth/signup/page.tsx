@@ -1,7 +1,6 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
@@ -21,7 +20,6 @@ type SignUpForm = {
 
 /** The sign up page. */
 const SignUp = () => {
-  const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const schema = Yup.object().shape({
@@ -86,19 +84,11 @@ const SignUp = () => {
       // console.log(JSON.stringify(data, null, 2));
       await createUser(data);
       // After creating, signIn with redirect to the lifestyle survey page
-      const result = await signIn('credentials', {
+      await signIn('credentials', {
         callbackUrl: '/lifestyle-survey',
         email: data.email,
         password: data.password,
-        redirect: false,
       });
-      if (result?.error) {
-        setSubmitError('Sign in failed after registration. Please try logging in.');
-        setIsLoading(false);
-      } else if (result?.ok) {
-        router.push('/lifestyle-survey');
-        router.refresh();
-      }
     } catch (error: any) {
       console.error('Registration error:', error);
       if (error.message === 'Email already exists' || (error.message && error.message.includes('Unique constraint'))) {
@@ -113,7 +103,7 @@ const SignUp = () => {
   return (
     <main
       style={{
-        minHeight: '100vh',
+        flex: '1 0 auto',
         background: 'linear-gradient(135deg, #f0f9f4 0%, #d4edda 100%)',
         paddingTop: '2rem',
         paddingBottom: '2rem',
