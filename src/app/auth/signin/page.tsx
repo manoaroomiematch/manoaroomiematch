@@ -34,7 +34,7 @@ const SignIn = () => {
   return (
     <main
       style={{
-        minHeight: '100vh',
+        flex: '1 0 auto',
         background: 'linear-gradient(135deg, #f0f9f4 0%, #d4edda 100%)',
         paddingTop: '2rem',
         paddingBottom: '2rem',
