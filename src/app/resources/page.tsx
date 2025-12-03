@@ -2,6 +2,7 @@
 
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { HouseFill, ArrowUpRightSquare, BuildingFill } from 'react-bootstrap-icons';
+import Image from 'next/image';
 
 /**
  * Resources Page
@@ -13,13 +14,26 @@ import { HouseFill, ArrowUpRightSquare, BuildingFill } from 'react-bootstrap-ico
 const ResourcesPage = () => (
   <main className="bg-light min-vh-100 py-5">
     <Container className="py-4">
-      {/* Header Section */}
-      <div className="text-center mb-5">
-        <h1 className="fw-bold mb-3">Housing Resources</h1>
-        <p className="lead text-muted">
-          Everything you need to find your perfect home at UH Manoa
-        </p>
-      </div>
+      {/* Header Section with decorative graphic */}
+      <Row className="align-items-center mb-5">
+        <Col xs={12} md={3} lg={2} className="text-center text-md-start mb-3 mb-md-0">
+          <Image
+            src="/graphic6.png"
+            alt="Decorative illustration"
+            width={250}
+            height={250}
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
+        </Col>
+        <Col xs={12} md={9} lg={10}>
+          <div className="text-center text-md-start">
+            <h1 className="fw-bold mb-3">Housing Resources</h1>
+            <p className="lead text-muted">
+              Everything you need to find your perfect home at UH Manoa
+            </p>
+          </div>
+        </Col>
+      </Row>
 
       {/* Featured Resources */}
       <Row className="g-4 mb-5">

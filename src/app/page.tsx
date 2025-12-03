@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { People, BarChartLine, ShieldCheck, Lightbulb } from 'react-bootstrap-icons';
 import styles from './page.module.css';
 
@@ -107,6 +108,15 @@ const Home = () => {
         {/* Overview Section */}
         <section className={styles.overviewSection}>
           <div className={styles.overviewContainer}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <Image
+                src="/graphic3.png"
+                alt="Decorative illustration"
+                width={200}
+                height={200}
+                style={{ maxWidth: '100%', height: 'auto' }}
+              />
+            </div>
             <h2 className={styles.sectionTitle}>What is Mānoa RoomieMatch?</h2>
             <p className={styles.overviewText}>
               Every semester, hundreds of UH Mānoa students struggle to find compatible roommates.
@@ -141,6 +151,15 @@ const Home = () => {
         {/* Second CTA placed above Sign Up Prompt */}
         <section className={styles.ctaSection}>
           <div className={styles.ctaContainer}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <Image
+                src="/graphic7.png"
+                alt="Decorative illustration"
+                width={180}
+                height={180}
+                style={{ maxWidth: '100%', height: 'auto' }}
+              />
+            </div>
             <h2 className={styles.ctaTitle}>Ready to Find Your Perfect Match?</h2>
             <p className={styles.ctaSubtitle}>
               Start your journey to finding the ideal roommate today.
