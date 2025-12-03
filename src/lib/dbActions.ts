@@ -57,6 +57,10 @@ export async function updateUserProfile(email: string, data: {
   instagram?: string;
   snapchat?: string;
   hometown?: string;
+  housingType?: string;
+  preferredDorm?: string;
+  specificBuilding?: string;
+  budget?: string;
   photoUrl?: string;
   smoking?: boolean;
   drinking?: string;

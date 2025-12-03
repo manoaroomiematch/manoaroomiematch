@@ -49,6 +49,12 @@ model UserProfile {
   hometown        String?
   createdAt       DateTime @default(now())
   
+  // Housing preferences
+  housingType      String?  // 'on-campus', 'off-campus', 'either', 'undecided'
+  preferredDorm    String?
+  specificBuilding String?
+  budget           String?
+  
   sleepSchedule   Int      @default(3)
   cleanliness     Int      @default(3)
   noiseLevel      Int      @default(3)
