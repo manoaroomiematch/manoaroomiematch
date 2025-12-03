@@ -201,7 +201,7 @@ const LifestyleSurvey: React.FC = () => {
     const timeoutId = setTimeout(() => {
       // Only save if there's actual data entered
       const hasData = surveyData.sleepSchedule
-        || surveyData.noiseTolerance !== 50
+        || (surveyData.noiseTolerance !== null && surveyData.noiseTolerance !== undefined)
         || surveyData.cleanliness
         || surveyData.studyHabits
         || surveyData.socialLevel
@@ -219,7 +219,7 @@ const LifestyleSurvey: React.FC = () => {
   useEffect(() => {
     const handleBeforeUnload = () => {
       const hasData = surveyData.sleepSchedule
-        || surveyData.noiseTolerance !== 50
+        || (surveyData.noiseTolerance !== null && surveyData.noiseTolerance !== undefined)
         || surveyData.cleanliness
         || surveyData.studyHabits
         || surveyData.socialLevel
@@ -280,7 +280,7 @@ const LifestyleSurvey: React.FC = () => {
   // Save data immediately to localStorage
   const saveImmediately = () => {
     const hasData = surveyData.sleepSchedule
-      || surveyData.noiseTolerance !== 50
+      || (surveyData.noiseTolerance !== null && surveyData.noiseTolerance !== undefined)
       || surveyData.cleanliness
       || surveyData.studyHabits
       || surveyData.socialLevel

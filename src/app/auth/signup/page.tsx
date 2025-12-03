@@ -225,7 +225,9 @@ const SignUp = () => {
                       />
                       <input
                         type="password"
-                        {...register('password')}
+                        {...register('password', {
+                          onChange: (e) => setWatchPassword(e.target.value),
+                        })}
                         className={`form-control form-control-lg ${errors.password ? 'is-invalid' : ''}`}
                         placeholder="Minimum 6 characters"
                         disabled={isLoading}
@@ -238,7 +240,6 @@ const SignUp = () => {
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#198754'}
                         onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-                        onChange={(e) => setWatchPassword(e.target.value)}
                       />
                       <div className="invalid-feedback">{errors.password?.message}</div>
                     </div>
