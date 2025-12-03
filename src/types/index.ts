@@ -20,6 +20,11 @@ export interface ComparisonData {
   categoryBreakdown: CategoryBreakdown[];
 }
 
+export interface MatchDetailData extends ComparisonData {
+  compatibleTraits: string[];
+  conflicts: string[];
+}
+
 export interface CategoryBreakdown {
   category: string;
   yourValue: string | number;

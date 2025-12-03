@@ -6,8 +6,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { ComparisonData } from '@/types';
+import {
+  Card,
+  Col,
+  Container,
+  Row,
+  Button,
+  ListGroup,
+} from 'react-bootstrap';
+import { MatchDetailData } from '@/types';
 import SideBySideComparison from '@/components/SideBySideComparison';
 import CompatibilityReportBox from '@/components/CompatibilityReport';
 import IcebreakersBox from '@/components/Icebreakers';
@@ -18,7 +25,7 @@ export default function ComparisonPage() {
   const matchId = params.matchId as string;
   const userId = searchParams.get('userId');
 
-  const [data, setData] = useState<ComparisonData | null>(null);
+  const [data, setData] = useState<MatchDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,11 +38,11 @@ export default function ComparisonPage() {
       }
 
       try {
-        const res = await fetch(`/api/matches/${matchId}/comparison?userId=${userId}`);
+        const res = await fetch(`/api/matches/${matchId}?userId=${userId}`);
         if (!res.ok) throw new Error('Failed to fetch comparison data');
 
         const comparisonData = await res.json();
-        setData(comparisonData);
+        setData(comparisonData as MatchDetailData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
@@ -117,6 +124,69 @@ export default function ComparisonPage() {
               categoryBreakdown={data.categoryBreakdown}
               overallScore={data.match.overallScore}
             />
+          </Col>
+        </Row>
+
+        <Row className="mb-4 g-4">
+          <Col lg={6}>
+            <Card className="shadow-sm h-100">
+              <Card.Body className="p-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div
+                    className="bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center rounded"
+                    style={{ width: '44px', height: '44px' }}
+                  >
+                    <i className="bi bi-hand-thumbs-up" />
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">Compatible Traits</h5>
+                    <small className="text-muted">Where your lifestyles naturally align</small>
+                  </div>
+                </div>
+                {data.compatibleTraits.length > 0 ? (
+                  <ListGroup variant="flush">
+                    {data.compatibleTraits.map((trait, index) => (
+                      <ListGroup.Item key={trait + index} className="px-0">
+                        <i className="bi bi-check-circle text-success me-2" />
+                        {trait}
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                ) : (
+                  <p className="text-muted mb-0">No strong alignments identified yet.</p>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col lg={6}>
+            <Card className="shadow-sm h-100">
+              <Card.Body className="p-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div
+                    className="bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center rounded"
+                    style={{ width: '44px', height: '44px' }}
+                  >
+                    <i className="bi bi-exclamation-triangle" />
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">Potential Conflicts</h5>
+                    <small className="text-muted">Areas to discuss early</small>
+                  </div>
+                </div>
+                {data.conflicts.length > 0 ? (
+                  <ListGroup variant="flush">
+                    {data.conflicts.map((conflict, index) => (
+                      <ListGroup.Item key={conflict + index} className="px-0">
+                        <i className="bi bi-dot text-danger me-2" />
+                        {conflict}
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                ) : (
+                  <p className="text-muted mb-0">No major conflicts detected.</p>
+                )}
+              </Card.Body>
+            </Card>
           </Col>
         </Row>
 
