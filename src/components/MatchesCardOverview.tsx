@@ -127,7 +127,7 @@ const MatchesCardOverview: React.FC = () => (
                   </strong>
                 </div>
 
-                <Link href={`/comparison/${match.id}?userId=user-123`} passHref legacyBehavior>
+                <Link href={`/comparison/${match.id}`} passHref legacyBehavior>
                   <Button variant="success" className="mt-3 w-100">
                     View Details
                   </Button>

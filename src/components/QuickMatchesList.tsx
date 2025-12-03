@@ -75,7 +75,7 @@ const QuickMatchesList: React.FC<QuickMatchesListProps> = ({ matches }) => (
             </div>
 
             {/* View Button */}
-            <Link href={`/comparison/${match.id}?userId=user-123`} passHref legacyBehavior>
+            <Link href={`/comparison/${match.id}`} passHref legacyBehavior>
               <Button
                 variant="success"
                 size="sm"
