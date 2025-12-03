@@ -13,7 +13,7 @@ import Link from 'next/link';
  * This should match the actual database schema for user profiles
  */
 interface MatchData {
-  id: number;
+  id: string;
   name: string;
   major: string;
   traits: string[]; // Array of traits like "Night Owl", "Tidy", "Introvert"
