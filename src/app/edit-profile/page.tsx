@@ -39,6 +39,10 @@ const EditProfilePage = () => {
     major: isJohnDoe ? 'Computer Science' : '',
     classStanding: isJohnDoe ? 'Junior' : '',
     graduationYear: '',
+    needRoommateBy: '',
+    instagram: '',
+    snapchat: '',
+    hometown: '',
     smoking: false,
     drinking: 'occasionally',
     pets: false,
@@ -61,6 +65,10 @@ const EditProfilePage = () => {
         try {
           const profile = await getProfileByEmail(currentUserEmail);
           if (profile) {
+            const profileWithNew = profile as any; // Temporary type assertion for new fields
+            const needRoommateByDate = profileWithNew.needRoommateBy
+              ? new Date(profileWithNew.needRoommateBy).toISOString().split('T')[0]
+              : '';
             setFormData({
               firstName: profile.firstName || '',
               lastName: profile.lastName || '',
@@ -70,6 +78,10 @@ const EditProfilePage = () => {
               major: profile.major || '',
               classStanding: profile.classStanding || '',
               graduationYear: profile.graduationYear?.toString() || '',
+              needRoommateBy: needRoommateByDate,
+              instagram: profileWithNew.instagram || '',
+              snapchat: profileWithNew.snapchat || '',
+              hometown: profileWithNew.hometown || '',
               smoking: profile.smoking || false,
               drinking: profile.drinking || 'occasionally',
               pets: profile.pets || false,
@@ -141,6 +153,10 @@ const EditProfilePage = () => {
         major: formData.major,
         classStanding: formData.classStanding,
         graduationYear: formData.graduationYear ? parseInt(formData.graduationYear, 10) : undefined,
+        needRoommateBy: formData.needRoommateBy ? new Date(formData.needRoommateBy) : undefined,
+        instagram: formData.instagram,
+        snapchat: formData.snapchat,
+        hometown: formData.hometown,
         smoking: formData.smoking,
         drinking: formData.drinking,
         pets: formData.pets,
@@ -291,18 +307,14 @@ const EditProfilePage = () => {
 
                     <Col xs={12}>
                       <Form.Group>
-                        <Form.Label>Bio</Form.Label>
+                        <Form.Label>Need Roommate By (optional)</Form.Label>
                         <Form.Control
-                          as="textarea"
-                          rows={4}
-                          value={formData.bio}
-                          onChange={(e) => handleInputChange('bio', e.target.value)}
-                          placeholder="Tell others about yourself..."
-                          maxLength={500}
+                          type="date"
+                          value={formData.needRoommateBy}
+                          onChange={(e) => handleInputChange('needRoommateBy', e.target.value)}
                         />
                         <Form.Text className="text-muted">
-                          {formData.bio.length}
-                          /500 characters
+                          When do you need to find a roommate?
                         </Form.Text>
                       </Form.Group>
                     </Col>
@@ -375,85 +387,65 @@ const EditProfilePage = () => {
                 </Card.Body>
               </Card>
 
-              {/* Lifestyle & Preferences Section */}
+              {/* About Me Section */}
               <Card className="shadow-sm mb-4" style={{ border: 'none', borderRadius: '12px' }}>
                 <Card.Body className="p-4">
-                  <h4 className="fw-bold mb-3">Lifestyle & Preferences</h4>
+                  <h4 className="fw-bold mb-3">About Me</h4>
+                  <p className="text-muted small mb-3">
+                    All fields in this section are optional.
+                  </p>
 
                   <Row className="g-3">
-                    <Col md={6}>
+                    <Col xs={12}>
                       <Form.Group>
-                        <Form.Label>Work Schedule</Form.Label>
-                        <Form.Select
-                          value={formData.workSchedule}
-                          onChange={(e) => handleInputChange('workSchedule', e.target.value)}
-                        >
-                          <option value="day">Day</option>
-                          <option value="night">Night</option>
-                          <option value="mixed">Mixed</option>
-                        </Form.Select>
+                        <Form.Label>Bio</Form.Label>
+                        <Form.Control
+                          as="textarea"
+                          rows={4}
+                          value={formData.bio}
+                          onChange={(e) => handleInputChange('bio', e.target.value)}
+                          placeholder="Tell others about yourself..."
+                          maxLength={500}
+                        />
+                        <Form.Text className="text-muted">
+                          {formData.bio.length}
+                          /500 characters
+                        </Form.Text>
                       </Form.Group>
                     </Col>
 
                     <Col md={6}>
                       <Form.Group>
-                        <Form.Label>Drinking Habits</Form.Label>
-                        <Form.Select
-                          value={formData.drinking}
-                          onChange={(e) => handleInputChange('drinking', e.target.value)}
-                        >
-                          <option value="frequently">Frequently</option>
-                          <option value="occasionally">Occasionally</option>
-                          <option value="never">Never</option>
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-
-                    <Col md={6}>
-                      <Form.Group className="d-flex align-items-center h-100">
-                        <Form.Check
-                          type="checkbox"
-                          id="smoking"
-                          label="Do you smoke?"
-                          checked={formData.smoking}
-                          onChange={(e) => handleInputChange('smoking', e.target.checked)}
+                        <Form.Label>Instagram Handle</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={formData.instagram}
+                          onChange={(e) => handleInputChange('instagram', e.target.value)}
+                          placeholder="@username"
                         />
                       </Form.Group>
                     </Col>
 
                     <Col md={6}>
-                      <Form.Group className="d-flex align-items-center h-100">
-                        <Form.Check
-                          type="checkbox"
-                          id="pets"
-                          label="Do you have pets?"
-                          checked={formData.pets}
-                          onChange={(e) => handleInputChange('pets', e.target.checked)}
+                      <Form.Group>
+                        <Form.Label>Snapchat Username</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={formData.snapchat}
+                          onChange={(e) => handleInputChange('snapchat', e.target.value)}
+                          placeholder="username"
                         />
                       </Form.Group>
                     </Col>
 
                     <Col xs={12}>
                       <Form.Group>
-                        <Form.Label>Pet Types (if any)</Form.Label>
+                        <Form.Label>Hometown / Where are you from?</Form.Label>
                         <Form.Control
                           type="text"
-                          value={formData.petTypes}
-                          onChange={(e) => handleInputChange('petTypes', e.target.value)}
-                          placeholder="e.g., Dog, Cat, Hamster (comma separated)"
-                          disabled={!formData.pets}
-                        />
-                      </Form.Group>
-                    </Col>
-
-                    <Col xs={12}>
-                      <Form.Group>
-                        <Form.Label>Dietary Preferences</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={formData.dietary}
-                          onChange={(e) => handleInputChange('dietary', e.target.value)}
-                          placeholder="e.g., Vegetarian, Vegan, Gluten-free (comma separated)"
+                          value={formData.hometown}
+                          onChange={(e) => handleInputChange('hometown', e.target.value)}
+                          placeholder="e.g., Honolulu, HI"
                         />
                       </Form.Group>
                     </Col>

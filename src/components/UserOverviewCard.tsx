@@ -13,7 +13,6 @@ interface UserOverviewCardProps {
   email: string;
   photoUrl?: string;
   pronouns?: string;
-  bio?: string;
 }
 
 const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
@@ -24,7 +23,6 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
   email,
   photoUrl,
   pronouns,
-  bio,
 }) => (
   <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
     <Card.Body className="p-4">
@@ -78,12 +76,6 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
             {' '}
             {pronouns}
           </p>
-        )}
-        {bio && (
-          <div className="mb-2">
-            <strong>Bio:</strong>
-            <p className="text-muted mt-1">{bio}</p>
-          </div>
         )}
       </div>
 
