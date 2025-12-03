@@ -8,6 +8,7 @@ import { Card, Col, Container, Button, Form, Row, Alert, ProgressBar } from 'rea
 import { createUser } from '@/lib/dbActions';
 import { useState, useEffect } from 'react';
 import { PersonFill, EnvelopeFill, LockFill } from 'react-bootstrap-icons';
+import { useRouter } from 'next/navigation';
 
 type SignUpForm = {
   firstName: string;
@@ -17,10 +18,10 @@ type SignUpForm = {
   confirmPassword: string;
   // acceptTerms: boolean;
 };
-
 /** The sign up page. */
 const SignUp = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const router = useRouter();
 
   const schema = Yup.object().shape({
     firstName: Yup.string().required('First Name is required'),
@@ -84,11 +85,20 @@ const SignUp = () => {
       // console.log(JSON.stringify(data, null, 2));
       await createUser(data);
       // After creating, signIn with redirect to the lifestyle survey page
-      await signIn('credentials', {
+      const result = await signIn('credentials', {
         callbackUrl: '/lifestyle-survey',
         email: data.email,
         password: data.password,
+        redirect: false,
       });
+
+      if (result?.error) {
+        setSubmitError('Sign in failed after registration. Please try logging in manually.');
+        setIsLoading(false);
+      } else {
+        router.push('/lifestyle-survey');
+        router.refresh();
+      }
     } catch (error: any) {
       console.error('Registration error:', error);
       if (error.message === 'Email already exists' || (error.message && error.message.includes('Unique constraint'))) {
