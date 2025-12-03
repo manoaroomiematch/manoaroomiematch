@@ -8,7 +8,6 @@ import { Card, Col, Container, Button, Form, Row, Alert, ProgressBar } from 'rea
 import { createUser } from '@/lib/dbActions';
 import { useState, useEffect } from 'react';
 import { PersonFill, EnvelopeFill, LockFill } from 'react-bootstrap-icons';
-import { useRouter } from 'next/navigation';
 
 type SignUpForm = {
   firstName: string;
@@ -21,8 +20,6 @@ type SignUpForm = {
 /** The sign up page. */
 const SignUp = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const router = useRouter();
-
   const schema = Yup.object().shape({
     firstName: Yup.string().required('First Name is required'),
     lastName: Yup.string().required('Last Name is required'),
@@ -96,8 +93,8 @@ const SignUp = () => {
         setSubmitError('Sign in failed after registration. Please try logging in manually.');
         setIsLoading(false);
       } else {
-        router.push('/lifestyle-survey');
-        router.refresh();
+        // Force a full page reload to ensure session is picked up correctly in all environments
+        window.location.href = '/lifestyle-survey';
       }
     } catch (error: any) {
       console.error('Registration error:', error);
