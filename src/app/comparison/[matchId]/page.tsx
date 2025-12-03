@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable max-len */
 /* eslint-disable react/button-has-type */
@@ -5,7 +6,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   Card,
   Col,
@@ -13,6 +15,7 @@ import {
   Row,
   Button,
   ListGroup,
+  Alert,
 } from 'react-bootstrap';
 import { MatchDetailData } from '@/types';
 import SideBySideComparison from '@/components/SideBySideComparison';
@@ -21,9 +24,8 @@ import IcebreakersBox from '@/components/Icebreakers';
 
 export default function ComparisonPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const matchId = params.matchId as string;
-  const userId = searchParams.get('userId');
+  const { data: session, status } = useSession();
 
   const [data, setData] = useState<MatchDetailData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,19 +33,36 @@ export default function ComparisonPage() {
 
   useEffect(() => {
     async function fetchComparison() {
-      if (!userId) {
-        setError('User ID is required');
+      // Wait for session to load
+      if (status === 'loading') {
+        return;
+      }
+
+      if (status === 'unauthenticated') {
+        setError('Please sign in to view matches');
         setLoading(false);
         return;
       }
 
       try {
-        const res = await fetch(`/api/matches/${matchId}?userId=${userId}`);
-        if (!res.ok) throw new Error('Failed to fetch comparison data');
+        console.log('[Comparison Page] Fetching match:', matchId);
+
+        // Make API call WITHOUT userId parameter - API will use session
+        const res = await fetch(`/api/matches/${matchId}`);
+
+        console.log('[Comparison Page] Response status:', res.status);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error('[Comparison Page] API error:', errorData);
+          throw new Error(errorData.error || 'Failed to fetch comparison data');
+        }
 
         const comparisonData = await res.json();
+        console.log('[Comparison Page] Data received:', comparisonData);
         setData(comparisonData as MatchDetailData);
       } catch (err) {
+        console.error('[Comparison Page] Error:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
@@ -51,9 +70,9 @@ export default function ComparisonPage() {
     }
 
     fetchComparison();
-  }, [matchId, userId]);
+  }, [matchId, status]);
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <main className="bg-light min-vh-100">
         <Container className="py-5">
@@ -74,15 +93,19 @@ export default function ComparisonPage() {
         <Container className="py-5">
           <Row className="justify-content-center">
             <Col md={6}>
-              <Card className="shadow-sm border-0">
-                <Card.Body className="text-center p-5">
-                  <div className="text-danger mb-3">
-                    <i className="bi bi-exclamation-circle" style={{ fontSize: '3rem' }} />
-                  </div>
-                  <h2>Error Loading Match</h2>
-                  <p className="text-muted">{error || 'No data available'}</p>
-                </Card.Body>
-              </Card>
+              <Alert variant="danger">
+                <Alert.Heading>Error Loading Match</Alert.Heading>
+                <p>{error || 'No data available'}</p>
+                <hr />
+                <div className="d-flex justify-content-between">
+                  <Button variant="outline-danger" href="/matches">
+                    Back to Matches
+                  </Button>
+                  <Button variant="outline-secondary" onClick={() => window.location.reload()}>
+                    Try Again
+                  </Button>
+                </div>
+              </Alert>
             </Col>
           </Row>
         </Container>

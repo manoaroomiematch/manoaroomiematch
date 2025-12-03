@@ -25,10 +25,8 @@ export async function GET(
 ) {
   try {
     const { matchId } = params;
-    const { searchParams } = new URL(req.url);
-    const userIdParam = searchParams.get('userId');
 
-    console.log('[Match API] Request received:', { matchId, userIdParam });
+    console.log('[Match API] Request received for matchId:', matchId);
 
     // Get session for authentication
     const session = await getServerSession(authOptions);
@@ -39,6 +37,8 @@ export async function GET(
         { status: 401 },
       );
     }
+
+    console.log('[Match API] User authenticated:', session.user.email);
 
     // Get match with both user profiles
     const match = await getMatch(matchId);
@@ -57,61 +57,21 @@ export async function GET(
       user2Id: match.user2Id,
     });
 
-    // Resolve the current user's profile ID
-    let currentUserProfileId: string;
+    // Get current user's profile from session email
+    const userProfile = await prisma.userProfile.findFirst({
+      where: { email: session.user.email },
+    });
 
-    if (userIdParam) {
-      // If userId is provided, try to use it
-      // Check if it's already a profile ID (CUID format)
-      if (userIdParam.startsWith('c') && userIdParam.length > 20) {
-        currentUserProfileId = userIdParam;
-        console.log('[Match API] Using provided profile ID:', currentUserProfileId);
-      } else {
-        // It's a numeric user ID, need to convert to profile ID
-        const numericUserId = parseInt(userIdParam, 10);
-        if (Number.isNaN(numericUserId)) {
-          console.error('[Match API] Invalid user ID format:', userIdParam);
-          return NextResponse.json(
-            { error: 'Invalid user ID format' },
-            { status: 400 },
-          );
-        }
-
-        const userProfile = await prisma.userProfile.findUnique({
-          where: { userId: numericUserId },
-        });
-
-        if (!userProfile) {
-          console.error('[Match API] User profile not found for userId:', numericUserId);
-          return NextResponse.json(
-            { error: 'User profile not found' },
-            { status: 404 },
-          );
-        }
-
-        currentUserProfileId = userProfile.id;
-        console.log('[Match API] Converted user ID to profile ID:', {
-          userId: numericUserId,
-          profileId: currentUserProfileId,
-        });
-      }
-    } else {
-      // No userId provided, look up from session email
-      const userProfile = await prisma.userProfile.findFirst({
-        where: { email: session.user.email },
-      });
-
-      if (!userProfile) {
-        console.error('[Match API] User profile not found for email:', session.user.email);
-        return NextResponse.json(
-          { error: 'User profile not found' },
-          { status: 404 },
-        );
-      }
-
-      currentUserProfileId = userProfile.id;
-      console.log('[Match API] Using profile ID from session:', currentUserProfileId);
+    if (!userProfile) {
+      console.error('[Match API] User profile not found for email:', session.user.email);
+      return NextResponse.json(
+        { error: 'User profile not found' },
+        { status: 404 },
+      );
     }
+
+    const currentUserProfileId = userProfile.id;
+    console.log('[Match API] Current user profile ID:', currentUserProfileId);
 
     // Check if user is part of this match
     if (match.user1Id !== currentUserProfileId && match.user2Id !== currentUserProfileId) {
@@ -149,6 +109,8 @@ export async function GET(
     // Build comparison data
     const comparisonData = buildComparisonData(currentUser, matchUser, match);
     const { compatibleTraits, conflicts } = buildHighlights(comparisonData.categoryBreakdown);
+
+    console.log('[Match API] Successfully returning comparison data');
 
     return NextResponse.json({
       ...comparisonData,
