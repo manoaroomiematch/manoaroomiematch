@@ -56,6 +56,9 @@ const NavBar: React.FC = () => {
                   >
                     Lifestyle Survey
                   </Nav.Link>,
+                  <Nav.Link id="resources-nav" href="/resources" key="resources" active={pathName === '/resources'}>
+                    Resources
+                  </Nav.Link>,
                   <Nav.Link id="profile-nav" href="/profile" key="profile" active={pathName === '/profile'}>
                   My Profile
                   </Nav.Link>,
