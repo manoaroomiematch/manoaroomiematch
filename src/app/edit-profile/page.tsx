@@ -50,6 +50,10 @@ const EditProfilePage = () => {
     dietary: '',
     interests: '',
     workSchedule: 'day',
+    housingType: '', // 'on-campus', 'off-campus', 'either', 'undecided'
+    preferredDorm: '', // Specific dorm selection
+    specificBuilding: '', // For custom building name
+    budget: '', // Budget for off-campus
   });
 
   const [profilePhoto, setProfilePhoto] = useState<string>(
@@ -89,6 +93,10 @@ const EditProfilePage = () => {
               dietary: profile.dietary?.join(', ') || '',
               interests: profile.interests?.join(', ') || '',
               workSchedule: profile.workSchedule || 'day',
+              housingType: profileWithNew.housingType || '',
+              preferredDorm: profileWithNew.preferredDorm || '',
+              specificBuilding: profileWithNew.specificBuilding || '',
+              budget: profileWithNew.budget || '',
             });
             // if (profile.photoUrl) setProfilePhoto(profile.photoUrl);
           }
@@ -157,6 +165,10 @@ const EditProfilePage = () => {
         instagram: formData.instagram,
         snapchat: formData.snapchat,
         hometown: formData.hometown,
+        housingType: formData.housingType,
+        preferredDorm: formData.preferredDorm,
+        specificBuilding: formData.specificBuilding,
+        budget: formData.budget,
         smoking: formData.smoking,
         drinking: formData.drinking,
         pets: formData.pets,
@@ -318,6 +330,86 @@ const EditProfilePage = () => {
                         </Form.Text>
                       </Form.Group>
                     </Col>
+
+                    <Col xs={12}>
+                      <Form.Group>
+                        <Form.Label>Preferred Housing Type (optional)</Form.Label>
+                        <Form.Select
+                          value={formData.housingType}
+                          onChange={(e) => handleInputChange('housingType', e.target.value)}
+                        >
+                          <option value="">Select housing type...</option>
+                          <option value="on-campus">On-Campus Dorm</option>
+                          <option value="off-campus">Off-Campus Apartment</option>
+                          <option value="either">Either (Open to both)</option>
+                          <option value="undecided">Undecided</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+
+                    {/* Show dorm options if on-campus or either */}
+                    {(formData.housingType === 'on-campus' || formData.housingType === 'either') && (
+                      <Col xs={12}>
+                        <Form.Group>
+                          <Form.Label>Preferred Dorm (optional)</Form.Label>
+                          <Form.Select
+                            value={formData.preferredDorm}
+                            onChange={(e) => handleInputChange('preferredDorm', e.target.value)}
+                          >
+                            <option value="">Any dorm / No preference</option>
+                            <option value="Hale Aloha - Lehua">Hale Aloha - Lehua</option>
+                            <option value="Hale Aloha - Ilima">Hale Aloha - ʻIlima</option>
+                            <option value="Hale Aloha - Mokihana">Hale Aloha - Mokihana</option>
+                            <option value="Hale Aloha - Lokelani">Hale Aloha - Lokelani</option>
+                            <option value="Johnson Hall">Johnson Hall</option>
+                            <option value="Frear Hall">Frear Hall</option>
+                            <option value="Gateway House">Gateway House</option>
+                            <option value="Hale Kahawai">Hale Kahawai</option>
+                            <option value="Hale Laulima">Hale Laulima</option>
+                            <option value="Hale Anuenue">Hale Ānuenue</option>
+                            <option value="Hale Wainani">Hale Wainani</option>
+                            <option value="Walter Dods Jr RISE Center">Walter Dods, Jr. RISE Center</option>
+                            <option value="Hale Haukani">Hale Haukani</option>
+                            <option value="Hale Kawili">Hale Kawili</option>
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                    )}
+
+                    {/* Show budget and building if off-campus or either */}
+                    {(formData.housingType === 'off-campus' || formData.housingType === 'either') && (
+                      <>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Monthly Budget (optional)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={formData.budget}
+                              onChange={(e) => handleInputChange('budget', e.target.value)}
+                              placeholder="e.g., $800-1200"
+                            />
+                            <Form.Text className="text-muted">
+                              Your preferred monthly rent range
+                            </Form.Text>
+                          </Form.Group>
+                        </Col>
+
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Specific Building (optional)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={formData.specificBuilding}
+                              onChange={(e) => handleInputChange('specificBuilding', e.target.value)}
+                              placeholder="e.g., Campus Heights, University Tower"
+                            />
+                            <Form.Text className="text-muted">
+                              If you have a specific building in mind
+                            </Form.Text>
+                          </Form.Group>
+                        </Col>
+                      </>
+                    )}
                   </Row>
                 </Card.Body>
               </Card>

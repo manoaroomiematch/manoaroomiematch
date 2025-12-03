@@ -85,7 +85,7 @@ const AboutMeCard: React.FC<AboutMeCardProps> = ({
             </h6>
             <div className="d-flex flex-wrap gap-2">
               {interests.map((item) => (
-                <Badge key={item} bg="primary" className="px-3 py-2">
+                <Badge key={item} bg="success" className="px-3 py-2">
                   {item}
                 </Badge>
               ))}

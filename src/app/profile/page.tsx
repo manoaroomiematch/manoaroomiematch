@@ -2,10 +2,10 @@ import { getServerSession } from 'next-auth';
 import { Container, Row, Col } from 'react-bootstrap';
 import { redirect } from 'next/navigation';
 import UserOverviewCard from '@/components/UserOverviewCard';
-import CompatibilityCard from '@/components/CompatibilityCard';
 import AboutMeCard from '@/components/AboutMeCard';
 import LifestyleSurveyButton from '@/components/LifestyleSurveyButton';
 import MatchesCardOverview from '@/components/MatchesCardOverview';
+import HousingHighlightCard from '@/components/HousingHighlightCard';
 import { getProfileByEmail } from '@/lib/dbActions';
 import authOptions from '@/lib/authOptions';
 
@@ -46,6 +46,13 @@ const ProfilePage = async () => {
 
           {/* RIGHT COLUMN */}
           <Col lg={8} md={12}>
+            <HousingHighlightCard
+              needRoommateBy={(profile as any).needRoommateBy || undefined}
+              housingType={(profile as any).housingType || undefined}
+              preferredDorm={(profile as any).preferredDorm || undefined}
+              specificBuilding={(profile as any).specificBuilding || undefined}
+              budget={(profile as any).budget || undefined}
+            />
             <AboutMeCard
               bio={profile.bio || undefined}
               hometown={(profile as any).hometown || undefined}
@@ -54,18 +61,6 @@ const ProfilePage = async () => {
               interests={profile.interests}
             />
             <LifestyleSurveyButton />
-            <CompatibilityCard
-              interests={profile.interests}
-              lifestyle={{
-                cleanliness: profile.cleanliness,
-                socialLevel: profile.socialLevel,
-                sleepSchedule: profile.sleepSchedule,
-                guestFrequency: profile.guestFrequency,
-                smoking: profile.smoking,
-                drinking: profile.drinking,
-                pets: profile.pets,
-              }}
-            />
           </Col>
         </Row>
 
