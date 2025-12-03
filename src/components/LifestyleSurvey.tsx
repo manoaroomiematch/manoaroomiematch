@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button, Card, Col, Container, Form, Row, ProgressBar } from 'react-bootstrap';
+import Image from 'next/image';
 
 // TYPE DEFINITIONS
 interface LifestyleSurveyData {
@@ -381,7 +382,21 @@ const LifestyleSurvey: React.FC = () => {
 
   return (
     <Container className="py-3">
-      <Row className="justify-content-center">
+      <Row className="justify-content-center align-items-start">
+        {/* Decorative Graphic - Left Side */}
+        <Col lg={3} className="d-none d-lg-block">
+          <div className="position-sticky" style={{ top: '100px' }}>
+            <Image
+              src="/graphic4.png"
+              alt="Decorative illustration"
+              width={300}
+              height={300}
+              className="img-fluid"
+              style={{ maxWidth: '100%', height: 'auto' }}
+            />
+          </div>
+        </Col>
+
         <Col xs={12} md={8} lg={6}>
           <div className="text-center mb-4">
             <h2>Profile Setup</h2>
@@ -534,6 +549,20 @@ const LifestyleSurvey: React.FC = () => {
               </div>
             </Card.Body>
           </Card>
+        </Col>
+
+        {/* Decorative Graphic */}
+        <Col lg={3} className="d-none d-lg-block">
+          <div className="position-sticky" style={{ top: '100px' }}>
+            <Image
+              src="/graphic1.png"
+              alt="Decorative illustration"
+              width={300}
+              height={300}
+              className="img-fluid"
+              style={{ maxWidth: '100%', height: 'auto' }}
+            />
+          </div>
         </Col>
       </Row>
     </Container>
