@@ -1,6 +1,7 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
@@ -19,6 +20,7 @@ type SignUpForm = {
 };
 /** The sign up page. */
 const SignUp = () => {
+  const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const schema = Yup.object().shape({
     firstName: Yup.string().required('First Name is required'),
@@ -92,9 +94,9 @@ const SignUp = () => {
       if (result?.error) {
         setSubmitError('Sign in failed after registration. Please try logging in manually.');
         setIsLoading(false);
-      } else {
-        // Force a full page reload to ensure session is picked up correctly in all environments
-        window.location.href = '/lifestyle-survey';
+      } else if (result?.ok) {
+        router.push('/lifestyle-survey');
+        router.refresh();
       }
     } catch (error: any) {
       console.error('Registration error:', error);

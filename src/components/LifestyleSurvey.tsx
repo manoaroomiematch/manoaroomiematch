@@ -140,13 +140,9 @@ const LifestyleSurvey: React.FC = () => {
 
   // Check if survey is already completed and redirect to confirmation page
   useEffect(() => {
-    const completedSurvey = localStorage.getItem('lifestyle-survey-completed');
-    if (completedSurvey) {
-      console.log('Survey already completed, redirecting to confirmation page');
-      window.location.href = '/lifestyle-survey/confirmation';
-    } else {
-      setIsCheckingCompletion(false);
-    }
+    // Allow users to access the survey even if they have a completion flag in localStorage
+    // This ensures new signups on the same device can take the survey
+    setIsCheckingCompletion(false);
   }, []);
 
   // Restore from draft on mount
