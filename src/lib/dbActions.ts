@@ -53,6 +53,10 @@ export async function updateUserProfile(email: string, data: {
   major?: string;
   classStanding?: string;
   graduationYear?: number;
+  needRoommateBy?: Date;
+  instagram?: string;
+  snapchat?: string;
+  hometown?: string;
   photoUrl?: string;
   smoking?: boolean;
   drinking?: string;

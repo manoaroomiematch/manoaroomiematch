@@ -43,6 +43,10 @@ model UserProfile {
   major           String?
   classStanding   String?
   graduationYear  Int?
+  needRoommateBy  DateTime?
+  instagram       String?
+  snapchat        String?
+  hometown        String?
   createdAt       DateTime @default(now())
   
   sleepSchedule   Int      @default(3)

@@ -128,12 +128,24 @@ const LifestyleSurvey: React.FC = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isCheckingCompletion, setIsCheckingCompletion] = useState(true);
 
   const totalSteps = SURVEY_STEPS.length;
 
   // Set client-side rendering flag
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Check if survey is already completed and redirect to confirmation page
+  useEffect(() => {
+    const completedSurvey = localStorage.getItem('lifestyle-survey-completed');
+    if (completedSurvey) {
+      console.log('Survey already completed, redirecting to confirmation page');
+      window.location.href = '/lifestyle-survey/confirmation';
+    } else {
+      setIsCheckingCompletion(false);
+    }
   }, []);
 
   // Restore from draft on mount
@@ -202,6 +214,36 @@ const LifestyleSurvey: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [surveyData, currentStep]);
 
+  // Save data immediately when user navigates away from the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const hasData = surveyData.sleepSchedule
+        || surveyData.noiseTolerance !== 50
+        || surveyData.cleanliness
+        || surveyData.studyHabits
+        || surveyData.socialLevel
+        || surveyData.guestPolicy;
+
+      if (hasData) {
+        const draftData = {
+          data: surveyData,
+          step: currentStep,
+          timestamp: new Date().toISOString(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+      }
+    };
+
+    // Save on page unload
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Also save when component unmounts (navigation within app)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      handleBeforeUnload(); // Save on unmount
+    };
+  }, [surveyData, currentStep]);
+
   // Handle input changes
   const handleInputChange = (key: keyof LifestyleSurveyData, value: string | number) => {
     setSurveyData(prev => ({
@@ -234,15 +276,37 @@ const LifestyleSurvey: React.FC = () => {
     return Math.round((answeredQuestions / totalQuestions) * 100);
   };
 
+  // Save data immediately to localStorage
+  const saveImmediately = () => {
+    const hasData = surveyData.sleepSchedule
+      || surveyData.noiseTolerance !== 50
+      || surveyData.cleanliness
+      || surveyData.studyHabits
+      || surveyData.socialLevel
+      || surveyData.guestPolicy;
+
+    if (hasData) {
+      const draftData = {
+        data: surveyData,
+        step: currentStep,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+      console.log('Data saved immediately');
+    }
+  };
+
   // Navigate between steps
   const goToNextStep = () => {
     if (currentStep < totalSteps - 1) {
+      saveImmediately(); // Save before moving to next step
       setCurrentStep(currentStep + 1);
     }
   };
 
   const goToPreviousStep = () => {
     if (currentStep > 0) {
+      saveImmediately(); // Save before moving to previous step
       setCurrentStep(currentStep - 1);
     }
   };
@@ -254,12 +318,15 @@ const LifestyleSurvey: React.FC = () => {
       // TODO: Replace with actual API call
       console.log('Survey submitted:', surveyData);
 
+      // Save survey data to localStorage for confirmation page
+      localStorage.setItem('lifestyle-survey-completed', JSON.stringify(surveyData));
+
       // Clear draft from localStorage on successful submission
       localStorage.removeItem(STORAGE_KEY);
       setShowDraftBanner(false);
 
-      // Show success message
-      console.log('Survey completed successfully!');
+      // Redirect to confirmation page
+      window.location.href = '/lifestyle-survey/confirmation';
     } catch (error) {
       console.error('Error submitting survey:', error);
       console.log('Error submitting survey. Please try again.');
@@ -296,6 +363,21 @@ const LifestyleSurvey: React.FC = () => {
   };
 
   const currentStepData = SURVEY_STEPS[currentStep];
+
+  // Show loading while checking if survey is already completed
+  if (isCheckingCompletion) {
+    return (
+      <Container className="py-5">
+        <Row className="justify-content-center">
+          <Col xs={12} className="text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    );
+  }
 
   return (
     <Container className="py-3">

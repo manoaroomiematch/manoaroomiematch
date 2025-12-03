@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import UserOverviewCard from '@/components/UserOverviewCard';
 import CompatibilityCard from '@/components/CompatibilityCard';
 import AboutMeCard from '@/components/AboutMeCard';
+import LifestyleSurveyButton from '@/components/LifestyleSurveyButton';
 import MatchesCardOverview from '@/components/MatchesCardOverview';
 import { getProfileByEmail } from '@/lib/dbActions';
 import authOptions from '@/lib/authOptions';
@@ -40,20 +41,19 @@ const ProfilePage = async () => {
               email={profile.email}
               photoUrl={profile.photoUrl || undefined}
               pronouns={profile.pronouns || undefined}
-              bio={profile.bio || undefined}
             />
           </Col>
 
           {/* RIGHT COLUMN */}
           <Col lg={8} md={12}>
             <AboutMeCard
-              workSchedule={profile.workSchedule}
-              smoking={profile.smoking}
-              drinking={profile.drinking}
-              pets={profile.pets}
-              petTypes={profile.petTypes}
-              dietary={profile.dietary}
+              bio={profile.bio || undefined}
+              hometown={(profile as any).hometown || undefined}
+              instagram={(profile as any).instagram || undefined}
+              snapchat={(profile as any).snapchat || undefined}
+              interests={profile.interests}
             />
+            <LifestyleSurveyButton />
             <CompatibilityCard
               interests={profile.interests}
               lifestyle={{

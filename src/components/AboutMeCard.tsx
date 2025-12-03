@@ -2,97 +2,96 @@
 
 import { Card, Badge, Row, Col } from 'react-bootstrap';
 import {
-  Briefcase,
-  CupStraw,
-  EmojiSmile,
-  EggFried,
+  GeoAlt,
+  Instagram,
+  Snapchat,
+  ChatDots,
+  Stars,
 } from 'react-bootstrap-icons';
 
 interface AboutMeCardProps {
-  workSchedule?: string;
-  smoking?: boolean;
-  drinking?: string;
-  pets?: boolean;
-  petTypes?: string[];
-  dietary?: string[];
+  bio?: string;
+  hometown?: string;
+  instagram?: string;
+  snapchat?: string;
+  interests?: string[];
 }
 
 const AboutMeCard: React.FC<AboutMeCardProps> = ({
-  workSchedule,
-  smoking,
-  drinking,
-  pets,
-  petTypes,
-  dietary,
+  bio,
+  hometown,
+  instagram,
+  snapchat,
+  interests,
 }) => (
   <Card className="shadow-sm mb-4" style={{ border: 'none', borderRadius: '12px' }}>
     <Card.Body className="p-4">
       <h4 className="fw-bold mb-4">About Me</h4>
 
+      {/* Bio Section */}
+      {bio && (
+        <Row className="g-4 mb-4">
+          <Col xs={12}>
+            <h6 className="fw-bold text-muted mb-2">
+              <ChatDots className="me-2" />
+              Bio
+            </h6>
+            <p className="mb-0">{bio}</p>
+          </Col>
+        </Row>
+      )}
+
       <Row className="g-4">
-        <Col md={6}>
-          <h6 className="fw-bold text-muted mb-2">
-            <Briefcase className="me-2" />
-            Work Schedule
-          </h6>
-          <p className="text-capitalize">{workSchedule || 'Not specified'}</p>
-        </Col>
+        {/* Hometown */}
+        {hometown && (
+          <Col md={6}>
+            <h6 className="fw-bold text-muted mb-2">
+              <GeoAlt className="me-2" />
+              From
+            </h6>
+            <p>{hometown}</p>
+          </Col>
+        )}
 
-        <Col md={6}>
-          <h6 className="fw-bold text-muted mb-2">
-            <CupStraw className="me-2" />
-            Habits
-          </h6>
-          <ul className="list-unstyled mb-0">
-            <li>
-              Smoking:
-              {' '}
-              {smoking ? 'Yes' : 'No'}
-            </li>
-            <li>
-              Drinking:
-              {' '}
-              <span className="text-capitalize">{drinking || 'Not specified'}</span>
-            </li>
-          </ul>
-        </Col>
+        {/* Social Media */}
+        {(instagram || snapchat) && (
+          <Col md={6}>
+            <h6 className="fw-bold text-muted mb-2">
+              Social Media
+            </h6>
+            <ul className="list-unstyled mb-0">
+              {instagram && (
+                <li className="mb-1">
+                  <Instagram className="me-2" />
+                  {instagram}
+                </li>
+              )}
+              {snapchat && (
+                <li>
+                  <Snapchat className="me-2" />
+                  {snapchat}
+                </li>
+              )}
+            </ul>
+          </Col>
+        )}
 
-        <Col md={6}>
-          <h6 className="fw-bold text-muted mb-2">
-            <EmojiSmile className="me-2" />
-            Pets
-          </h6>
-          <p>
-            {pets ? 'Has pets' : 'No pets'}
-            {pets && petTypes && petTypes.length > 0 && (
-            <span className="text-muted">
-              {' '}
-              (
-              {petTypes.join(', ')}
-              )
-            </span>
-            )}
-          </p>
-        </Col>
-
-        <Col md={6}>
-          <h6 className="fw-bold text-muted mb-2">
-            <EggFried className="me-2" />
-            Dietary
-          </h6>
-          {dietary && dietary.length > 0 ? (
+        {/* Interests & Hobbies */}
+        {interests && interests.length > 0 && (
+          <Col xs={12}>
+            <h6 className="fw-bold text-muted mb-2">
+              <Stars className="me-2" />
+              Interests & Hobbies
+            </h6>
             <div className="d-flex flex-wrap gap-2">
-              {dietary.map((item) => (
-                <Badge key={item} bg="light" text="dark" className="border">
+              {interests.map((item) => (
+                <Badge key={item} bg="primary" className="px-3 py-2">
                   {item}
                 </Badge>
               ))}
             </div>
-          ) : (
-            <p>No specific dietary preferences</p>
-          )}
-        </Col>
-
+          </Col>
+        )}
       </Row>
     </Card.Body>
   </Card>
