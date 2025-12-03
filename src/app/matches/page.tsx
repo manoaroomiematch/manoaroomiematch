@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-indent, @typescript-eslint/indent */
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -161,7 +159,6 @@ const BrowseMatches: React.FC = () => {
             <h1 className="mb-3 mb-md-0">Browse Matches</h1>
           </Col>
           <Col xs={12} md={6} className="text-md-end">
-            {/* Toggle between grid and list view */}
             <ButtonGroup aria-label="View mode toggle">
               <Button
                 variant={viewMode === 'grid' ? 'success' : 'outline-success'}
@@ -183,10 +180,6 @@ const BrowseMatches: React.FC = () => {
           </Col>
         </Row>
 
-        {/* TODO: Add filter/sort controls here */}
-        {/* Example: Filter by major, traits, match percentage range */}
-
-        {/* Matches Display Area */}
         <Row className={viewMode === 'grid' ? 'g-4' : 'g-3'}>
           {matches.length > 0 ? (
             matches.map((match) => (
@@ -201,7 +194,6 @@ const BrowseMatches: React.FC = () => {
               </Col>
             ))
           ) : (
-            // Empty state when no matches are found
             <Col xs={12} className="text-center py-5">
               <p className="text-muted">
                 {currentProfileId
@@ -212,9 +204,6 @@ const BrowseMatches: React.FC = () => {
             </Col>
           )}
         </Row>
-
-        {/* TODO: Add pagination controls here if needed */}
-        {/* Example: Show 12 matches per page with pagination buttons */}
       </Container>
     </main>
   );

@@ -1,8 +1,22 @@
+/* eslint-disable consistent-return */
+/**
+ * UPDATED SurveyConfirmation Component
+ *
+ * This version automatically generates matches when the user completes the survey.
+ *
+ * Changes from original:
+ * 1. Calls match generation API on component mount
+ * 2. Shows loading state while generating matches
+ * 3. Displays match statistics
+ * 4. Provides button to view matches
+ *
+ */
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Col, Container, Row, Badge } from 'react-bootstrap';
-import { CheckCircleFill, PencilSquare, ArrowClockwise } from 'react-bootstrap-icons';
+import { Button, Card, Col, Container, Row, Badge, Spinner, Alert } from 'react-bootstrap';
+import { CheckCircleFill, PencilSquare, ArrowClockwise, PeopleFill, StarFill } from 'react-bootstrap-icons';
 import { useRouter } from 'next/navigation';
 
 interface LifestyleSurveyData {
@@ -14,11 +28,24 @@ interface LifestyleSurveyData {
   guestPolicy: string;
 }
 
+interface MatchStats {
+  totalMatches: number;
+  highMatches: number;
+  mediumMatches: number;
+  lowMatches: number;
+  averageScore: number;
+}
+
 const SurveyConfirmation: React.FC = () => {
   const router = useRouter();
   const [surveyData, setSurveyData] = useState<LifestyleSurveyData | null>(null);
   const [showConfetti, setShowConfetti] = useState(true);
   const [showRedoConfirm, setShowRedoConfirm] = useState(false);
+
+  // Match generation state
+  const [generatingMatches, setGeneratingMatches] = useState(true);
+  const [matchStats, setMatchStats] = useState<MatchStats | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load completed survey data from localStorage
@@ -28,12 +55,70 @@ const SurveyConfirmation: React.FC = () => {
     } else {
       // If no data found, redirect back to survey
       router.push('/lifestyle-survey');
+      return;
     }
 
     // Hide confetti after animation
     const timer = setTimeout(() => setShowConfetti(false), 3000);
     return () => clearTimeout(timer);
   }, [router]);
+
+  // Auto-generate matches on mount
+  useEffect(() => {
+    async function generateMatches() {
+      try {
+        setGeneratingMatches(true);
+        setMatchError(null);
+
+        // Check if matches were already generated for this session
+        const matchesGenerated = sessionStorage.getItem('matches-generated');
+
+        if (matchesGenerated === 'true') {
+          // Just fetch stats
+          const statsResponse = await fetch('/api/matches/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'stats' }),
+          });
+
+          if (statsResponse.ok) {
+            const data = await statsResponse.json();
+            setMatchStats(data.stats);
+          }
+          setGeneratingMatches(false);
+          return;
+        }
+
+        // Generate new matches
+        const response = await fetch('/api/matches/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'generate' }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate matches');
+        }
+
+        const data = await response.json();
+        setMatchStats(data.stats);
+
+        // Mark as generated for this session
+        sessionStorage.setItem('matches-generated', 'true');
+
+        console.log(`Generated ${data.matchesCreated} matches successfully`);
+      } catch (error) {
+        console.error('Error generating matches:', error);
+        setMatchError('Could not generate matches automatically. You can try again from your profile.');
+      } finally {
+        setGeneratingMatches(false);
+      }
+    }
+
+    if (surveyData) {
+      generateMatches();
+    }
+  }, [surveyData]);
 
   const handleEditAnswers = () => {
     router.push('/lifestyle-survey/edit');
@@ -48,6 +133,8 @@ const SurveyConfirmation: React.FC = () => {
     localStorage.removeItem('lifestyle-survey-completed');
     // Clear any existing draft
     localStorage.removeItem('lifestyle-survey-draft');
+    // Clear match generation flag
+    sessionStorage.removeItem('matches-generated');
     // Redirect to survey start
     router.push('/lifestyle-survey');
   };
@@ -157,14 +244,89 @@ const SurveyConfirmation: React.FC = () => {
               <h2 className="mb-2">Survey Completed! 🎉</h2>
               <p className="text-muted">
                 Your lifestyle preferences have been saved successfully.
-                We&apos;ll use this information to find your perfect roommate match!
               </p>
             </div>
+
+            {/* Match Generation Status */}
+            {generatingMatches && (
+              <Alert variant="info" className="d-flex align-items-center">
+                <Spinner animation="border" size="sm" className="me-3" />
+                <div>
+                  <strong>Finding your matches...</strong>
+                  <br />
+                  <small>We&apos;re analyzing your preferences to find compatible roommates.</small>
+                </div>
+              </Alert>
+            )}
+
+            {matchError && (
+              <Alert variant="warning">
+                <strong>Note:</strong>
+                {' '}
+                {matchError}
+              </Alert>
+            )}
+
+            {/* Match Statistics */}
+            {matchStats && !generatingMatches && (
+              <Card className="mb-4 shadow-sm border-success" style={{ borderRadius: '12px' }}>
+                <Card.Body className="p-4">
+                  <div className="text-center mb-3">
+                    <PeopleFill size={48} className="text-success mb-2" />
+                    <h4 className="mb-1">
+                      {matchStats.totalMatches}
+                      {' '}
+                      Matches Found!
+                    </h4>
+                    <p className="text-muted mb-0">
+                      Average compatibility:
+                      {' '}
+                      {matchStats.averageScore}
+                      %
+                    </p>
+                  </div>
+
+                  <Row className="g-3 mt-2">
+                    <Col xs={4}>
+                      <div className="text-center p-3 bg-success bg-opacity-10 rounded">
+                        <StarFill className="text-success mb-1" size={24} />
+                        <div className="fw-bold">{matchStats.highMatches}</div>
+                        <small className="text-muted">High (80%+)</small>
+                      </div>
+                    </Col>
+                    <Col xs={4}>
+                      <div className="text-center p-3 bg-warning bg-opacity-10 rounded">
+                        <StarFill className="text-warning mb-1" size={24} />
+                        <div className="fw-bold">{matchStats.mediumMatches}</div>
+                        <small className="text-muted">Medium (60-79%)</small>
+                      </div>
+                    </Col>
+                    <Col xs={4}>
+                      <div className="text-center p-3 bg-secondary bg-opacity-10 rounded">
+                        <StarFill className="text-secondary mb-1" size={24} />
+                        <div className="fw-bold">{matchStats.lowMatches}</div>
+                        <small className="text-muted">Other (&lt;60%)</small>
+                      </div>
+                    </Col>
+                  </Row>
+
+                  <div className="text-center mt-4">
+                    <Button
+                      variant="success"
+                      size="lg"
+                      onClick={() => router.push('/matches')}
+                    >
+                      Browse My Matches
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
 
             {/* Action Buttons */}
             <Card className="mb-4 shadow-sm" style={{ border: 'none', borderRadius: '12px' }}>
               <Card.Body className="p-4">
-                <h5 className="mb-3">What would you like to do?</h5>
+                <h5 className="mb-3">Manage Your Profile</h5>
                 <div className="d-grid gap-3">
                   <Button
                     variant="outline-primary"
@@ -212,7 +374,7 @@ const SurveyConfirmation: React.FC = () => {
             {/* Navigation Button */}
             <div className="text-center mt-4">
               <Button
-                variant="success"
+                variant="outline-success"
                 size="lg"
                 onClick={() => router.push('/profile')}
               >
@@ -251,7 +413,7 @@ const SurveyConfirmation: React.FC = () => {
                 <div className="modal-body">
                   <p>
                     Are you sure you want to redo the entire survey?
-                    This will clear all your current answers and start fresh.
+                    This will clear all your current answers and you&apos;ll need to regenerate your matches.
                   </p>
                   <p className="text-muted mb-0">
                     <small>
