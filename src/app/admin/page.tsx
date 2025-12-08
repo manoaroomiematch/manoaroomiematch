@@ -26,6 +26,7 @@ import UserProfileModal from '@/components/UserProfileModal';
 import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 import DeleteUserModal from '@/components/DeleteUserModal';
+import AdminSidebar from '@/components/AdminSidebar';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -357,283 +358,300 @@ const AdminPage: React.FC = () => {
 
   return (
     <main>
-      <Container className="py-4">
-        {/* Only the green gradient welcome banner remains */}
-        <div
-          className="mb-4 p-5 rounded-3"
-          style={{
-            background: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
-            color: '#fff',
-            boxShadow: '0 8px 32px rgba(86, 171, 47, 0.15)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Decorative background elements */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '-50%',
-              right: '-10%',
-              width: '300px',
-              height: '300px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.05)',
-              zIndex: 0,
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '-30%',
-              left: '-5%',
-              width: '200px',
-              height: '200px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.03)',
-              zIndex: 0,
-            }}
-          />
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
-              {getTimeBasedGreeting()}
-              ,
-              {' '}
-              <strong>{session?.user?.name || 'Admin'}</strong>
-            </h1>
-            <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
-              Welcome to your admin dashboard
-            </p>
-          </div>
-        </div>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="mb-0">Admin Dashboard</h2>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={fetchAdminData}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : 'Refresh Data'}
-          </button>
-        </div>
-
-        {error && (
-          <Alert variant="danger" dismissible onClose={() => setError(null)}>
-            <strong>Error:</strong>
-            {' '}
-            {error}
-          </Alert>
-        )}
-
-        {/* USER MANAGEMENT */}
-        <AdminSection title="User Management" page={page} totalPages={totalPagesUsers} onPageChange={setPage}>
-          <div className="d-flex gap-3 mb-3 flex-wrap">
-            <Form.Control
-              style={{ maxWidth: '280px' }}
-              type="text"
-              placeholder="Search user..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
+      <Container fluid className="py-4">
+        <div className="d-flex gap-4">
+          {/* Sidebar */}
+          <div style={{ minWidth: '300px' }}>
+            <AdminSidebar
+              adminName={session?.user?.name || 'Admin'}
+              adminEmail={session?.user?.email || ''}
+              totalUsers={users.length}
+              adminUserCount={users.filter((u) => u.role === 'ADMIN').length}
+              regularUserCount={users.filter((u) => u.role === 'USER').length}
+              totalFlags={flags.length}
+              totalCategories={categories.length}
             />
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Filter by role</option>
-              <option value="ADMIN">Admin</option>
-              <option value="USER">User</option>
-            </Form.Select>
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={userSort}
-              onChange={(e) => {
-                setUserSort(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Sort by</option>
-              <option value="NameA">Name A-Z</option>
-              <option value="NameZ">Name Z-A</option>
-            </Form.Select>
           </div>
 
-          <AdminTable>
-            <thead className="table-light">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Activity</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {shownUsers.map((u) => (
-                <UserManagement
-                  key={u.id}
-                  {...u}
-                  onDelete={() => {
-                    setDeleteUserId(u.id);
-                    setDeleteUserName(u.name);
-                    setShowDeleteUserModal(true);
-                  }}
-                  onView={handleViewUser}
-                />
-              ))}
-            </tbody>
-          </AdminTable>
-        </AdminSection>
-
-        {/* CONTENT MODERATION */}
-        <AdminSection
-          title="Content Moderation"
-          page={moderationPage}
-          totalPages={totalPagesModeration}
-          onPageChange={setModerationPage}
-        >
-          <div className="d-flex gap-3 mb-3 flex-wrap">
-            <Form.Control
-              style={{ maxWidth: '280px' }}
-              type="text"
-              placeholder="Search by user..."
-              value={moderationSearch}
-              onChange={(e) => {
-                setModerationSearch(e.target.value);
-                setModerationPage(1);
-              }}
-            />
-
-            <Form.Select
-              style={{ maxWidth: '200px' }}
-              value={reasonFilter}
-              onChange={(e) => {
-                setReasonFilter(e.target.value);
-                setModerationPage(1);
+          {/* Main Content */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              className="mb-4 p-5 rounded-3"
+              style={{
+                background: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
+                color: '#fff',
+                boxShadow: '0 8px 32px rgba(86, 171, 47, 0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <option value="">Filter by reason</option>
-              <option value="Spam">Spam</option>
-              <option value="Inappropriate content">Inappropriate content</option>
-              <option value="Harassment">Harassment</option>
-            </Form.Select>
+              {/* Decorative background elements */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-50%',
+                  right: '-10%',
+                  width: '300px',
+                  height: '300px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  zIndex: 0,
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-30%',
+                  left: '-5%',
+                  width: '200px',
+                  height: '200px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  zIndex: 0,
+                }}
+              />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
+                  {getTimeBasedGreeting()}
+                  ,
+                  {' '}
+                  <strong>{session?.user?.name || 'Admin'}</strong>
+                </h1>
+                <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
+                  Welcome to your admin dashboard
+                </p>
+              </div>
+            </div>
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h2 className="mb-0">Admin Dashboard</h2>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={fetchAdminData}
+                disabled={loading}
+              >
+                {loading ? 'Refreshing...' : 'Refresh Data'}
+              </button>
+            </div>
 
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={moderationSort}
-              onChange={(e) => {
-                setModerationSort(e.target.value);
-                setModerationPage(1);
-              }}
-            >
-              <option value="">Sort by</option>
-              <option value="UserA">User A-Z</option>
-              <option value="UserZ">User Z-A</option>
-              <option value="DateNew">Date (Newest)</option>
-              <option value="DateOld">Date (Oldest)</option>
-            </Form.Select>
-          </div>
+            {error && (
+              <Alert variant="danger" dismissible onClose={() => setError(null)}>
+                <strong>Error:</strong>
+                {' '}
+                {error}
+              </Alert>
+            )}
 
-          <AdminTable>
-            <thead className="table-light">
-              <tr>
-                <th>User</th>
-                <th>Flag Reason</th>
-                <th>Flagged Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {shownFlags.map((flag) => (
-                <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
-              ))}
-            </tbody>
-          </AdminTable>
-        </AdminSection>
-
-        {/* LIFESTYLE CATEGORIES */}
-        <AdminSection
-          title="Lifestyle Categories"
-          page={categoryPage}
-          totalPages={totalPagesCategories}
-          onPageChange={setCategoryPage}
-        >
-          <div className="d-flex gap-3 mb-3 flex-wrap">
-            <Form.Control
-              style={{ maxWidth: '280px' }}
-              type="text"
-              placeholder="Search categories..."
-              value={categorySearch}
-              onChange={(e) => {
-                setCategorySearch(e.target.value);
-                setCategoryPage(1);
-              }}
-            />
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={categorySort}
-              onChange={(e) => {
-                setCategorySort(e.target.value);
-                setCategoryPage(1);
-              }}
-            >
-              <option value="">Sort by</option>
-              <option value="NameA">Name A-Z</option>
-              <option value="NameZ">Name Z-A</option>
-              <option value="ItemsLow">Items (Low-High)</option>
-              <option value="ItemsHigh">Items (High-Low)</option>
-              <option value="DateNew">Date (Newest)</option>
-              <option value="DateOld">Date (Oldest)</option>
-            </Form.Select>
-
-            <Button
-              variant="success"
-              className="rounded-pill px-4"
-              onClick={() => setShowAddCategoryModal(true)}
-            >
-              Add Category
-            </Button>
-          </div>
-
-          <AdminTable>
-            <thead className="table-light">
-              <tr>
-                <th>Category</th>
-                <th>Items</th>
-                <th>Last Updated</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {shownCategories.map((cat) => (
-                <LifestyleCategoriesTable
-                  key={cat.id}
-                  {...cat}
-                  onDelete={() => {
-                    setDeleteCategoryId(cat.id);
-                    setDeleteCategoryName(cat.name);
-                    setShowDeleteCategoryModal(true);
+            {/* USER MANAGEMENT */}
+            <AdminSection title="User Management" page={page} totalPages={totalPagesUsers} onPageChange={setPage}>
+              <div className="d-flex gap-3 mb-3 flex-wrap">
+                <Form.Control
+                  style={{ maxWidth: '280px' }}
+                  type="text"
+                  placeholder="Search user..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
                   }}
                 />
-              ))}
-            </tbody>
-          </AdminTable>
-        </AdminSection>
+
+                <Form.Select
+                  style={{ maxWidth: '180px' }}
+                  value={roleFilter}
+                  onChange={(e) => {
+                    setRoleFilter(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Filter by role</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="USER">User</option>
+                </Form.Select>
+
+                <Form.Select
+                  style={{ maxWidth: '180px' }}
+                  value={userSort}
+                  onChange={(e) => {
+                    setUserSort(e.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Sort by</option>
+                  <option value="NameA">Name A-Z</option>
+                  <option value="NameZ">Name Z-A</option>
+                </Form.Select>
+              </div>
+
+              <AdminTable>
+                <thead className="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Activity</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {shownUsers.map((u) => (
+                    <UserManagement
+                      key={u.id}
+                      {...u}
+                      onDelete={() => {
+                        setDeleteUserId(u.id);
+                        setDeleteUserName(u.name);
+                        setShowDeleteUserModal(true);
+                      }}
+                      onView={handleViewUser}
+                    />
+                  ))}
+                </tbody>
+              </AdminTable>
+            </AdminSection>
+
+            {/* CONTENT MODERATION */}
+            <AdminSection
+              title="Content Moderation"
+              page={moderationPage}
+              totalPages={totalPagesModeration}
+              onPageChange={setModerationPage}
+            >
+              <div className="d-flex gap-3 mb-3 flex-wrap">
+                <Form.Control
+                  style={{ maxWidth: '280px' }}
+                  type="text"
+                  placeholder="Search by user..."
+                  value={moderationSearch}
+                  onChange={(e) => {
+                    setModerationSearch(e.target.value);
+                    setModerationPage(1);
+                  }}
+                />
+
+                <Form.Select
+                  style={{ maxWidth: '200px' }}
+                  value={reasonFilter}
+                  onChange={(e) => {
+                    setReasonFilter(e.target.value);
+                    setModerationPage(1);
+                  }}
+                >
+                  <option value="">Filter by reason</option>
+                  <option value="Spam">Spam</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Harassment">Harassment</option>
+                </Form.Select>
+
+                <Form.Select
+                  style={{ maxWidth: '180px' }}
+                  value={moderationSort}
+                  onChange={(e) => {
+                    setModerationSort(e.target.value);
+                    setModerationPage(1);
+                  }}
+                >
+                  <option value="">Sort by</option>
+                  <option value="UserA">User A-Z</option>
+                  <option value="UserZ">User Z-A</option>
+                  <option value="DateNew">Date (Newest)</option>
+                  <option value="DateOld">Date (Oldest)</option>
+                </Form.Select>
+              </div>
+
+              <AdminTable>
+                <thead className="table-light">
+                  <tr>
+                    <th>User</th>
+                    <th>Flag Reason</th>
+                    <th>Flagged Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {shownFlags.map((flag) => (
+                    <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
+                  ))}
+                </tbody>
+              </AdminTable>
+            </AdminSection>
+
+            {/* LIFESTYLE CATEGORIES */}
+            <AdminSection
+              title="Lifestyle Categories"
+              page={categoryPage}
+              totalPages={totalPagesCategories}
+              onPageChange={setCategoryPage}
+            >
+              <div className="d-flex gap-3 mb-3 flex-wrap">
+                <Form.Control
+                  style={{ maxWidth: '280px' }}
+                  type="text"
+                  placeholder="Search categories..."
+                  value={categorySearch}
+                  onChange={(e) => {
+                    setCategorySearch(e.target.value);
+                    setCategoryPage(1);
+                  }}
+                />
+
+                <Form.Select
+                  style={{ maxWidth: '180px' }}
+                  value={categorySort}
+                  onChange={(e) => {
+                    setCategorySort(e.target.value);
+                    setCategoryPage(1);
+                  }}
+                >
+                  <option value="">Sort by</option>
+                  <option value="NameA">Name A-Z</option>
+                  <option value="NameZ">Name Z-A</option>
+                  <option value="ItemsLow">Items (Low-High)</option>
+                  <option value="ItemsHigh">Items (High-Low)</option>
+                  <option value="DateNew">Date (Newest)</option>
+                  <option value="DateOld">Date (Oldest)</option>
+                </Form.Select>
+
+                <Button
+                  variant="success"
+                  className="rounded-pill px-4"
+                  onClick={() => setShowAddCategoryModal(true)}
+                >
+                  Add Category
+                </Button>
+              </div>
+
+              <AdminTable>
+                <thead className="table-light">
+                  <tr>
+                    <th>Category</th>
+                    <th>Items</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {shownCategories.map((cat) => (
+                    <LifestyleCategoriesTable
+                      key={cat.id}
+                      {...cat}
+                      onDelete={() => {
+                        setDeleteCategoryId(cat.id);
+                        setDeleteCategoryName(cat.name);
+                        setShowDeleteCategoryModal(true);
+                      }}
+                    />
+                  ))}
+                </tbody>
+              </AdminTable>
+            </AdminSection>
+          </div>
+        </div>
       </Container>
 
       {/* Add Category Modal */}
