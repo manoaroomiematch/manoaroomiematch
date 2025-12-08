@@ -265,11 +265,11 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  /** Initial data load on component mount */
+  /** Initial data load on component mount and when admin profile modal opens/closes */
   useEffect(() => {
     fetchAdminData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, status]);
+  }, [session, status, showProfileModal]);
 
   /** Handle flag resolution - calls API endpoint to update flag status */
   // This function is passed to ContentModerationTable components to handle
@@ -369,6 +369,11 @@ const AdminPage: React.FC = () => {
   const totalPagesCategories = Math.ceil(filteredCategories.length / pageSize);
   const shownCategories = filteredCategories.slice((categoryPage - 1) * pageSize, categoryPage * pageSize);
 
+  // Compute admin display name from edited profile if available
+  const adminDisplayName = (adminProfile.firstName || adminProfile.lastName)
+    ? `${adminProfile.firstName ?? ''} ${adminProfile.lastName ?? ''}`.trim()
+    : session?.user?.name || 'Admin';
+
   return (
     <main>
       <Container fluid className="py-4">
@@ -376,7 +381,7 @@ const AdminPage: React.FC = () => {
           {/* Sidebar */}
           <div style={{ minWidth: '300px' }}>
             <AdminSidebar
-              adminName={session?.user?.name || 'Admin'}
+              adminName={adminDisplayName}
               adminEmail={session?.user?.email || ''}
               adminPhotoUrl={adminPhotoUrl}
               adminFirstName={adminProfile.firstName}
@@ -437,7 +442,7 @@ const AdminPage: React.FC = () => {
                     <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
                       {getTimeBasedGreeting()}
                       ,
-                      <strong>{session?.user?.name || 'Admin'}</strong>
+                      <strong>{adminDisplayName}</strong>
                     </h1>
                     <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
                       Welcome to your admin dashboard!
@@ -733,7 +738,10 @@ const AdminPage: React.FC = () => {
       <UserProfileModal
         email={selectedUserEmail}
         show={showProfileModal}
-        onHide={() => setShowProfileModal(false)}
+        onHide={() => {
+          setShowProfileModal(false);
+          fetchAdminData();
+        }}
       />
     </main>
   );

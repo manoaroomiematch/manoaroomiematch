@@ -130,7 +130,7 @@ const WeatherWidget: React.FC = () => {
         style={{
           border: 'none',
           borderRadius: '12px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'rgba(255, 255, 255, 0.03)',
           color: 'white',
           minHeight: '120px',
         }}
