@@ -49,7 +49,7 @@ const NavBar: React.FC = () => {
                 {role === 'ADMIN' ? (
                   <>
                     <Nav.Link id="admin-dashboard-nav" href="/admin" active={pathName === '/admin'}>
-                      Admin
+                      Admin Dashboard
                     </Nav.Link>
                     <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
                       Resources
