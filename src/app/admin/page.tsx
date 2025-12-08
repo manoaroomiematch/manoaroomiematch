@@ -57,6 +57,21 @@ interface Category {
   lastUpdated: string;
 }
 
+/**
+ * Get a time-based greeting based on the current hour
+ * @returns greeting string (Good Morning, Good Afternoon, or Good Evening)
+ */
+function getTimeBasedGreeting(): string {
+  const currentHour = new Date().getHours();
+  if (currentHour < 12) {
+    return 'Good Morning';
+  }
+  if (currentHour < 18) {
+    return 'Good Afternoon';
+  }
+  return 'Good Evening';
+}
+
 const AdminPage: React.FC = () => {
   // Modal state for add/delete category
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -343,8 +358,58 @@ const AdminPage: React.FC = () => {
   return (
     <main>
       <Container className="py-4">
+        {/* Only the green gradient welcome banner remains */}
+        <div
+          className="mb-4 p-5 rounded-3"
+          style={{
+            background: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
+            color: '#fff',
+            boxShadow: '0 8px 32px rgba(86, 171, 47, 0.15)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Decorative background elements */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '-50%',
+              right: '-10%',
+              width: '300px',
+              height: '300px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.05)',
+              zIndex: 0,
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-30%',
+              left: '-5%',
+              width: '200px',
+              height: '200px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.03)',
+              zIndex: 0,
+            }}
+          />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
+              {getTimeBasedGreeting()}
+              ,
+              {' '}
+              <strong>{session?.user?.name || 'Admin'}</strong>
+            </h1>
+            <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
+              Welcome to your admin dashboard
+            </p>
+          </div>
+        </div>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1>Admin Home</h1>
+          <h2 className="mb-0">Admin Dashboard</h2>
           <button
             type="button"
             className="btn btn-primary"
