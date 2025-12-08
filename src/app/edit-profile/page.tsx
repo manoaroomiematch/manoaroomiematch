@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Modal } from 'react-bootstrap';
 import { PersonCircle, Upload, Trash } from 'react-bootstrap-icons';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -61,6 +61,14 @@ const EditProfilePage = () => {
   );
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  // Modal state for success/failure feedback
+  const [modalState, setModalState] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    success: boolean;
+  }>({ show: false, title: '', message: '', success: false });
 
   // Fetch profile data
   useEffect(() => {
@@ -179,12 +187,20 @@ const EditProfilePage = () => {
         pronouns: formData.pronouns,
         bio: formData.bio,
       });
-      // eslint-disable-next-line no-alert
-      alert('Profile saved successfully!');
+      setModalState({
+        show: true,
+        title: 'Profile Updated',
+        message: 'Your changes have been saved successfully.',
+        success: true,
+      });
     } catch (error) {
       console.error('Error saving profile:', error);
-      // eslint-disable-next-line no-alert
-      alert('Failed to save profile.');
+      setModalState({
+        show: true,
+        title: 'Update Failed',
+        message: 'We could not save your changes. Please try again.',
+        success: false,
+      });
     }
   };
 
@@ -590,6 +606,25 @@ const EditProfilePage = () => {
           </Col>
         </Row>
       </Container>
+      {/* Feedback Modal */}
+      <Modal show={modalState.show} onHide={() => setModalState({ ...modalState, show: false })} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{modalState.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className={modalState.success ? 'text-success' : 'text-danger'}>{modalState.message}</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <div className="w-100 d-flex justify-content-between align-items-center">
+            <Button variant="secondary" onClick={() => setModalState({ ...modalState, show: false })}>
+              Close
+            </Button>
+            <Button variant="success" onClick={() => router.push('/profile')}>
+              See My Profile
+            </Button>
+          </div>
+        </Modal.Footer>
+      </Modal>
     </main>
   );
 };
