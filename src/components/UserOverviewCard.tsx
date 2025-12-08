@@ -25,7 +25,7 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
   pronouns,
 }) => (
   <Card className="shadow-sm h-100" style={{ border: 'none', borderRadius: '12px' }}>
-    <Card.Body className="p-4">
+    <Card.Body className="p-4 d-flex flex-column h-100">
       {/* Profile Image - Centered at Top */}
       <div className="text-center mb-4">
         {photoUrl ? (
@@ -79,7 +79,7 @@ const UserOverviewCard: React.FC<UserOverviewCardProps> = ({
         )}
       </div>
 
-      <div className="mt-4 d-grid">
+      <div className="mt-auto mb-auto pt-3 d-grid">
         <Link href="/edit-profile" passHref legacyBehavior>
           <Button variant="success" size="lg">
             Edit Profile
