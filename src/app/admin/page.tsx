@@ -165,6 +165,7 @@ const AdminPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
 
   /** Check admin access - redirect non-admin users */
   // This provides client-side protection in addition to the server-side
@@ -234,6 +235,15 @@ const AdminPage: React.FC = () => {
       }
       const categoriesData = await categoriesResponse.json();
       setCategories(categoriesData.categories || []);
+
+      // Fetch admin profile to get photo URL
+      if (session?.user?.email) {
+        const profileResponse = await fetch(`/api/profile?email=${encodeURIComponent(session.user.email)}`);
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setAdminPhotoUrl(profileData.profile?.photoUrl || undefined);
+        }
+      }
     } catch (err) {
       console.error('Error fetching admin data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -365,11 +375,13 @@ const AdminPage: React.FC = () => {
             <AdminSidebar
               adminName={session?.user?.name || 'Admin'}
               adminEmail={session?.user?.email || ''}
+              adminPhotoUrl={adminPhotoUrl}
               totalUsers={users.length}
               adminUserCount={users.filter((u) => u.role === 'ADMIN').length}
               regularUserCount={users.filter((u) => u.role === 'USER').length}
               totalFlags={flags.length}
               totalCategories={categories.length}
+              onProfileUpdate={fetchAdminData}
             />
           </div>
 

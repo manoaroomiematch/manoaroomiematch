@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Card, Button, ListGroup, Form, Badge, Modal } from 'react-bootstrap';
+import { Card, Button, ListGroup, Form, Badge } from 'react-bootstrap';
 import { PersonCircle, Plus, Trash2, PencilSquare } from 'react-bootstrap-icons';
+import AdminEditProfileModal from './AdminEditProfileModal';
 
 interface Task {
   id: string;
@@ -20,6 +21,7 @@ interface AdminSidebarProps {
   regularUserCount: number;
   totalFlags: number;
   totalCategories: number;
+  onProfileUpdate?: () => void;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -31,21 +33,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   regularUserCount,
   totalFlags,
   totalCategories,
+  onProfileUpdate,
 }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showAddTask, setShowAddTask] = useState(false);
-
-  // Profile edit modal state
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    firstName: '',
-    lastName: '',
-    bio: '',
-    pronouns: '',
-  });
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Load tasks from localStorage on mount
   useEffect(() => {
@@ -57,16 +50,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         console.error('Error loading tasks:', err);
       }
     }
-
-    // Initialize edit form with admin name from props
-    const [firstName, ...lastNameParts] = adminName.split(' ');
-    const lastName = lastNameParts.join(' ');
-    setEditFormData((prev) => ({
-      ...prev,
-      firstName: firstName || '',
-      lastName: lastName || '',
-    }));
-  }, [adminName]);
+  }, []);
 
   // Save tasks to localStorage whenever they change
   useEffect(() => {
@@ -93,55 +77,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   const handleDeleteTask = (taskId: string) => {
     setTasks(tasks.filter((task) => task.id !== taskId));
-  };
-
-  const handleOpenEditModal = () => {
-    setProfileError(null);
-    setShowEditModal(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setShowEditModal(false);
-    setProfileError(null);
-    // Reset form to current values
-    const [firstName, ...lastNameParts] = adminName.split(' ');
-    const lastName = lastNameParts.join(' ');
-    setEditFormData((prev) => ({
-      ...prev,
-      firstName: firstName || '',
-      lastName: lastName || '',
-    }));
-  };
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingProfile(true);
-    setProfileError(null);
-
-    try {
-      const response = await fetch('/api/admin/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: adminEmail,
-          firstName: editFormData.firstName.trim(),
-          lastName: editFormData.lastName.trim(),
-          bio: editFormData.bio.trim(),
-          pronouns: editFormData.pronouns.trim(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
-
-      setShowEditModal(false);
-      // You could add a success toast notification here
-    } catch (err) {
-      setProfileError(err instanceof Error ? err.message : 'Error updating profile');
-    } finally {
-      setIsSavingProfile(false);
-    }
   };
 
   const completedTasksCount = tasks.filter((task) => task.completed).length;
@@ -185,7 +120,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             variant="outline-primary"
             size="sm"
             className="w-100 d-flex align-items-center justify-content-center gap-2"
-            onClick={handleOpenEditModal}
+            onClick={() => setShowEditModal(true)}
           >
             <PencilSquare size={16} />
             Edit Profile
@@ -355,78 +290,21 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </Card>
 
       {/* Edit Profile Modal */}
-      <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Profile</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {profileError && (
-            <div className="alert alert-danger" role="alert">
-              {profileError}
-            </div>
-          )}
-          <Form onSubmit={handleSaveProfile}>
-            <Form.Group className="mb-3">
-              <Form.Label>First Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={editFormData.firstName}
-                onChange={(e) => setEditFormData((prev) => ({ ...prev, firstName: e.target.value }))}
-                placeholder="First name"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Last Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={editFormData.lastName}
-                onChange={(e) => setEditFormData((prev) => ({ ...prev, lastName: e.target.value }))}
-                placeholder="Last name"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Pronouns</Form.Label>
-              <Form.Control
-                type="text"
-                value={editFormData.pronouns}
-                onChange={(e) => setEditFormData((prev) => ({ ...prev, pronouns: e.target.value }))}
-                placeholder="e.g., he/him, she/her, they/them"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Bio</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={editFormData.bio}
-                onChange={(e) => setEditFormData((prev) => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell us about yourself"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseEditModal}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSaveProfile}
-            disabled={isSavingProfile}
-          >
-            {isSavingProfile ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <AdminEditProfileModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        onSave={onProfileUpdate}
+        adminName={adminName}
+        adminEmail={adminEmail}
+        adminPhotoUrl={adminPhotoUrl}
+      />
     </div>
   );
 };
 
-export default AdminSidebar;
-
 AdminSidebar.defaultProps = {
   adminPhotoUrl: undefined,
+  onProfileUpdate: undefined,
 };
+
+export default AdminSidebar;
