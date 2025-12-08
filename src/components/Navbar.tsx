@@ -42,102 +42,94 @@ const NavBar: React.FC = () => {
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto justify-content-start">
-            {currentUser
-              ? [
-                  <Nav.Link id="browse-matches-nav" href="/matches" key="matches" active={pathName === '/matches'}>
-                    Browse Matches
-                  </Nav.Link>,
-                  <Nav.Link
-                    id="lifestyle-survey-nav"
-                    href="/lifestyle-survey"
-                    key="lifestyle-survey"
-                    active={pathName === '/lifestyle-survey'}
-                  >
-                    Lifestyle Survey
-                  </Nav.Link>,
-                  <Nav.Link id="resources-nav" href="/resources" key="resources" active={pathName === '/resources'}>
-                    Resources
-                  </Nav.Link>,
-                  <Nav.Link id="profile-nav" href="/profile" key="profile" active={pathName === '/profile'}>
-                  My Profile
-                  </Nav.Link>,
-                  <Nav.Link
-                    id="edit-profile-nav"
-                    href="/edit-profile"
-                    key="edit-profile"
-                    active={pathName === '/edit-profile'}
-                  >
-                  Edit Profile
-                  </Nav.Link>,
-                  // Messages navigation link with unread notification badge.
-                  // The chat bubble icon is slightly larger (size 20) to make it more visible.
-                  // When there are unread messages, a small red circle with the count appears
-                  // in the top-right corner of the icon - this helps users quickly see when
-                  // they have new messages waiting for them.
-                  <Nav.Link id="messages-nav" href="/messages" key="messages" active={pathName === '/messages'}>
-                    <span className="position-relative">
-                      <ChatDots className="me-1" size={20} />
-                      {/* Notification badge - only shows when there are unread messages.
-                          The badge is positioned absolutely so it floats on top of the icon,
-                          giving that classic "notification dot" look you see in most messaging apps. */}
-                      {unreadMessageCount > 0 && (
-                        <Badge
-                          bg="danger"
-                          pill
-                          className="position-absolute"
-                          style={{
-                            top: '-8px',
-                            right: '-8px',
-                            fontSize: '0.65rem',
-                            minWidth: '18px',
-                            height: '18px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0 5px',
-                          }}
-                        >
-                          {unreadMessageCount}
-                        </Badge>
-                      )}
-                    </span>
-                  </Nav.Link>,
-                ]
-              : ''}
-            {currentUser && role === 'ADMIN' ? (
-              [
-                <Nav.Link id="admin-stuff-nav" href="/admin" key="admin" active={pathName === '/admin'}>
-                  Admin
-                </Nav.Link>,
-              ]
-            ) : (
-              ''
-            )}
-          </Nav>
-          <Nav>
-            {session ? (
-              <NavDropdown id="login-dropdown" title={currentUser} className="nav-login-dropdown">
-                <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
-                  <PencilSquare />
-                  {' '}
-                  Edit Profile
-                </NavDropdown.Item>
-                <NavDropdown.Item
-                  id="login-dropdown-sign-out"
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  role="button"
+          <Nav className="me-auto justify-content-start flex-row flex-wrap">
+            {currentUser ? (
+              <>
+                <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'}>
+                  Browse Matches
+                </Nav.Link>
+                <Nav.Link
+                  id="lifestyle-survey-nav"
+                  href="/lifestyle-survey"
+                  active={pathName === '/lifestyle-survey'}
                 >
-                  <BoxArrowRight />
-                  {' '}
-                  Sign Out
-                </NavDropdown.Item>
-                <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
-                  <Lock />
-                  {' '}
-                  Change Password
-                </NavDropdown.Item>
-              </NavDropdown>
+                  Lifestyle Survey
+                </Nav.Link>
+                <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
+                  Resources
+                </Nav.Link>
+                <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
+                  My Profile
+                </Nav.Link>
+                <Nav.Link
+                  id="edit-profile-nav"
+                  href="/edit-profile"
+                  active={pathName === '/edit-profile'}
+                >
+                  Edit Profile
+                </Nav.Link>
+                {currentUser && role === 'ADMIN' ? (
+                  <Nav.Link id="admin-stuff-nav" href="/admin" active={pathName === '/admin'}>
+                    Admin
+                  </Nav.Link>
+                ) : ''}
+              </>
+            ) : ''}
+          </Nav>
+          <Nav className="align-items-center gap-2 ms-auto">
+            {session ? (
+              <>
+                <NavDropdown
+                  id="login-dropdown"
+                  className="nav-login-dropdown"
+                  title={currentUser}
+                >
+                  <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
+                    <PencilSquare />
+                    {' '}
+                    Edit Profile
+                  </NavDropdown.Item>
+                  <NavDropdown.Item
+                    id="login-dropdown-sign-out"
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    role="button"
+                  >
+                    <BoxArrowRight />
+                    {' '}
+                    Sign Out
+                  </NavDropdown.Item>
+                  <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
+                    <Lock />
+                    {' '}
+                    Change Password
+                  </NavDropdown.Item>
+                </NavDropdown>
+                <Nav.Link id="messages-nav" href="/messages" active={pathName === '/messages'}>
+                  <span className="position-relative">
+                    <ChatDots className="me-1" size={20} />
+                    {unreadMessageCount > 0 && (
+                      <Badge
+                        bg="danger"
+                        pill
+                        className="position-absolute"
+                        style={{
+                          top: '-8px',
+                          right: '-8px',
+                          fontSize: '0.65rem',
+                          minWidth: '18px',
+                          height: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '0 5px',
+                        }}
+                      >
+                        {unreadMessageCount}
+                      </Badge>
+                    )}
+                  </span>
+                </Nav.Link>
+              </>
             ) : (
               <NavDropdown id="login-dropdown" title="Login" className="nav-login-dropdown">
                 <NavDropdown.Item id="login-dropdown-sign-in" href="/auth/signin">
