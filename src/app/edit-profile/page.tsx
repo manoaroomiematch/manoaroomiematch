@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Modal } from 'react-bootstrap';
-import { PersonCircle, Upload, Trash } from 'react-bootstrap-icons';
-import { useSession } from 'next-auth/react';
+import { PersonCircle, Upload, Trash, Eye, EyeSlash } from 'react-bootstrap-icons';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,6 +69,15 @@ const EditProfilePage = () => {
     message: string;
     success: boolean;
   }>({ show: false, title: '', message: '', success: false });
+
+  // Delete account modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    show: boolean;
+    password: string;
+    loading: boolean;
+    error: string | null;
+    showPassword?: boolean;
+  }>({ show: false, password: '', loading: false, error: null, showPassword: false });
 
   // Fetch profile data
   useEffect(() => {
@@ -201,6 +210,29 @@ const EditProfilePage = () => {
         message: 'We could not save your changes. Please try again.',
         success: false,
       });
+    }
+  };
+
+  // Handle Delete Account
+  const handleConfirmDelete = async () => {
+    if (!currentUserEmail) return;
+    setDeleteModal((s) => ({ ...s, loading: true, error: null }));
+    try {
+      const res = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deleteModal.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDeleteModal((s) => ({ ...s, loading: false, error: data.error || 'Invalid password or request.' }));
+        return;
+      }
+      setDeleteModal({ show: false, password: '', loading: false, error: null });
+      // Ensure session cookie and client state are cleared before redirect
+      await signOut({ redirect: true, callbackUrl: '/auth/signin' });
+    } catch (err) {
+      setDeleteModal((s) => ({ ...s, loading: false, error: 'An error occurred. Please try again.' }));
     }
   };
 
@@ -587,6 +619,20 @@ const EditProfilePage = () => {
                 </Card.Body>
               </Card>
 
+              {/* Profile Management Section */}
+              <Card className="shadow-sm mb-4" style={{ border: 'none', borderRadius: '12px' }}>
+                <Card.Body className="p-4">
+                  <h4 className="fw-bold mb-3">Profile Management</h4>
+                  <p className="text-muted mb-3">Delete your account and all associated data.</p>
+                  <Button
+                    variant="danger"
+                    className="rounded-pill"
+                    onClick={() => setDeleteModal({ show: true, password: '', loading: false, error: null })}
+                  >
+                    Delete Account
+                  </Button>
+                </Card.Body>
+              </Card>
               {/* Action Buttons */}
               <div className="d-flex justify-content-end gap-2">
                 <Button
@@ -623,6 +669,57 @@ const EditProfilePage = () => {
               See My Profile
             </Button>
           </div>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Account Confirmation Modal */}
+      <Modal
+        show={deleteModal.show}
+        onHide={() => setDeleteModal({ show: false, password: '', loading: false, error: null })}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Account Deletion</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <p className="text-danger fw-semibold">This action is irreversible.</p>
+            <p className="text-muted mb-2">All your profile data, matches, and messages will be permanently deleted.</p>
+          </div>
+          <Form.Group>
+            <Form.Label>Enter your password to confirm</Form.Label>
+            <div className="d-flex align-items-center gap-2">
+              <Form.Control
+                type={deleteModal.showPassword ? 'text' : 'password'}
+                value={deleteModal.password}
+                onChange={(e) => setDeleteModal((s) => ({ ...s, password: e.target.value }))}
+                placeholder="Password"
+              />
+              <Button
+                variant="outline-secondary"
+                onClick={() => setDeleteModal((s) => ({ ...s, showPassword: !s.showPassword }))}
+                aria-label={deleteModal.showPassword ? 'Hide password' : 'Show password'}
+              >
+                {deleteModal.showPassword ? <EyeSlash /> : <Eye />}
+              </Button>
+            </div>
+          </Form.Group>
+          {deleteModal.error && <p className="text-danger mt-2">{deleteModal.error}</p>}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setDeleteModal({ show: false, password: '', loading: false, error: null })}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleConfirmDelete}
+            disabled={deleteModal.loading || !deleteModal.password}
+          >
+            {deleteModal.loading ? 'Deleting…' : 'Delete My Account'}
+          </Button>
         </Modal.Footer>
       </Modal>
     </main>
