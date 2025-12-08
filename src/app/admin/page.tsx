@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 /* eslint-disable no-alert */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
@@ -21,7 +22,6 @@ import AdminSection from '@/components/AdminSection';
 import LifestyleCategoriesTable from '@/components/LifestyleCategoryAdmin';
 import ContentModerationTable from '@/components/ContentModerationAdmin';
 import AdminTable from '@/components/AdminTable';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import UserProfileModal from '@/components/UserProfileModal';
 import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
@@ -166,6 +166,12 @@ const AdminPage: React.FC = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
+  const [adminProfile, setAdminProfile] = useState<{
+    firstName?: string;
+    lastName?: string;
+    bio?: string;
+    pronouns?: string;
+  }>({});
 
   /** Check admin access - redirect non-admin users */
   // This provides client-side protection in addition to the server-side
@@ -236,12 +242,19 @@ const AdminPage: React.FC = () => {
       const categoriesData = await categoriesResponse.json();
       setCategories(categoriesData.categories || []);
 
-      // Fetch admin profile to get photo URL
+      // Fetch admin profile to get photo URL and other data
       if (session?.user?.email) {
         const profileResponse = await fetch(`/api/profile?email=${encodeURIComponent(session.user.email)}`);
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          setAdminPhotoUrl(profileData.profile?.photoUrl || undefined);
+          const { profile } = profileData;
+          setAdminPhotoUrl(profile?.photoUrl || undefined);
+          setAdminProfile({
+            firstName: profile?.firstName || undefined,
+            lastName: profile?.lastName || undefined,
+            bio: profile?.bio || undefined,
+            pronouns: profile?.pronouns || undefined,
+          });
         }
       }
     } catch (err) {
@@ -356,16 +369,6 @@ const AdminPage: React.FC = () => {
   const totalPagesCategories = Math.ceil(filteredCategories.length / pageSize);
   const shownCategories = filteredCategories.slice((categoryPage - 1) * pageSize, categoryPage * pageSize);
 
-  if (loading) {
-    return (
-      <main>
-        <Container className="py-4 text-center">
-          <LoadingSpinner />
-        </Container>
-      </main>
-    );
-  }
-
   return (
     <main>
       <Container fluid className="py-4">
@@ -376,6 +379,10 @@ const AdminPage: React.FC = () => {
               adminName={session?.user?.name || 'Admin'}
               adminEmail={session?.user?.email || ''}
               adminPhotoUrl={adminPhotoUrl}
+              adminFirstName={adminProfile.firstName}
+              adminLastName={adminProfile.lastName}
+              adminBio={adminProfile.bio}
+              adminPronouns={adminProfile.pronouns}
               totalUsers={users.length}
               adminUserCount={users.filter((u) => u.role === 'ADMIN').length}
               regularUserCount={users.filter((u) => u.role === 'USER').length}
@@ -425,15 +432,22 @@ const AdminPage: React.FC = () => {
                 }}
               />
               <div style={{ position: 'relative', zIndex: 1 }}>
-                <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
-                  {getTimeBasedGreeting()}
-                  ,
-                  {' '}
-                  <strong>{session?.user?.name || 'Admin'}</strong>
-                </h1>
-                <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
-                  Welcome to your admin dashboard
-                </p>
+                <div className="d-flex justify-content-between align-items-center" style={{ width: '100%' }}>
+                  <div>
+                    <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
+                      {getTimeBasedGreeting()}
+                      ,
+                      <strong>{session?.user?.name || 'Admin'}</strong>
+                    </h1>
+                    <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
+                      Welcome to your admin dashboard!
+                    </p>
+                  </div>
+                  <div style={{ minWidth: '340px', maxWidth: '420px', width: '100%' }}>
+                    {/* WeatherWidget inside banner */}
+                    {require('@/components/WeatherWidget').default()}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="d-flex justify-content-between align-items-center mb-4">

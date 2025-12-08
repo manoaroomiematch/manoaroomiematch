@@ -40,6 +40,9 @@ export async function PUT(req: Request) {
         bio: bio ?? existingProfile.bio,
         pronouns: pronouns ?? existingProfile.pronouns,
         photoUrl: profilePhoto ?? existingProfile.photoUrl,
+        name: firstName && lastName
+          ? `${firstName} ${lastName}`.trim()
+          : existingProfile.name,
       },
     });
 

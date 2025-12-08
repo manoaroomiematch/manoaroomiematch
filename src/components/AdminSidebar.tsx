@@ -16,6 +16,10 @@ interface AdminSidebarProps {
   adminName: string;
   adminEmail: string;
   adminPhotoUrl?: string;
+  adminFirstName?: string;
+  adminLastName?: string;
+  adminBio?: string;
+  adminPronouns?: string;
   totalUsers: number;
   adminUserCount: number;
   regularUserCount: number;
@@ -28,6 +32,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   adminName,
   adminEmail,
   adminPhotoUrl,
+  adminFirstName,
+  adminLastName,
+  adminBio,
+  adminPronouns,
   totalUsers,
   adminUserCount,
   regularUserCount,
@@ -297,6 +305,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         adminName={adminName}
         adminEmail={adminEmail}
         adminPhotoUrl={adminPhotoUrl}
+        adminFirstName={adminFirstName}
+        adminLastName={adminLastName}
+        adminBio={adminBio}
+        adminPronouns={adminPronouns}
       />
     </div>
   );
@@ -304,6 +316,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
 AdminSidebar.defaultProps = {
   adminPhotoUrl: undefined,
+  adminFirstName: undefined,
+  adminLastName: undefined,
+  adminBio: undefined,
+  adminPronouns: undefined,
   onProfileUpdate: undefined,
 };
 

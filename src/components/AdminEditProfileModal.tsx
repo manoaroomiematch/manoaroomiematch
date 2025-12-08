@@ -12,6 +12,10 @@ interface AdminEditProfileModalProps {
   adminName: string;
   adminEmail: string;
   adminPhotoUrl?: string;
+  adminBio?: string;
+  adminPronouns?: string;
+  adminFirstName?: string;
+  adminLastName?: string;
 }
 
 const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
@@ -21,6 +25,10 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
   adminName,
   adminEmail,
   adminPhotoUrl,
+  adminBio = '',
+  adminPronouns = '',
+  adminFirstName = '',
+  adminLastName = '',
 }) => {
   // Profile edit form state
   const [editFormData, setEditFormData] = useState({
@@ -59,27 +67,31 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
 
   // Initialize form and load preferences on mount
   useEffect(() => {
-    // Initialize edit form with admin name from props
-    const [firstName, ...lastNameParts] = adminName.split(' ');
-    const lastName = lastNameParts.join(' ');
-    setEditFormData((prev) => ({
-      ...prev,
-      firstName: firstName || '',
-      lastName: lastName || '',
-    }));
+    if (show) {
+      // Initialize form with props data
+      setEditFormData({
+        firstName: adminFirstName || '',
+        lastName: adminLastName || '',
+        bio: adminBio || '',
+        pronouns: adminPronouns || '',
+      });
+
+      // Update profile photo if available
+      if (adminPhotoUrl) {
+        setProfilePhoto(adminPhotoUrl);
+      }
+
+      // Reset modal position
+      setModalPosition({ x: 0, y: 0 });
+      setProfileError(null);
+    }
 
     // Load theme preference
     const storedTheme = localStorage.getItem('adminTheme') as 'light' | 'dark' | 'auto' | null;
     if (storedTheme) {
       setThemePreference(storedTheme);
     }
-
-    // Reset modal position when opening
-    if (show) {
-      setModalPosition({ x: 0, y: 0 });
-      setProfileError(null);
-    }
-  }, [adminName, show]);
+  }, [show, adminFirstName, adminLastName, adminBio, adminPronouns, adminPhotoUrl]);
 
   // Save theme preference to localStorage
   useEffect(() => {
@@ -480,6 +492,10 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
 
 AdminEditProfileModal.defaultProps = {
   adminPhotoUrl: undefined,
+  adminBio: undefined,
+  adminPronouns: undefined,
+  adminFirstName: undefined,
+  adminLastName: undefined,
   onSave: undefined,
 };
 
