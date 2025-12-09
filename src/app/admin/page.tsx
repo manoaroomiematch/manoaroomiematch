@@ -442,6 +442,7 @@ const AdminPage: React.FC = () => {
                     <h1 className="mb-0" style={{ color: 'inherit', fontWeight: 700, fontSize: '2.5rem' }}>
                       {getTimeBasedGreeting()}
                       ,
+                      {' '}
                       <strong>{adminDisplayName}</strong>
                     </h1>
                     <p style={{ fontSize: '0.95rem', marginTop: '0.5rem', opacity: 0.95 }}>
@@ -456,7 +457,6 @@ const AdminPage: React.FC = () => {
               </div>
             </div>
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 className="mb-0">Admin Dashboard</h2>
               <button
                 type="button"
                 className="btn btn-primary"

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Card, Button, ListGroup, Form, Badge } from 'react-bootstrap';
-import { PersonCircle, Plus, Trash2, PencilSquare } from 'react-bootstrap-icons';
+import { PersonCircle, Plus, PencilSquare, X } from 'react-bootstrap-icons';
 import AdminEditProfileModal from './AdminEditProfileModal';
 
 interface Task {
@@ -246,7 +246,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     onClick={() => handleDeleteTask(task.id)}
                     title="Delete task"
                   >
-                    <Trash2 size={16} />
+                    <X size={16} />
                   </Button>
                 </ListGroup.Item>
               ))}

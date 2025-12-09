@@ -28,37 +28,30 @@ export async function GET() {
       );
     }
 
-    // Fetch all users from the User table (which always exists)
+    // Fetch all users with their profiles in one query for better efficiency
     const users = await prisma.user.findMany({
+      include: {
+        profile: true,
+      },
       orderBy: {
         id: 'asc',
       },
     });
 
-    // Try to fetch profiles if the UserProfile table exists
-    // This is a defensive approach since the table might not exist yet in all environments
-    let profiles: any[] = [];
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      profiles = await (prisma as any).userProfile.findMany();
-    } catch (err) {
-      console.log('UserProfile table does not exist yet, using basic user info');
-    }
-
-    // Create a profile map for quick lookup by userId
-    const profileMap = new Map(profiles.map((p: any) => [p.userId, p]));
-
     // Transform the data to match the expected format for the admin UI
     // Falls back to email username if no profile exists
     const formattedUsers = users.map((user) => {
-      const profile = profileMap.get(user.id);
+      const profileName = user.profile?.firstName && user.profile?.lastName
+        ? `${user.profile.firstName} ${user.profile.lastName}`.trim()
+        : user.profile?.name || user.email.split('@')[0];
+
       return {
         id: user.id.toString(),
-        name: profile?.name || user.email.split('@')[0], // Use email prefix as fallback
+        name: profileName,
         email: user.email,
         role: user.role,
         activity: 'Online', // You can implement real activity tracking later
-        createdAt: profile?.createdAt,
+        createdAt: user.profile?.createdAt,
       };
     });
 
@@ -94,18 +87,68 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid user id format' }, { status: 400 });
     }
 
-    // Delete user profile first using userId: Number(id)
+    // Delete all related records in correct order to avoid foreign key constraint violations
     try {
-      await (prisma as any).userProfile.delete({ where: { userId } });
+      // First, get the user's profile ID to delete matches
+      const userProfile = await prisma.userProfile.findUnique({ where: { userId } });
+
+      if (userProfile) {
+        // Delete all matches for this user profile
+        await prisma.match.deleteMany({
+          where: {
+            OR: [
+              { user1Id: userProfile.id },
+              { user2Id: userProfile.id },
+            ],
+          },
+        });
+
+        // Delete lifestyle responses before deleting profile
+        await prisma.lifestyleResponse.deleteMany({ where: { user_id: userId } });
+
+        // Delete the user profile
+        await prisma.userProfile.delete({ where: { userId } });
+      }
+
+      // Delete all flags related to this user (both reported and reported_by)
+      await prisma.flag.deleteMany({
+        where: {
+          OR: [
+            { reported_by_user_id: userId },
+            { reported_user_id: userId },
+          ],
+        },
+      });
+
+      // Delete all notifications for this user
+      await prisma.notification.deleteMany({ where: { user_id: userId } });
+
+      // Delete all messages where user is sender or receiver
+      await prisma.message.deleteMany({
+        where: {
+          OR: [
+            { senderId: userId },
+            { receiverId: userId },
+          ],
+        },
+      });
     } catch (err) {
-      // Ignore if profile doesn't exist
+      console.error('Error deleting related records:', err);
+      return NextResponse.json(
+        { error: `Failed to delete user records: ${err instanceof Error ? err.message : 'Unknown error'}` },
+        { status: 500 },
+      );
     }
-    // Delete user from database
+
+    // Finally, delete the user
     await prisma.user.delete({ where: { id: userId } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting user:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 },
+    );
   }
 }
