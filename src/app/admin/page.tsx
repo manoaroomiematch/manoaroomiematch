@@ -446,7 +446,7 @@ const AdminPage: React.FC = () => {
               setAdminBgColor={setAdminBgColor}
             />
           </div>
-          {/* Main Content */}
+          {/* Main Content Banner */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               className="mb-4 p-5 rounded-4 shadow-sm"
