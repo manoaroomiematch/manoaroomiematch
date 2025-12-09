@@ -45,11 +45,9 @@ export function ProfilePictureProvider({ children }: { children: React.ReactNode
       if (res.ok) {
         const data = await res.json();
         setPhotoUrl(data.photoUrl || null);
-      } else {
+      } else if (res.status !== 401) {
         // Don't treat 401 as an error - user might just not be authenticated yet
-        if (res.status !== 401) {
-          console.error('Failed to fetch profile picture:', res.status);
-        }
+        console.error('Failed to fetch profile picture:', res.status);
       }
     } catch (error) {
       // Silently fail - the picture fetch is non-critical
