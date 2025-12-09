@@ -6,10 +6,11 @@ import authOptions from '@/lib/authOptions';
 
 /**
  * GET /api/admin/users
- * Returns all users with their profile information
+ * Returns paginated users with their profile information
+ * Query parameters: ?page=1&limit=10
  * Admin-only endpoint
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     // Check if user is authenticated and has admin role
     const session = await getServerSession(authOptions);
@@ -28,7 +29,16 @@ export async function GET() {
       );
     }
 
-    // Fetch all users with their profiles in one query for better efficiency
+    // Parse pagination parameters from URL
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10', 10)));
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const total = await prisma.user.count();
+
+    // Fetch paginated users with their profiles in one query for better efficiency
     const users = await prisma.user.findMany({
       include: {
         profile: true,
@@ -36,6 +46,8 @@ export async function GET() {
       orderBy: {
         id: 'asc',
       },
+      skip,
+      take: limit,
     });
 
     // Transform the data to match the expected format for the admin UI
@@ -50,12 +62,18 @@ export async function GET() {
         name: profileName,
         email: user.email,
         role: user.role,
-        activity: 'Online', // You can implement real activity tracking later
-        createdAt: user.profile?.createdAt,
       };
     });
 
-    return NextResponse.json({ users: formattedUsers });
+    return NextResponse.json({
+      users: formattedUsers,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(

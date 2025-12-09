@@ -29,7 +29,10 @@ const NavBar: React.FC = () => {
   return (
     <Navbar bg="light" expand="lg">
       <Container>
-        <Navbar.Brand href="/" className="d-flex align-items-center">
+        <Navbar.Brand
+          href={role === 'ADMIN' ? '/admin' : '/'}
+          className="d-flex align-items-center"
+        >
           <Image
             src="/RoomieLogo.png"
             alt="Manoa RoomieMatch"

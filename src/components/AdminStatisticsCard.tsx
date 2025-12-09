@@ -3,8 +3,6 @@ import { Badge } from 'react-bootstrap';
 
 interface AdminStatisticsCardProps {
   totalUsers: number;
-  adminUserCount: number;
-  regularUserCount: number;
   totalFlags: number;
   totalCategories: number;
   barColor?: string;
@@ -13,8 +11,6 @@ interface AdminStatisticsCardProps {
 
 const AdminStatisticsCard: React.FC<AdminStatisticsCardProps> = ({
   totalUsers,
-  adminUserCount,
-  regularUserCount,
   totalFlags,
   totalCategories,
   barColor = 'linear-gradient(90deg, #e0ffe7 0%, #f8f9fa 100%)',
@@ -38,20 +34,6 @@ const AdminStatisticsCard: React.FC<AdminStatisticsCardProps> = ({
       </Badge>
       {' '}
       Users
-    </span>
-    <span>
-      <Badge bg="danger" className="me-1">
-        {adminUserCount}
-      </Badge>
-      {' '}
-      Admins
-    </span>
-    <span>
-      <Badge bg="secondary" className="me-1">
-        {regularUserCount}
-      </Badge>
-      {' '}
-      Regular
     </span>
     <span>
       <Badge bg="warning" className="me-1">

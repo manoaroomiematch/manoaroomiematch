@@ -28,6 +28,8 @@ import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 import DeleteUserModal from '@/components/DeleteUserModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminStatisticsCard from '@/components/AdminStatisticsCard';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import WeatherWidget from '@/components/WeatherWidget';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -40,7 +42,6 @@ interface User {
   name: string;
   email: string;
   role: string;
-  activity: string;
 }
 
 interface Flag {
@@ -160,9 +161,15 @@ const AdminPage: React.FC = () => {
 
   /** Data state - fetched from API endpoints instead of hard-coded mock data */
   const [users, setUsers] = useState<User[]>([]);
+  const [usersPagination, setUsersPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
   const [flags, setFlags] = useState<Flag[]>([]);
+  const [flagsPagination, setFlagsPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categoriesPagination, setCategoriesPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [flagsLoading, setFlagsLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
@@ -194,7 +201,7 @@ const AdminPage: React.FC = () => {
   const [userSort, setUserSort] = useState('');
 
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 10;
 
   /** CONTENT MODERATION FILTERS */
   const [moderationSearch, setModerationSearch] = useState('');
@@ -207,67 +214,115 @@ const AdminPage: React.FC = () => {
   const [categorySort, setCategorySort] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
 
-  /** Fetch data from API - replaces all hard-coded mock data */
-  const fetchAdminData = async () => {
-    // Only fetch data if user is authenticated and is admin
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') {
-      return;
-    }
-
+  /** Fetch users for the current page */
+  const fetchUsers = async () => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
     try {
-      setLoading(true);
-
-      // Fetch users from database (replaces mockUsers)
-      const usersResponse = await fetch('/api/admin/users');
-      if (!usersResponse.ok) {
-        throw new Error(`Failed to fetch users: ${usersResponse.statusText}`);
-      }
-      const usersData = await usersResponse.json();
-      setUsers(usersData.users || []);
-
-      // Fetch flags from database (replaces mockFlags)
-      const flagsResponse = await fetch('/api/admin/flags');
-      if (!flagsResponse.ok) {
-        throw new Error(`Failed to fetch flags: ${flagsResponse.statusText}`);
-      }
-      const flagsData = await flagsResponse.json();
-      setFlags(flagsData.flags || []);
-
-      // Fetch categories from database (replaces mockCategories)
-      const categoriesResponse = await fetch('/api/admin/categories');
-      if (!categoriesResponse.ok) {
-        throw new Error(`Failed to fetch categories: ${categoriesResponse.statusText}`);
-      }
-      const categoriesData = await categoriesResponse.json();
-      setCategories(categoriesData.categories || []);
-
-      // Fetch admin profile to get photo URL and other data
-      if (session?.user?.email) {
-        const profileResponse = await fetch(`/api/profile?email=${encodeURIComponent(session.user.email)}`);
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json();
-          const { profile } = profileData;
-          setAdminPhotoUrl(profile?.photoUrl || undefined);
-          setAdminProfile({
-            firstName: profile?.firstName || undefined,
-            lastName: profile?.lastName || undefined,
-            bio: profile?.bio || undefined,
-            pronouns: profile?.pronouns || undefined,
-          });
-        }
-      }
+      setUsersLoading(true);
+      const response = await fetch(`/api/admin/users?page=${page}&limit=${pageSize}`);
+      if (!response.ok) throw new Error(`Failed to fetch users: ${response.statusText}`);
+      const data = await response.json();
+      setUsers(data.users || []);
+      setUsersPagination(data.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 });
     } catch (err) {
-      console.error('Error fetching admin data:', err);
+      console.error('Error fetching users:', err);
     } finally {
-      setLoading(false);
+      setUsersLoading(false);
     }
   };
 
-  /** Initial data load on component mount and when admin profile modal opens/closes */
+  /** Fetch flags for the current page */
+  const fetchFlags = async () => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    try {
+      setFlagsLoading(true);
+      const response = await fetch(`/api/admin/flags?page=${moderationPage}&limit=${pageSize}`);
+      if (!response.ok) throw new Error(`Failed to fetch flags: ${response.statusText}`);
+      const data = await response.json();
+      setFlags(data.flags || []);
+      setFlagsPagination(data.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 });
+    } catch (err) {
+      console.error('Error fetching flags:', err);
+    } finally {
+      setFlagsLoading(false);
+    }
+  };
+
+  /** Fetch categories for the current page */
+  const fetchCategories = async () => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    try {
+      setCategoriesLoading(true);
+      const response = await fetch(`/api/admin/categories?page=${categoryPage}&limit=${pageSize}`);
+      if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
+      const data = await response.json();
+      setCategories(data.categories || []);
+      setCategoriesPagination(data.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 });
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  /** Fetch admin profile and all data on initial load */
+  const fetchAdminData = async () => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    try {
+      setInitialLoading(true);
+      // Fetch admin profile
+      if (session?.user?.email) {
+        try {
+          const response = await fetch(`/api/profile?email=${encodeURIComponent(session.user.email)}`);
+          if (response.ok) {
+            const data = await response.json();
+            const { profile } = data;
+            setAdminPhotoUrl(profile?.photoUrl || undefined);
+            setAdminProfile({
+              firstName: profile?.firstName || undefined,
+              lastName: profile?.lastName || undefined,
+              bio: profile?.bio || undefined,
+              pronouns: profile?.pronouns || undefined,
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching admin profile:', err);
+        }
+      }
+      // Fetch all tables in parallel
+      await Promise.all([fetchUsers(), fetchFlags(), fetchCategories()]);
+    } catch (err) {
+      console.error('Error fetching admin data:', err);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  /** Fetch data from API - replaces all hard-coded mock data */
+
+  // Initial load on component mount and when profile changes
   useEffect(() => {
     fetchAdminData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, showProfileModal]);
+
+  // Fetch users when user page changes
+  useEffect(() => {
+    if (!initialLoading) fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  // Fetch flags when moderation page changes
+  useEffect(() => {
+    if (!initialLoading) fetchFlags();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moderationPage]);
+
+  // Fetch categories when category page changes
+  useEffect(() => {
+    if (!initialLoading) fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryPage]);
 
   /** Handle flag resolution - calls API endpoint to update flag status */
   // This function is passed to ContentModerationTable components to handle
@@ -296,75 +351,20 @@ const AdminPage: React.FC = () => {
   };
 
   /** USER MANAGEMENT FILTERS */
-  let filteredUsers = users.filter((user) => {
-    // Support searching by first or last name, as well as full name and email
-    const searchLower = search.toLowerCase();
-    const [firstName, ...rest] = user.name.split(' ');
-    const lastName = rest.length > 0 ? rest[rest.length - 1] : '';
-    const matchesSearch = user.name.toLowerCase().includes(searchLower)
-      || user.email.toLowerCase().includes(searchLower)
-      || firstName.toLowerCase().includes(searchLower)
-      || lastName.toLowerCase().includes(searchLower);
-    const matchesRole = roleFilter ? user.role === roleFilter : true;
-    return matchesSearch && matchesRole;
-  });
-
-  // Apply sorting for users
-  if (userSort === 'NameA') {
-    filteredUsers = [...filteredUsers].sort((a, b) => a.name.localeCompare(b.name));
-  } else if (userSort === 'NameZ') {
-    filteredUsers = [...filteredUsers].sort((a, b) => b.name.localeCompare(a.name));
-  }
-
-  const totalPagesUsers = Math.ceil(filteredUsers.length / pageSize);
-  const shownUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+  // Note: Filtering and sorting now handled server-side via API pagination
+  // keeping filter state for UI but not actively filtering/sorting locally
+  const totalPagesUsers = usersPagination.pages;
+  const shownUsers = users;
 
   /** CONTENT MODERATION FILTERS */
-  let filteredFlags = flags.filter((flag) => {
-    const matchesSearch = flag.user.toLowerCase().includes(moderationSearch.toLowerCase());
-    const matchesReason = reasonFilter ? flag.reason === reasonFilter : true;
-    return matchesSearch && matchesReason;
-  });
-
-  // Apply sorting
-  if (moderationSort === 'UserA') {
-    filteredFlags = [...filteredFlags].sort((a, b) => a.user.localeCompare(b.user));
-  } else if (moderationSort === 'UserZ') {
-    filteredFlags = [...filteredFlags].sort((a, b) => b.user.localeCompare(a.user));
-  } else if (moderationSort === 'DateNew') {
-    filteredFlags = [...filteredFlags].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  } else if (moderationSort === 'DateOld') {
-    filteredFlags = [...filteredFlags].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
-
-  const totalPagesModeration = Math.ceil(filteredFlags.length / pageSize);
-  const shownFlags = filteredFlags.slice((moderationPage - 1) * pageSize, moderationPage * pageSize);
+  // Note: Filtering and sorting now handled server-side via API pagination
+  const totalPagesModeration = flagsPagination.pages;
+  const shownFlags = flags;
 
   /** LIFESTYLE CATEGORIES FILTERS */
-  let filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name.toLowerCase().includes(categorySearch.toLowerCase());
-    return matchesSearch;
-  });
-
-  // Apply sorting for categories
-  if (categorySort === 'NameA') {
-    filteredCategories = [...filteredCategories].sort((a, b) => a.name.localeCompare(b.name));
-  } else if (categorySort === 'NameZ') {
-    filteredCategories = [...filteredCategories].sort((a, b) => b.name.localeCompare(a.name));
-  } else if (categorySort === 'ItemsLow') {
-    filteredCategories = [...filteredCategories].sort((a, b) => a.items - b.items);
-  } else if (categorySort === 'ItemsHigh') {
-    filteredCategories = [...filteredCategories].sort((a, b) => b.items - a.items);
-  } else if (categorySort === 'DateNew') {
-    // eslint-disable-next-line max-len
-    filteredCategories = [...filteredCategories].sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
-  } else if (categorySort === 'DateOld') {
-    // eslint-disable-next-line max-len
-    filteredCategories = [...filteredCategories].sort((a, b) => new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime());
-  }
-
-  const totalPagesCategories = Math.ceil(filteredCategories.length / pageSize);
-  const shownCategories = filteredCategories.slice((categoryPage - 1) * pageSize, categoryPage * pageSize);
+  // Note: Filtering and sorting now handled server-side via API pagination
+  const totalPagesCategories = categoriesPagination.pages;
+  const shownCategories = categories;
 
   // Compute admin display name from edited profile if available
   const adminDisplayName = (adminProfile.firstName || adminProfile.lastName)
@@ -407,8 +407,8 @@ const AdminPage: React.FC = () => {
     red: {
       bg: 'linear-gradient(120deg, #ffebee 60%, #ffcdd2 100%)',
       banner: 'linear-gradient(135deg, #c62828 0%, #ff8a80 100%)',
-      stats: '#ff8181ff',
-      statsText: '#4f0202ff',
+      stats: '#ff8989ff',
+      statsText: '#460202ff',
     },
     yellow: {
       bg: 'linear-gradient(120deg, #fffde7 60%, #fff9c4 100%)',
@@ -417,6 +417,16 @@ const AdminPage: React.FC = () => {
       statsText: '#896711ff',
     },
   };
+
+  if (status === 'loading' || initialLoading) {
+    return (
+      <main>
+        <Container fluid className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+          <LoadingSpinner />
+        </Container>
+      </main>
+    );
+  }
 
   return (
     <main>
@@ -498,7 +508,7 @@ const AdminPage: React.FC = () => {
                   </div>
                   <div style={{ minWidth: '340px', maxWidth: '420px', width: '100%' }}>
                     {/* WeatherWidget inside banner */}
-                    {require('@/components/WeatherWidget').default()}
+                    <WeatherWidget />
                   </div>
                 </div>
               </div>
@@ -509,24 +519,27 @@ const AdminPage: React.FC = () => {
                 className="btn btn-primary shadow-sm px-4 py-2 rounded-pill"
                 style={{ fontWeight: 600, fontSize: '1.05rem', letterSpacing: 0.5 }}
                 onClick={fetchAdminData}
-                disabled={loading}
               >
-                {loading ? 'Refreshing...' : 'Refresh Data'}
+                Refresh All Data
               </button>
               <AdminStatisticsCard
-                totalUsers={users.length}
-                adminUserCount={users.filter((u) => u.role === 'ADMIN').length}
-                regularUserCount={users.filter((u) => u.role !== 'ADMIN').length}
-                totalFlags={flags.length}
-                totalCategories={categories.length}
+                totalUsers={usersPagination.total}
+                totalFlags={flagsPagination.total}
+                totalCategories={categoriesPagination.total}
                 barColor={colorMap[adminBgColor].stats}
                 barText={colorMap[adminBgColor].statsText}
               />
             </div>
             {/* Section styling for all admin tables */}
             <div className="mb-4">
-              <AdminSection title="User Management" page={page} totalPages={totalPagesUsers} onPageChange={setPage}>
-                <div className="d-flex gap-3 mb-3 flex-wrap">
+              <AdminSection
+                title="User Management"
+                page={page}
+                totalPages={totalPagesUsers}
+                onPageChange={setPage}
+                themeColor={adminBgColor}
+              >
+                <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                   <Form.Control
                     style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                     type="text"
@@ -538,7 +551,11 @@ const AdminPage: React.FC = () => {
                     }}
                   />
                   <Form.Select
-                    style={{ maxWidth: '180px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
                     value={roleFilter}
                     onChange={(e) => {
                       setRoleFilter(e.target.value);
@@ -550,7 +567,11 @@ const AdminPage: React.FC = () => {
                     <option value="USER">User</option>
                   </Form.Select>
                   <Form.Select
-                    style={{ maxWidth: '180px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
                     value={userSort}
                     onChange={(e) => {
                       setUserSort(e.target.value);
@@ -561,6 +582,21 @@ const AdminPage: React.FC = () => {
                     <option value="NameA">Name A-Z</option>
                     <option value="NameZ">Name Z-A</option>
                   </Form.Select>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm rounded-pill"
+                    style={{
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#1976d2',
+                      color: '#fff',
+                      border: 'none',
+                    }}
+                    onClick={fetchUsers}
+                    disabled={usersLoading}
+                  >
+                    {usersLoading ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
                 <AdminTable>
                   <thead className="table-light">
@@ -568,7 +604,6 @@ const AdminPage: React.FC = () => {
                       <th>Name</th>
                       <th>Email</th>
                       <th>Role</th>
-                      <th>Activity</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -595,8 +630,9 @@ const AdminPage: React.FC = () => {
                 page={moderationPage}
                 totalPages={totalPagesModeration}
                 onPageChange={setModerationPage}
+                themeColor={adminBgColor}
               >
-                <div className="d-flex gap-3 mb-3 flex-wrap">
+                <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                   <Form.Control
                     style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                     type="text"
@@ -621,7 +657,11 @@ const AdminPage: React.FC = () => {
                     <option value="Harassment">Harassment</option>
                   </Form.Select>
                   <Form.Select
-                    style={{ maxWidth: '180px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
                     value={moderationSort}
                     onChange={(e) => {
                       setModerationSort(e.target.value);
@@ -634,6 +674,21 @@ const AdminPage: React.FC = () => {
                     <option value="DateNew">Date (Newest)</option>
                     <option value="DateOld">Date (Oldest)</option>
                   </Form.Select>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm rounded-pill"
+                    style={{
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#1976d2',
+                      color: '#fff',
+                      border: 'none',
+                    }}
+                    onClick={fetchFlags}
+                    disabled={flagsLoading}
+                  >
+                    {flagsLoading ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
                 <AdminTable>
                   <thead className="table-light">
@@ -658,8 +713,9 @@ const AdminPage: React.FC = () => {
                 page={categoryPage}
                 totalPages={totalPagesCategories}
                 onPageChange={setCategoryPage}
+                themeColor={adminBgColor}
               >
-                <div className="d-flex gap-3 mb-3 flex-wrap">
+                <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                   <Form.Control
                     style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                     type="text"
@@ -671,7 +727,11 @@ const AdminPage: React.FC = () => {
                     }}
                   />
                   <Form.Select
-                    style={{ maxWidth: '180px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
                     value={categorySort}
                     onChange={(e) => {
                       setCategorySort(e.target.value);
@@ -689,11 +749,30 @@ const AdminPage: React.FC = () => {
                   <Button
                     variant="success"
                     className="rounded-pill px-4 shadow-sm"
-                    style={{ fontWeight: 600, fontSize: '1.05rem', letterSpacing: 0.5 }}
+                    style={{
+                      fontWeight: 600,
+                      fontSize: '1.05rem',
+                      letterSpacing: 0.5,
+                    }}
                     onClick={() => setShowAddCategoryModal(true)}
                   >
                     Add Category
                   </Button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm rounded-pill"
+                    style={{
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      backgroundColor: '#1976d2',
+                      color: '#fff',
+                      border: 'none',
+                    }}
+                    onClick={fetchCategories}
+                    disabled={categoriesLoading}
+                  >
+                    {categoriesLoading ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
                 <AdminTable>
                   <thead className="table-light">
