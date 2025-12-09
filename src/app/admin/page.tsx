@@ -150,9 +150,21 @@ const AdminPage: React.FC = () => {
       setUserModalError('Error deleting user.');
     }
   };
-  /** View user profile handler */
-  const handleViewUser = (email: string) => {
-    setSelectedUserEmail(email);
+  /** View user profile handler - uses pre-fetched user data, then fetches full profile on demand */
+  const handleViewUser = async (email: string) => {
+    // Attempt to fetch the full profile data
+    try {
+      const response = await fetch(`/api/profile?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedUserProfile(data.profile);
+      } else {
+        setSelectedUserProfile(null);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setSelectedUserProfile(null);
+    }
     setShowProfileModal(true);
   };
   const { data: session, status } = useSession();
@@ -169,7 +181,7 @@ const AdminPage: React.FC = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [flagsLoading, setFlagsLoading] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
   const [adminProfile, setAdminProfile] = useState<{
@@ -323,9 +335,7 @@ const AdminPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryPage]);
 
-  /** Handle flag resolution - calls API endpoint to update flag status */
-  // This function is passed to ContentModerationTable components to handle
-  // resolve/deactivate button clicks
+  /** Handle flag resolution - updates local state immediately after successful API call */
   const handleResolveFlag = async (flagId: number, action: 'resolve' | 'deactivate') => {
     try {
       const response = await fetch('/api/admin/resolve-flag', {
@@ -340,10 +350,9 @@ const AdminPage: React.FC = () => {
         throw new Error(`Failed to ${action} flag`);
       }
 
-      // Refresh flags data to show updated status
-      const flagsResponse = await fetch('/api/admin/flags');
-      const flagsData = await flagsResponse.json();
-      setFlags(flagsData.flags || []);
+      // Update local state immediately instead of re-fetching
+      const newStatus = action === 'resolve' ? 'resolved' : 'user_deactivated';
+      setFlags((prev) => prev.map((flag) => (flag.id === flagId ? { ...flag, status: newStatus } : flag)));
     } catch (err) {
       console.error(`Error ${action}ing flag:`, err);
     }
@@ -849,11 +858,11 @@ const AdminPage: React.FC = () => {
 
       {/* User Profile Modal */}
       <UserProfileModal
-        email={selectedUserEmail}
+        profile={selectedUserProfile}
         show={showProfileModal}
         onHide={() => {
           setShowProfileModal(false);
-          fetchAdminData();
+          setSelectedUserProfile(null);
         }}
       />
     </main>
