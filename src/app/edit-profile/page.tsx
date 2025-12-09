@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Modal } from 'react-bootstrap';
-import { PersonCircle, Upload, Trash, Eye, EyeSlash } from 'react-bootstrap-icons';
+import { Eye, EyeSlash } from 'react-bootstrap-icons';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { updateUserProfile, getProfileByEmail } from '@/lib/dbActions';
+import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 
 /**
  * Edit Profile Page
@@ -23,7 +23,6 @@ import { updateUserProfile, getProfileByEmail } from '@/lib/dbActions';
 const EditProfilePage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Mock initial data - TODO: Replace with actual data from database
   const currentUserEmail = session?.user?.email || '';
@@ -55,12 +54,6 @@ const EditProfilePage = () => {
     specificBuilding: '', // For custom building name
     budget: '', // Budget for off-campus
   });
-
-  const [profilePhoto, setProfilePhoto] = useState<string>(
-    isJohnDoe ? '/johndoe.jpg' : '',
-  );
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   // Modal state for success/failure feedback
   const [modalState, setModalState] = useState<{
@@ -139,38 +132,9 @@ const EditProfilePage = () => {
     setFormData({ ...formData, [field]: value });
   };
 
-  // Handle photo upload
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Trigger file input click
-  const handleChangePhotoClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Remove photo
-  const handleRemovePhoto = () => {
-    setProfilePhoto('');
-    setPhotoFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
   // Handle form submission
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // console.log('Photo file (not implemented):', photoFile);
     try {
       await updateUserProfile(currentUserEmail, {
         firstName: formData.firstName,
@@ -261,47 +225,7 @@ const EditProfilePage = () => {
               <Card className="shadow-sm mb-4" style={{ border: 'none', borderRadius: '12px' }}>
                 <Card.Body className="p-4">
                   <h4 className="fw-bold mb-3">Profile Photo</h4>
-
-                  <div className="text-center mb-3">
-                    {profilePhoto ? (
-                      <Image
-                        src={profilePhoto}
-                        alt="Profile photo"
-                        width={150}
-                        height={150}
-                        className="rounded-circle"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <PersonCircle size={150} className="text-secondary" />
-                    )}
-                  </div>
-
-                  <div className="d-flex justify-content-center gap-2">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handlePhotoChange}
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                    />
-                    <Button
-                      variant="success"
-                      onClick={handleChangePhotoClick}
-                    >
-                      <Upload className="me-2" />
-                      {profilePhoto ? 'Change Photo' : 'Upload Photo'}
-                    </Button>
-                    {profilePhoto && (
-                      <Button
-                        variant="outline-danger"
-                        onClick={handleRemovePhoto}
-                      >
-                        <Trash className="me-2" />
-                        Remove Photo
-                      </Button>
-                    )}
-                  </div>
+                  <ProfilePictureUpload />
                 </Card.Body>
               </Card>
 
