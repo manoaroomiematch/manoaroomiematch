@@ -29,7 +29,6 @@ import DeleteUserModal from '@/components/DeleteUserModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminStatisticsCard from '@/components/AdminStatisticsCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import WeatherWidget from '@/components/WeatherWidget';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -505,10 +504,6 @@ const AdminPage: React.FC = () => {
                     <p style={{ fontSize: '1.05rem', marginTop: '0.5rem', opacity: 0.95, fontWeight: 500 }}>
                       Welcome to your admin dashboard!
                     </p>
-                  </div>
-                  <div style={{ minWidth: '340px', maxWidth: '420px', width: '100%' }}>
-                    {/* WeatherWidget inside banner */}
-                    <WeatherWidget />
                   </div>
                 </div>
               </div>
