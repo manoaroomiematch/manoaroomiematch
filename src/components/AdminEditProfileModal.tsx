@@ -459,24 +459,6 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
           )}
         </div>
 
-        {/* Application Settings Section */}
-        <div>
-          <h6 className="fw-bold mb-3">Application Settings</h6>
-          <Form.Group className="mb-0">
-            <Form.Label>Theme Preference</Form.Label>
-            <Form.Select
-              value={themePreference}
-              onChange={(e) => setThemePreference(e.target.value as 'light' | 'dark' | 'auto')}
-            >
-              <option value="light">Light Theme</option>
-              <option value="dark">Dark Theme</option>
-              <option value="auto">Auto (System Setting)</option>
-            </Form.Select>
-            <small className="text-muted d-block mt-2">
-              Choose how the admin panel displays. Auto will use your system preferences.
-            </small>
-          </Form.Group>
-        </div>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleCloseModal}>

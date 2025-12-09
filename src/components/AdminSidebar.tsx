@@ -1,10 +1,71 @@
 'use client';
 
+/* eslint-disable max-len */
+
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Card, Button, ListGroup, Form, Badge } from 'react-bootstrap';
+import { Card, Button, ListGroup, Form, Badge, Modal } from 'react-bootstrap';
 import { PersonCircle, Plus, PencilSquare, X } from 'react-bootstrap-icons';
 import AdminEditProfileModal from './AdminEditProfileModal';
+import AdminSettings from './AdminSettings';
+
+// Simple calendar component (no external library)
+function MiniCalendar() {
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const days = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let d = 1; d <= daysInMonth; d++) days.push(d);
+
+  function prevMonth() {
+    setCurrentMonth((m) => (m === 0 ? 11 : m - 1));
+    if (currentMonth === 0) setCurrentYear((y) => y - 1);
+  }
+  function nextMonth() {
+    setCurrentMonth((m) => (m === 11 ? 0 : m + 1));
+    if (currentMonth === 11) setCurrentYear((y) => y + 1);
+  }
+
+  return (
+    <div style={{ background: '#f8f9fa', borderRadius: 12, boxShadow: '0 1px 4px #0001', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8 }}>
+        <button type="button" onClick={prevMonth} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer' }}>&lt;</button>
+        <span style={{ fontWeight: 600 }}>
+          {monthNames[currentMonth]}
+          {' '}
+          {currentYear}
+        </span>
+        <button type="button" onClick={nextMonth} style={{ border: 'none', background: 'none', fontSize: 18, cursor: 'pointer' }}>&gt;</button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: 13, padding: '0 8px 8px 8px' }}>
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          <div key={d} style={{ fontWeight: 500, color: '#888' }}>{d}</div>
+        ))}
+        {days.map((d, i) => (
+          <div
+            key={d || i}
+            style={{
+              padding: 4,
+              borderRadius: 6,
+              background: d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear() ? '#b2f2bb' : 'none',
+              color: d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear() ? '#155724' : undefined,
+              minHeight: 24,
+            }}
+          >
+            {d || ''}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface Task {
   id: string;
@@ -20,12 +81,9 @@ interface AdminSidebarProps {
   adminLastName?: string;
   adminBio?: string;
   adminPronouns?: string;
-  totalUsers: number;
-  adminUserCount: number;
-  regularUserCount: number;
-  totalFlags: number;
-  totalCategories: number;
   onProfileUpdate?: () => void;
+  adminBgColor: 'white' | 'green' | 'blue' | 'red' | 'yellow';
+  setAdminBgColor: (color: 'white' | 'green' | 'blue' | 'red' | 'yellow') => void;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -36,17 +94,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   adminLastName,
   adminBio,
   adminPronouns,
-  totalUsers,
-  adminUserCount,
-  regularUserCount,
-  totalFlags,
-  totalCategories,
   onProfileUpdate,
+  adminBgColor,
+  setAdminBgColor,
 }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showAddTask, setShowAddTask] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   // Load tasks from localStorage on mount
   useEffect(() => {
@@ -136,44 +192,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </Card.Body>
       </Card>
 
-      {/* Statistics Card */}
-      <Card className="shadow-sm mb-3" style={{ border: 'none', borderRadius: '12px' }}>
-        <Card.Header className="bg-light p-3 border-0 rounded-top" style={{ borderRadius: '12px 12px 0 0' }}>
-          <h6 className="mb-0 fw-bold">Statistics</h6>
-        </Card.Header>
-        <Card.Body className="p-3">
-          <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <small className="text-muted">Total Users</small>
-              <Badge bg="primary">{totalUsers}</Badge>
-            </div>
-            <div className="ms-3">
-              <small className="text-muted d-block" style={{ fontSize: '0.8rem' }}>
-                Admins:
-                {' '}
-                <Badge bg="danger" className="ms-1">{adminUserCount}</Badge>
-              </small>
-              <small className="text-muted d-block" style={{ fontSize: '0.8rem' }}>
-                Users:
-                {' '}
-                <Badge bg="secondary" className="ms-1">{regularUserCount}</Badge>
-              </small>
-            </div>
-          </div>
-          <div className="mb-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <small className="text-muted">Flagged Content</small>
-              <Badge bg="warning">{totalFlags}</Badge>
-            </div>
-          </div>
-          <div>
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <small className="text-muted">Categories</small>
-              <Badge bg="success">{totalCategories}</Badge>
-            </div>
-          </div>
-        </Card.Body>
-      </Card>
+      {/* Mini Calendar */}
+      <MiniCalendar />
 
       {/* Tasks Checklist Card */}
       <Card className="shadow-sm" style={{ border: 'none', borderRadius: '12px' }}>
@@ -296,6 +316,29 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           )}
         </Card.Body>
       </Card>
+
+      {/* Change Theme Button */}
+      <Button
+        variant="outline-secondary"
+        className="w-100 my-3"
+        style={{ fontWeight: 600, borderRadius: 12 }}
+        onClick={() => setShowThemeModal(true)}
+      >
+        Change Theme
+      </Button>
+
+      {/* Theme Modal */}
+      <Modal show={showThemeModal} onHide={() => setShowThemeModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Choose Background Color</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <AdminSettings selected={adminBgColor} onChange={(color) => setAdminBgColor(color as 'white' | 'green' | 'blue' | 'red' | 'yellow')} />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowThemeModal(false)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Edit Profile Modal */}
       <AdminEditProfileModal

@@ -123,6 +123,25 @@ const WeatherWidget: React.FC = () => {
     }
   };
 
+  const getWeatherBackground = (condition: string) => {
+    switch (condition) {
+      case 'Clear':
+        return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      case 'Partly Cloudy':
+        return 'linear-gradient(135deg, #78a9d1 0%, #5a7fa1 100%)';
+      case 'Rainy':
+        return 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)';
+      case 'Stormy':
+        return 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)';
+      case 'Snowy':
+        return 'linear-gradient(135deg, #d8e8f0 0%, #a8c8d8 100%)';
+      case 'Foggy':
+        return 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)';
+      default:
+        return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    }
+  };
+
   if (loading) {
     return (
       <Card
@@ -130,7 +149,7 @@ const WeatherWidget: React.FC = () => {
         style={{
           border: 'none',
           borderRadius: '12px',
-          background: 'rgba(255, 255, 255, 0.03)',
+          background: getWeatherBackground('Clear'),
           color: 'white',
           minHeight: '120px',
         }}
@@ -152,11 +171,38 @@ const WeatherWidget: React.FC = () => {
       style={{
         border: 'none',
         borderRadius: '12px',
-        background: 'rgba(255, 255, 255, 0.03)',
+        background: getWeatherBackground(weather.condition),
         color: 'white',
+        overflow: 'hidden',
+        position: 'relative',
       }}
     >
-      <Card.Body className="p-3">
+      {/* Decorative overlay elements */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-20%',
+          right: '-10%',
+          width: '150px',
+          height: '150px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-10%',
+          left: '-5%',
+          width: '100px',
+          height: '100px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.05)',
+          zIndex: 0,
+        }}
+      />
+      <Card.Body className="p-3" style={{ position: 'relative', zIndex: 1 }}>
         <div className="d-flex justify-content-between align-items-start mb-2">
           <div>
             <div className="d-flex align-items-center gap-2 mb-1">
