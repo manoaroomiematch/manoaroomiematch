@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown, Badge } from 'react-bootstrap';
 import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots } from 'react-bootstrap-icons';
 import Image from 'next/image';
+import ProfileAvatar from '@/components/ProfileAvatar';
 
 const NavBar: React.FC = () => {
   const { data: session } = useSession();
@@ -82,7 +83,12 @@ const NavBar: React.FC = () => {
                 <NavDropdown
                   id="login-dropdown"
                   className="nav-login-dropdown"
-                  title={currentUser}
+                  title={(
+                    <span className="d-flex align-items-center gap-2">
+                      <ProfileAvatar size={28} useCurrentUser showBorder={false} />
+                      <span className="d-none d-md-inline">{currentUser}</span>
+                    </span>
+                  )}
                 >
                   <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
                     <PencilSquare />
