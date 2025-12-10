@@ -17,10 +17,37 @@ import {
   ListGroup,
   Alert,
 } from 'react-bootstrap';
-import { MatchDetailData } from '@/types';
+import { MatchDetailData, UserProfile } from '@/types';
 import SideBySideComparison from '@/components/SideBySideComparison';
 import CompatibilityReportBox from '@/components/CompatibilityReport';
 import IcebreakersBox from '@/components/Icebreakers';
+import UserProfileModal from '@/components/UserProfileModal';
+
+interface ProfileData {
+  name: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  pronouns?: string;
+  bio?: string;
+  photoUrl?: string;
+  major?: string;
+  classStanding?: string;
+  graduationYear?: number;
+  sleepSchedule: number;
+  cleanliness: number;
+  noiseLevel: number;
+  socialLevel: number;
+  guestFrequency: number;
+  temperature: number;
+  smoking: boolean;
+  drinking: string;
+  pets: boolean;
+  petTypes: string[];
+  dietary: string[];
+  interests: string[];
+  workSchedule: string;
+}
 
 export default function ComparisonPage() {
   const params = useParams();
@@ -30,6 +57,9 @@ export default function ComparisonPage() {
   const [data, setData] = useState<MatchDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     async function fetchComparison() {
@@ -71,6 +101,42 @@ export default function ComparisonPage() {
 
     fetchComparison();
   }, [matchId, status]);
+
+  const handleViewProfile = async (userId: string) => {
+    setProfileLoading(true);
+    try {
+      const res = await fetch(`/api/profile/${userId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+      const { profile } = await res.json();
+
+      // Convert Prisma UserProfile to ProfileData format (null to undefined)
+      const profileData: ProfileData = {
+        ...profile,
+        firstName: profile.firstName || undefined,
+        lastName: profile.lastName || undefined,
+        pronouns: profile.pronouns || undefined,
+        bio: profile.bio || undefined,
+        photoUrl: profile.photoUrl || undefined,
+        major: profile.major || undefined,
+        classStanding: profile.classStanding || undefined,
+        graduationYear: profile.graduationYear || undefined,
+      };
+
+      setSelectedProfile(profileData);
+      setShowProfileModal(true);
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowProfileModal(false);
+    setSelectedProfile(null);
+  };
 
   if (status === 'loading' || loading) {
     return (
@@ -146,6 +212,7 @@ export default function ComparisonPage() {
               matchUser={data.matchUser}
               categoryBreakdown={data.categoryBreakdown}
               overallScore={data.match.overallScore}
+              onViewProfile={handleViewProfile}
             />
           </Col>
         </Row>
@@ -246,6 +313,13 @@ export default function ComparisonPage() {
           </Col>
         </Row>
       </Container>
+
+      {/* Profile Modal */}
+      <UserProfileModal
+        profile={selectedProfile}
+        show={showProfileModal}
+        onHide={handleCloseModal}
+      />
     </main>
   );
 }

@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react/no-array-index-key */
+/* eslint-disable react/require-default-props */
 
 import { UserProfile } from '@/types';
 import Image from 'next/image';
-import { Card, Row, Col, Badge } from 'react-bootstrap';
+import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
 import { PersonCircle } from 'react-bootstrap-icons';
 
 interface CategoryBreakdown {
@@ -19,6 +20,7 @@ interface SideBySideComparisonProps {
   matchUser: UserProfile;
   categoryBreakdown: CategoryBreakdown[];
   overallScore: number;
+  onViewProfile?: (userId: string, userName: string) => void;
 }
 
 export default function SideBySideComparison({
@@ -26,6 +28,7 @@ export default function SideBySideComparison({
   matchUser,
   categoryBreakdown,
   overallScore,
+  onViewProfile,
 }: SideBySideComparisonProps) {
   const getCategoryIcon = (category: string) => {
     const categoryLower = category.toLowerCase();
@@ -98,6 +101,14 @@ export default function SideBySideComparison({
                   )}
                 </div>
                 <h4 className="fw-bold mb-0">{matchUser.name}</h4>
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => onViewProfile?.(matchUser.id, matchUser.name)}
+                >
+                  View Profile
+                </Button>
               </div>
             </Col>
           </Row>
