@@ -6,10 +6,11 @@ import authOptions from '@/lib/authOptions';
 
 /**
  * GET /api/admin/flags
- * Returns all content moderation flags
+ * Returns paginated content moderation flags
+ * Query parameters: ?page=1&limit=10
  * Admin-only endpoint
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     // Check if user is authenticated and has admin role
     const session = await getServerSession(authOptions);
@@ -28,7 +29,26 @@ export async function GET() {
       );
     }
 
-    // Fetch all flags with user information
+    // Parse pagination parameters from URL
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10', 10)));
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    let total = 0;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      total = await (prisma as any).flag.count();
+    } catch (err) {
+      console.log('Flag table count failed:', err);
+      return NextResponse.json({
+        flags: [],
+        pagination: { total: 0, page, limit, pages: 0 },
+      });
+    }
+
+    // Fetch paginated flags with user information
     // Wrapped in try-catch to handle cases where Flag table doesn't exist yet
     let flags: any[] = [];
     try {
@@ -41,10 +61,15 @@ export async function GET() {
         orderBy: {
           created_at: 'desc',
         },
+        skip,
+        take: limit,
       });
     } catch (err) {
       console.log('Flag table query failed, returning empty list:', err);
-      return NextResponse.json({ flags: [] });
+      return NextResponse.json({
+        flags: [],
+        pagination: { total: 0, page, limit, pages: 0 },
+      });
     }
 
     // Fetch all users to get their basic information (email, role)
@@ -82,7 +107,15 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ flags: formattedFlags });
+    return NextResponse.json({
+      flags: formattedFlags,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error fetching flags:', error);
     return NextResponse.json(

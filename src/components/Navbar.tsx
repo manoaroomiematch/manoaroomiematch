@@ -30,7 +30,10 @@ const NavBar: React.FC = () => {
   return (
     <Navbar bg="light" expand="lg">
       <Container>
-        <Navbar.Brand href="/" className="d-flex align-items-center">
+        <Navbar.Brand
+          href={role === 'ADMIN' ? '/admin' : '/'}
+          className="d-flex align-items-center"
+        >
           <Image
             src="/RoomieLogo.png"
             alt="Manoa RoomieMatch"
@@ -45,35 +48,44 @@ const NavBar: React.FC = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto justify-content-start flex-row flex-wrap">
             {currentUser ? (
+              // eslint-disable-next-line react/jsx-no-useless-fragment
               <>
-                <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'}>
-                  Browse Matches
-                </Nav.Link>
-                <Nav.Link
-                  id="lifestyle-survey-nav"
-                  href="/lifestyle-survey"
-                  active={pathName === '/lifestyle-survey'}
-                >
-                  Lifestyle Survey
-                </Nav.Link>
-                <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
-                  Resources
-                </Nav.Link>
-                <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
-                  My Profile
-                </Nav.Link>
-                <Nav.Link
-                  id="edit-profile-nav"
-                  href="/edit-profile"
-                  active={pathName === '/edit-profile'}
-                >
-                  Edit Profile
-                </Nav.Link>
-                {currentUser && role === 'ADMIN' ? (
-                  <Nav.Link id="admin-stuff-nav" href="/admin" active={pathName === '/admin'}>
-                    Admin
-                  </Nav.Link>
-                ) : ''}
+                {role === 'ADMIN' ? (
+                  <>
+                    <Nav.Link id="admin-dashboard-nav" href="/admin" active={pathName === '/admin'}>
+                      Admin Dashboard
+                    </Nav.Link>
+                    <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
+                      Resources
+                    </Nav.Link>
+                  </>
+                ) : (
+                  <>
+                    <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'}>
+                      Browse Matches
+                    </Nav.Link>
+                    <Nav.Link
+                      id="lifestyle-survey-nav"
+                      href="/lifestyle-survey"
+                      active={pathName === '/lifestyle-survey'}
+                    >
+                      Lifestyle Survey
+                    </Nav.Link>
+                    <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
+                      Resources
+                    </Nav.Link>
+                    <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
+                      My Profile
+                    </Nav.Link>
+                    <Nav.Link
+                      id="edit-profile-nav"
+                      href="/edit-profile"
+                      active={pathName === '/edit-profile'}
+                    >
+                      Edit Profile
+                    </Nav.Link>
+                  </>
+                )}
               </>
             ) : ''}
           </Nav>
@@ -90,11 +102,22 @@ const NavBar: React.FC = () => {
                     </span>
                   )}
                 >
-                  <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
-                    <PencilSquare />
+                  {role !== 'ADMIN' && (
+                    <>
+                      <NavDropdown.Item id="login-dropdown-edit-profile" href="/edit-profile">
+                        <PencilSquare />
+                        {' '}
+                        Edit Profile
+                      </NavDropdown.Item>
+                      <NavDropdown.Divider />
+                    </>
+                  )}
+                  <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
+                    <Lock />
                     {' '}
-                    Edit Profile
+                    Change Password
                   </NavDropdown.Item>
+                  <NavDropdown.Divider />
                   <NavDropdown.Item
                     id="login-dropdown-sign-out"
                     onClick={() => signOut({ callbackUrl: '/' })}
@@ -103,11 +126,6 @@ const NavBar: React.FC = () => {
                     <BoxArrowRight />
                     {' '}
                     Sign Out
-                  </NavDropdown.Item>
-                  <NavDropdown.Item id="login-dropdown-change-password" href="/auth/change-password">
-                    <Lock />
-                    {' '}
-                    Change Password
                   </NavDropdown.Item>
                 </NavDropdown>
                 <Nav.Link id="messages-nav" href="/messages" active={pathName === '/messages'}>

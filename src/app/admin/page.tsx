@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 /* eslint-disable no-alert */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 
@@ -12,7 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Container, Button, Form, Alert } from 'react-bootstrap';
+import { Container, Button, Form } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -21,11 +22,14 @@ import AdminSection from '@/components/AdminSection';
 import LifestyleCategoriesTable from '@/components/LifestyleCategoryAdmin';
 import ContentModerationTable from '@/components/ContentModerationAdmin';
 import AdminTable from '@/components/AdminTable';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import UserProfileModal from '@/components/UserProfileModal';
 import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 import DeleteUserModal from '@/components/DeleteUserModal';
+import AdminSidebar from '@/components/AdminSidebar';
+import AdminStatisticsCard from '@/components/AdminStatisticsCard';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { getFromCache, setCache, clearCache } from '@/lib/adminCache';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -38,7 +42,6 @@ interface User {
   name: string;
   email: string;
   role: string;
-  activity: string;
 }
 
 interface Flag {
@@ -55,6 +58,21 @@ interface Category {
   name: string;
   items: number;
   lastUpdated: string;
+}
+
+/**
+ * Get a time-based greeting based on the current hour
+ * @returns greeting string (Good Morning, Good Afternoon, or Good Evening)
+ */
+function getTimeBasedGreeting(): string {
+  const currentHour = new Date().getHours();
+  if (currentHour < 12) {
+    return 'Good Morning';
+  }
+  if (currentHour < 18) {
+    return 'Good Afternoon';
+  }
+  return 'Good Evening';
 }
 
 const AdminPage: React.FC = () => {
@@ -84,6 +102,8 @@ const AdminPage: React.FC = () => {
           lastUpdated: new Date().toISOString().split('T')[0],
         },
       ]);
+      // Clear category cache on add
+      clearCache('categories-all');
       setCategoryModalError(null);
     } catch (err) {
       setCategoryModalError('Error adding category.');
@@ -102,6 +122,8 @@ const AdminPage: React.FC = () => {
       });
       if (!response.ok) throw new Error('Failed to delete category');
       setCategories((prev) => prev.filter((cat) => cat.id !== deleteCategoryId));
+      // Clear category cache on delete
+      clearCache('categories-all');
       setCategoryModalError(null);
       setShowDeleteCategoryModal(false);
     } catch (err) {
@@ -127,15 +149,29 @@ const AdminPage: React.FC = () => {
         throw new Error('Failed to delete user');
       }
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
+      // Clear user cache on delete
+      clearCache('users-all');
       setUserModalError(null);
       setShowDeleteUserModal(false);
     } catch (err) {
       setUserModalError('Error deleting user.');
     }
   };
-  /** View user profile handler */
-  const handleViewUser = (email: string) => {
-    setSelectedUserEmail(email);
+  /** View user profile handler - uses pre-fetched user data, then fetches full profile on demand */
+  const handleViewUser = async (email: string) => {
+    // Attempt to fetch the full profile data
+    try {
+      const response = await fetch(`/api/profile?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedUserProfile(data.profile);
+      } else {
+        setSelectedUserProfile(null);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setSelectedUserProfile(null);
+    }
     setShowProfileModal(true);
   };
   const { data: session, status } = useSession();
@@ -145,10 +181,16 @@ const AdminPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [flags, setFlags] = useState<Flag[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedUserEmail, setSelectedUserEmail] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
+  const [adminProfile, setAdminProfile] = useState<{
+    firstName?: string;
+    lastName?: string;
+    bio?: string;
+    pronouns?: string;
+  }>({});
 
   /** Check admin access - redirect non-admin users */
   // This provides client-side protection in addition to the server-side
@@ -171,7 +213,7 @@ const AdminPage: React.FC = () => {
   const [userSort, setUserSort] = useState('');
 
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 10;
 
   /** CONTENT MODERATION FILTERS */
   const [moderationSearch, setModerationSearch] = useState('');
@@ -184,57 +226,126 @@ const AdminPage: React.FC = () => {
   const [categorySort, setCategorySort] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
 
-  /** Fetch data from API - replaces all hard-coded mock data */
-  const fetchAdminData = async () => {
-    // Only fetch data if user is authenticated and is admin
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') {
-      return;
-    }
-
+  /** Fetch all users with caching (client-side pagination) */
+  const fetchUsers = async (skipCache = false) => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
     try {
-      setLoading(true);
-      setError(null);
-
-      // Fetch users from database (replaces mockUsers)
-      const usersResponse = await fetch('/api/admin/users');
-      if (!usersResponse.ok) {
-        throw new Error(`Failed to fetch users: ${usersResponse.statusText}`);
+      // Check cache first
+      const cacheKey = 'users-all';
+      if (!skipCache) {
+        const cachedUsers = getFromCache<any>(cacheKey);
+        if (cachedUsers) {
+          setUsers(cachedUsers.users || []);
+          return;
+        }
       }
-      const usersData = await usersResponse.json();
-      setUsers(usersData.users || []);
 
-      // Fetch flags from database (replaces mockFlags)
-      const flagsResponse = await fetch('/api/admin/flags');
-      if (!flagsResponse.ok) {
-        throw new Error(`Failed to fetch flags: ${flagsResponse.statusText}`);
-      }
-      const flagsData = await flagsResponse.json();
-      setFlags(flagsData.flags || []);
+      const response = await fetch('/api/admin/users?limit=1000');
+      if (!response.ok) throw new Error(`Failed to fetch users: ${response.statusText}`);
+      const data = await response.json();
+      setUsers(data.users || []);
 
-      // Fetch categories from database (replaces mockCategories)
-      const categoriesResponse = await fetch('/api/admin/categories');
-      if (!categoriesResponse.ok) {
-        throw new Error(`Failed to fetch categories: ${categoriesResponse.statusText}`);
-      }
-      const categoriesData = await categoriesResponse.json();
-      setCategories(categoriesData.categories || []);
+      // Cache the result
+      setCache(cacheKey, data);
     } catch (err) {
-      console.error('Error fetching admin data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setLoading(false);
+      console.error('Error fetching users:', err);
     }
   };
 
-  /** Initial data load on component mount */
+  /** Fetch all flags with caching (client-side pagination) */
+  const fetchFlags = async (skipCache = false) => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    try {
+      // Check cache first
+      const cacheKey = 'flags-all';
+      if (!skipCache) {
+        const cachedFlags = getFromCache<any>(cacheKey);
+        if (cachedFlags) {
+          setFlags(cachedFlags.flags || []);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/admin/flags?limit=1000');
+      if (!response.ok) throw new Error(`Failed to fetch flags: ${response.statusText}`);
+      const data = await response.json();
+      setFlags(data.flags || []);
+
+      // Cache the result
+      setCache(cacheKey, data);
+    } catch (err) {
+      console.error('Error fetching flags:', err);
+    }
+  };
+
+  /** Fetch all categories with caching (client-side pagination) */
+  const fetchCategories = async (skipCache = false) => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    try {
+      // Check cache first
+      const cacheKey = 'categories-all';
+      if (!skipCache) {
+        const cachedCategories = getFromCache<any>(cacheKey);
+        if (cachedCategories) {
+          setCategories(cachedCategories.categories || []);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/admin/categories?limit=1000');
+      if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
+      const data = await response.json();
+      setCategories(data.categories || []);
+
+      // Cache the result
+      setCache(cacheKey, data);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
+
+  /** Fetch admin profile and all data on initial load */
+  const fetchAdminData = async () => {
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    try {
+      setInitialLoading(true);
+      // Fetch admin profile
+      if (session?.user?.email) {
+        try {
+          const response = await fetch(`/api/profile?email=${encodeURIComponent(session.user.email)}`);
+          if (response.ok) {
+            const data = await response.json();
+            const { profile } = data;
+            setAdminPhotoUrl(profile?.photoUrl || undefined);
+            setAdminProfile({
+              firstName: profile?.firstName || undefined,
+              lastName: profile?.lastName || undefined,
+              bio: profile?.bio || undefined,
+              pronouns: profile?.pronouns || undefined,
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching admin profile:', err);
+        }
+      }
+      // Fetch all tables in parallel
+      await Promise.all([fetchUsers(), fetchFlags(), fetchCategories()]);
+    } catch (err) {
+      console.error('Error fetching admin data:', err);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  /** Fetch data from API - replaces all hard-coded mock data */
+
+  // Initial load on component mount
   useEffect(() => {
     fetchAdminData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status]);
 
-  /** Handle flag resolution - calls API endpoint to update flag status */
-  // This function is passed to ContentModerationTable components to handle
-  // resolve/deactivate button clicks
+  /** Handle flag resolution - updates local state immediately after successful API call */
   const handleResolveFlag = async (flagId: number, action: 'resolve' | 'deactivate') => {
     try {
       const response = await fetch('/api/admin/resolve-flag', {
@@ -249,91 +360,137 @@ const AdminPage: React.FC = () => {
         throw new Error(`Failed to ${action} flag`);
       }
 
-      // Refresh flags data to show updated status
-      const flagsResponse = await fetch('/api/admin/flags');
-      const flagsData = await flagsResponse.json();
-      setFlags(flagsData.flags || []);
+      // Update local state immediately instead of re-fetching
+      const newStatus = action === 'resolve' ? 'resolved' : 'user_deactivated';
+      setFlags((prev) => prev.map((flag) => (flag.id === flagId ? { ...flag, status: newStatus } : flag)));
     } catch (err) {
       console.error(`Error ${action}ing flag:`, err);
-      setError(`Failed to ${action} flag. Please try again.`);
     }
   };
 
-  /** USER MANAGEMENT FILTERS */
-  let filteredUsers = users.filter((user) => {
-    // Support searching by first or last name, as well as full name and email
-    const searchLower = search.toLowerCase();
-    const [firstName, ...rest] = user.name.split(' ');
-    const lastName = rest.length > 0 ? rest[rest.length - 1] : '';
-    const matchesSearch = user.name.toLowerCase().includes(searchLower)
-      || user.email.toLowerCase().includes(searchLower)
-      || firstName.toLowerCase().includes(searchLower)
-      || lastName.toLowerCase().includes(searchLower);
-    const matchesRole = roleFilter ? user.role === roleFilter : true;
+  /** USER MANAGEMENT FILTERS - Client-side filtering and sorting */
+  const filteredUsers = users.filter((u) => {
+    const nameMatch = u.name.toLowerCase().includes(search.toLowerCase());
+    const emailMatch = u.email.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = search === '' || nameMatch || emailMatch;
+    const matchesRole = roleFilter === '' || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
-  // Apply sorting for users
-  if (userSort === 'NameA') {
-    filteredUsers = [...filteredUsers].sort((a, b) => a.name.localeCompare(b.name));
-  } else if (userSort === 'NameZ') {
-    filteredUsers = [...filteredUsers].sort((a, b) => b.name.localeCompare(a.name));
-  }
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (userSort === 'NameA') return a.name.localeCompare(b.name);
+    if (userSort === 'NameZ') return b.name.localeCompare(a.name);
+    return 0;
+  });
 
-  const totalPagesUsers = Math.ceil(filteredUsers.length / pageSize);
-  const shownUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+  // Paginate the filtered/sorted results
+  const startUser = (page - 1) * pageSize;
+  const paginatedUsers = sortedUsers.slice(startUser, startUser + pageSize);
+  const totalUserPages = Math.ceil(sortedUsers.length / pageSize);
+  const totalPagesUsers = totalUserPages;
+  const shownUsers = paginatedUsers;
 
-  /** CONTENT MODERATION FILTERS */
-  let filteredFlags = flags.filter((flag) => {
-    const matchesSearch = flag.user.toLowerCase().includes(moderationSearch.toLowerCase());
-    const matchesReason = reasonFilter ? flag.reason === reasonFilter : true;
+  /** CONTENT MODERATION FILTERS - Client-side filtering and sorting */
+  const filteredFlags = flags.filter((f) => {
+    const matchesSearch = moderationSearch === '' || f.user.toLowerCase().includes(moderationSearch.toLowerCase());
+    const matchesReason = reasonFilter === '' || f.reason === reasonFilter;
     return matchesSearch && matchesReason;
   });
 
-  // Apply sorting
-  if (moderationSort === 'UserA') {
-    filteredFlags = [...filteredFlags].sort((a, b) => a.user.localeCompare(b.user));
-  } else if (moderationSort === 'UserZ') {
-    filteredFlags = [...filteredFlags].sort((a, b) => b.user.localeCompare(a.user));
-  } else if (moderationSort === 'DateNew') {
-    filteredFlags = [...filteredFlags].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  } else if (moderationSort === 'DateOld') {
-    filteredFlags = [...filteredFlags].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }
+  const sortedFlags = [...filteredFlags].sort((a, b) => {
+    if (moderationSort === 'UserA') return a.user.localeCompare(b.user);
+    if (moderationSort === 'UserZ') return b.user.localeCompare(a.user);
+    if (moderationSort === 'DateNew') return new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (moderationSort === 'DateOld') return new Date(a.date).getTime() - new Date(b.date).getTime();
+    return 0;
+  });
 
-  const totalPagesModeration = Math.ceil(filteredFlags.length / pageSize);
-  const shownFlags = filteredFlags.slice((moderationPage - 1) * pageSize, moderationPage * pageSize);
+  // Paginate the filtered/sorted results
+  const startFlag = (moderationPage - 1) * pageSize;
+  const paginatedFlags = sortedFlags.slice(startFlag, startFlag + pageSize);
+  const totalFlagPages = Math.ceil(sortedFlags.length / pageSize);
+  const totalPagesModeration = totalFlagPages;
+  const shownFlags = paginatedFlags;
 
-  /** LIFESTYLE CATEGORIES FILTERS */
-  let filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name.toLowerCase().includes(categorySearch.toLowerCase());
+  /** LIFESTYLE CATEGORIES FILTERS - Client-side filtering and sorting */
+  const filteredCategories = categories.filter((c) => {
+    const matchesSearch = categorySearch === '' || c.name.toLowerCase().includes(categorySearch.toLowerCase());
     return matchesSearch;
   });
 
-  // Apply sorting for categories
-  if (categorySort === 'NameA') {
-    filteredCategories = [...filteredCategories].sort((a, b) => a.name.localeCompare(b.name));
-  } else if (categorySort === 'NameZ') {
-    filteredCategories = [...filteredCategories].sort((a, b) => b.name.localeCompare(a.name));
-  } else if (categorySort === 'ItemsLow') {
-    filteredCategories = [...filteredCategories].sort((a, b) => a.items - b.items);
-  } else if (categorySort === 'ItemsHigh') {
-    filteredCategories = [...filteredCategories].sort((a, b) => b.items - a.items);
-  } else if (categorySort === 'DateNew') {
-    // eslint-disable-next-line max-len
-    filteredCategories = [...filteredCategories].sort((a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime());
-  } else if (categorySort === 'DateOld') {
-    // eslint-disable-next-line max-len
-    filteredCategories = [...filteredCategories].sort((a, b) => new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime());
-  }
+  const sortedCategories = [...filteredCategories].sort((a, b) => {
+    if (categorySort === 'NameA') return a.name.localeCompare(b.name);
+    if (categorySort === 'NameZ') return b.name.localeCompare(a.name);
+    if (categorySort === 'ItemsLow') return a.items - b.items;
+    if (categorySort === 'ItemsHigh') return b.items - a.items;
+    if (categorySort === 'DateNew') return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+    if (categorySort === 'DateOld') return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
+    return 0;
+  });
 
-  const totalPagesCategories = Math.ceil(filteredCategories.length / pageSize);
-  const shownCategories = filteredCategories.slice((categoryPage - 1) * pageSize, categoryPage * pageSize);
+  // Paginate the filtered/sorted results
+  const startCategory = (categoryPage - 1) * pageSize;
+  const paginatedCategories = sortedCategories.slice(startCategory, startCategory + pageSize);
+  const totalCategoryPages = Math.ceil(sortedCategories.length / pageSize);
+  const totalPagesCategories = totalCategoryPages;
+  const shownCategories = paginatedCategories;
 
-  if (loading) {
+  // Compute admin display name from edited profile if available
+  const adminDisplayName = (adminProfile.firstName || adminProfile.lastName)
+    ? `${adminProfile.firstName ?? ''} ${adminProfile.lastName ?? ''}`.trim()
+    : session?.user?.name || 'Admin';
+
+  const [adminBgColor, setAdminBgColor] = useState<'white' | 'green' | 'blue' | 'red' | 'yellow'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('adminBgColor');
+      if (saved && ['white', 'green', 'blue', 'red', 'yellow'].includes(saved)) {
+        return saved as 'white' | 'green' | 'blue' | 'red' | 'yellow';
+      }
+    }
+    return 'white';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('adminBgColor', adminBgColor);
+  }, [adminBgColor]);
+
+  const colorMap = {
+    white: {
+      bg: 'linear-gradient(120deg, #f8f9fa 60%, #ffffff 100%)',
+      banner: 'linear-gradient(135deg, #56ab2f 0%, #a8e063 100%)',
+      stats: ' #a8e063ff',
+      statsText: '#246127ff',
+    },
+    green: {
+      bg: 'linear-gradient(120deg, #e8f5e9 60%, #c8e6c9 100%)',
+      banner: 'linear-gradient(135deg, #388e3c 0%, #a8e063 100%)',
+      stats: '#ace58dff',
+      statsText: '#002e02ff',
+    },
+    blue: {
+      bg: 'linear-gradient(120deg, #e3f2fd 60%, #bbdefb 100%)',
+      banner: 'linear-gradient(135deg, #1976d2 0%, #64b5f6 100%)',
+      stats: '#7bbdffff',
+      statsText: '#002d59ff',
+    },
+    red: {
+      bg: 'linear-gradient(120deg, #ffebee 60%, #ffcdd2 100%)',
+      banner: 'linear-gradient(135deg, #c62828 0%, #ff8a80 100%)',
+      stats: '#ff8989ff',
+      statsText: '#460202ff',
+    },
+    yellow: {
+      bg: 'linear-gradient(120deg, #fffde7 60%, #fff9c4 100%)',
+      banner: 'linear-gradient(135deg, #fbc02d 0%, #ffe772ff 100%)',
+      stats: '#ffe881ff',
+      statsText: '#896711ff',
+    },
+  };
+
+  if (status === 'loading' || initialLoading) {
     return (
       <main>
-        <Container className="py-4 text-center">
+        <Container fluid className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
           <LoadingSpinner />
         </Container>
       </main>
@@ -342,233 +499,320 @@ const AdminPage: React.FC = () => {
 
   return (
     <main>
-      <Container className="py-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1>Admin Home</h1>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={fetchAdminData}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : 'Refresh Data'}
-          </button>
+      <Container fluid className="py-4" style={{ background: colorMap[adminBgColor].bg, minHeight: '100vh' }}>
+        <div className="d-flex gap-4" style={{ alignItems: 'flex-start' }}>
+          {/* Sidebar */}
+          <div style={{ width: 320, minWidth: 280 }}>
+            <AdminSidebar
+              adminName={adminDisplayName}
+              adminEmail={session?.user?.email || ''}
+              adminPhotoUrl={adminPhotoUrl}
+              adminFirstName={adminProfile.firstName}
+              adminLastName={adminProfile.lastName}
+              adminBio={adminProfile.bio}
+              adminPronouns={adminProfile.pronouns}
+              onProfileUpdate={fetchAdminData}
+              adminBgColor={adminBgColor}
+              setAdminBgColor={setAdminBgColor}
+            />
+          </div>
+          {/* Main Content Banner */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              className="mb-4 p-5 rounded-4 shadow-sm"
+              style={{
+                background: colorMap[adminBgColor].banner,
+                color: '#fff',
+                boxShadow: '0 8px 32px rgba(86, 171, 47, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Decorative background elements */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-50%',
+                  right: '-10%',
+                  width: '300px',
+                  height: '300px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  zIndex: 0,
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-30%',
+                  left: '-5%',
+                  width: '200px',
+                  height: '200px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  zIndex: 0,
+                }}
+              />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div className="d-flex justify-content-between align-items-center" style={{ width: '100%' }}>
+                  <div>
+                    <h1
+                      className="mb-0"
+                      style={{
+                        color: 'inherit',
+                        fontWeight: 700,
+                        fontSize: '2.5rem',
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {getTimeBasedGreeting()}
+                      ,
+                      {' '}
+                      <strong>{adminDisplayName}</strong>
+                    </h1>
+                    <p style={{ fontSize: '1.05rem', marginTop: '0.5rem', opacity: 0.95, fontWeight: 500 }}>
+                      Welcome to your admin dashboard!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="d-flex justify-content-start align-items-center mb-4 gap-3 flex-wrap">
+              <AdminStatisticsCard
+                totalUsers={users.length}
+                totalFlags={flags.length}
+                totalCategories={categories.length}
+                barColor={colorMap[adminBgColor].stats}
+                barText={colorMap[adminBgColor].statsText}
+              />
+            </div>
+            {/* Section styling for all admin tables */}
+            <div className="mb-4">
+              <AdminSection
+                title="User Management"
+                page={page}
+                totalPages={totalPagesUsers}
+                onPageChange={setPage}
+                themeColor={adminBgColor}
+              >
+                <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
+                  <Form.Control
+                    style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    type="text"
+                    placeholder="Search user..."
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(1);
+                    }}
+                  />
+                  <Form.Select
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
+                    value={roleFilter}
+                    onChange={(e) => {
+                      setRoleFilter(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="">Filter by role</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="USER">User</option>
+                  </Form.Select>
+                  <Form.Select
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
+                    value={userSort}
+                    onChange={(e) => {
+                      setUserSort(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="">Sort by</option>
+                    <option value="NameA">Name A-Z</option>
+                    <option value="NameZ">Name Z-A</option>
+                  </Form.Select>
+                </div>
+                <AdminTable>
+                  <thead className="table-light">
+                    <tr style={{ background: '#e0ffe7', fontWeight: 600, fontSize: '1.05rem' }}>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shownUsers.map((u) => (
+                      <UserManagement
+                        key={u.id}
+                        {...u}
+                        onDelete={() => {
+                          setDeleteUserId(u.id);
+                          setDeleteUserName(u.name);
+                          setShowDeleteUserModal(true);
+                        }}
+                        onView={handleViewUser}
+                      />
+                    ))}
+                  </tbody>
+                </AdminTable>
+              </AdminSection>
+            </div>
+            <div className="mb-4">
+              <AdminSection
+                title="Content Moderation"
+                page={moderationPage}
+                totalPages={totalPagesModeration}
+                onPageChange={setModerationPage}
+                themeColor={adminBgColor}
+              >
+                <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
+                  <Form.Control
+                    style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    type="text"
+                    placeholder="Search by user..."
+                    value={moderationSearch}
+                    onChange={(e) => {
+                      setModerationSearch(e.target.value);
+                      setModerationPage(1);
+                    }}
+                  />
+                  <Form.Select
+                    style={{ maxWidth: '200px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    value={reasonFilter}
+                    onChange={(e) => {
+                      setReasonFilter(e.target.value);
+                      setModerationPage(1);
+                    }}
+                  >
+                    <option value="">Filter by reason</option>
+                    <option value="Spam">Spam</option>
+                    <option value="Inappropriate content">Inappropriate content</option>
+                    <option value="Harassment">Harassment</option>
+                  </Form.Select>
+                  <Form.Select
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
+                    value={moderationSort}
+                    onChange={(e) => {
+                      setModerationSort(e.target.value);
+                      setModerationPage(1);
+                    }}
+                  >
+                    <option value="">Sort by</option>
+                    <option value="UserA">User A-Z</option>
+                    <option value="UserZ">User Z-A</option>
+                    <option value="DateNew">Date (Newest)</option>
+                    <option value="DateOld">Date (Oldest)</option>
+                  </Form.Select>
+                </div>
+                <AdminTable>
+                  <thead className="table-light">
+                    <tr style={{ background: '#e0ffe7', fontWeight: 600, fontSize: '1.05rem' }}>
+                      <th>User</th>
+                      <th>Flag Reason</th>
+                      <th>Flagged Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shownFlags.map((flag) => (
+                      <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
+                    ))}
+                  </tbody>
+                </AdminTable>
+              </AdminSection>
+            </div>
+            <div className="mb-4">
+              <AdminSection
+                title="Lifestyle Categories"
+                page={categoryPage}
+                totalPages={totalPagesCategories}
+                onPageChange={setCategoryPage}
+                themeColor={adminBgColor}
+              >
+                <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
+                  <Form.Control
+                    style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
+                    type="text"
+                    placeholder="Search categories..."
+                    value={categorySearch}
+                    onChange={(e) => {
+                      setCategorySearch(e.target.value);
+                      setCategoryPage(1);
+                    }}
+                  />
+                  <Form.Select
+                    style={{
+                      maxWidth: '180px',
+                      borderRadius: '0.75rem',
+                      boxShadow: '0 1px 4px #0001',
+                    }}
+                    value={categorySort}
+                    onChange={(e) => {
+                      setCategorySort(e.target.value);
+                      setCategoryPage(1);
+                    }}
+                  >
+                    <option value="">Sort by</option>
+                    <option value="NameA">Name A-Z</option>
+                    <option value="NameZ">Name Z-A</option>
+                    <option value="ItemsLow">Items (Low-High)</option>
+                    <option value="ItemsHigh">Items (High-Low)</option>
+                    <option value="DateNew">Date (Newest)</option>
+                    <option value="DateOld">Date (Oldest)</option>
+                  </Form.Select>
+                  <Button
+                    variant="success"
+                    className="rounded-pill px-4 shadow-sm"
+                    style={{
+                      fontWeight: 600,
+                      fontSize: '1.05rem',
+                      letterSpacing: 0.5,
+                    }}
+                    onClick={() => setShowAddCategoryModal(true)}
+                  >
+                    Add Category
+                  </Button>
+                </div>
+                <AdminTable>
+                  <thead className="table-light">
+                    <tr style={{ background: '#e0ffe7', fontWeight: 600, fontSize: '1.05rem' }}>
+                      <th>Category</th>
+                      <th>Items</th>
+                      <th>Last Updated</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shownCategories.map((cat) => (
+                      <LifestyleCategoriesTable
+                        key={cat.id}
+                        {...cat}
+                        onDelete={() => {
+                          setDeleteCategoryId(cat.id);
+                          setDeleteCategoryName(cat.name);
+                          setShowDeleteCategoryModal(true);
+                        }}
+                      />
+                    ))}
+                  </tbody>
+                </AdminTable>
+              </AdminSection>
+            </div>
+          </div>
         </div>
-
-        {error && (
-          <Alert variant="danger" dismissible onClose={() => setError(null)}>
-            <strong>Error:</strong>
-            {' '}
-            {error}
-          </Alert>
-        )}
-
-        {/* USER MANAGEMENT */}
-        <AdminSection title="User Management" page={page} totalPages={totalPagesUsers} onPageChange={setPage}>
-          <div className="d-flex gap-3 mb-3 flex-wrap">
-            <Form.Control
-              style={{ maxWidth: '280px' }}
-              type="text"
-              placeholder="Search user..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Filter by role</option>
-              <option value="ADMIN">Admin</option>
-              <option value="USER">User</option>
-            </Form.Select>
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={userSort}
-              onChange={(e) => {
-                setUserSort(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Sort by</option>
-              <option value="NameA">Name A-Z</option>
-              <option value="NameZ">Name Z-A</option>
-            </Form.Select>
-          </div>
-
-          <AdminTable>
-            <thead className="table-light">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Activity</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {shownUsers.map((u) => (
-                <UserManagement
-                  key={u.id}
-                  {...u}
-                  onDelete={() => {
-                    setDeleteUserId(u.id);
-                    setDeleteUserName(u.name);
-                    setShowDeleteUserModal(true);
-                  }}
-                  onView={handleViewUser}
-                />
-              ))}
-            </tbody>
-          </AdminTable>
-        </AdminSection>
-
-        {/* CONTENT MODERATION */}
-        <AdminSection
-          title="Content Moderation"
-          page={moderationPage}
-          totalPages={totalPagesModeration}
-          onPageChange={setModerationPage}
-        >
-          <div className="d-flex gap-3 mb-3 flex-wrap">
-            <Form.Control
-              style={{ maxWidth: '280px' }}
-              type="text"
-              placeholder="Search by user..."
-              value={moderationSearch}
-              onChange={(e) => {
-                setModerationSearch(e.target.value);
-                setModerationPage(1);
-              }}
-            />
-
-            <Form.Select
-              style={{ maxWidth: '200px' }}
-              value={reasonFilter}
-              onChange={(e) => {
-                setReasonFilter(e.target.value);
-                setModerationPage(1);
-              }}
-            >
-              <option value="">Filter by reason</option>
-              <option value="Spam">Spam</option>
-              <option value="Inappropriate content">Inappropriate content</option>
-              <option value="Harassment">Harassment</option>
-            </Form.Select>
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={moderationSort}
-              onChange={(e) => {
-                setModerationSort(e.target.value);
-                setModerationPage(1);
-              }}
-            >
-              <option value="">Sort by</option>
-              <option value="UserA">User A-Z</option>
-              <option value="UserZ">User Z-A</option>
-              <option value="DateNew">Date (Newest)</option>
-              <option value="DateOld">Date (Oldest)</option>
-            </Form.Select>
-          </div>
-
-          <AdminTable>
-            <thead className="table-light">
-              <tr>
-                <th>User</th>
-                <th>Flag Reason</th>
-                <th>Flagged Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {shownFlags.map((flag) => (
-                <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
-              ))}
-            </tbody>
-          </AdminTable>
-        </AdminSection>
-
-        {/* LIFESTYLE CATEGORIES */}
-        <AdminSection
-          title="Lifestyle Categories"
-          page={categoryPage}
-          totalPages={totalPagesCategories}
-          onPageChange={setCategoryPage}
-        >
-          <div className="d-flex gap-3 mb-3 flex-wrap">
-            <Form.Control
-              style={{ maxWidth: '280px' }}
-              type="text"
-              placeholder="Search categories..."
-              value={categorySearch}
-              onChange={(e) => {
-                setCategorySearch(e.target.value);
-                setCategoryPage(1);
-              }}
-            />
-
-            <Form.Select
-              style={{ maxWidth: '180px' }}
-              value={categorySort}
-              onChange={(e) => {
-                setCategorySort(e.target.value);
-                setCategoryPage(1);
-              }}
-            >
-              <option value="">Sort by</option>
-              <option value="NameA">Name A-Z</option>
-              <option value="NameZ">Name Z-A</option>
-              <option value="ItemsLow">Items (Low-High)</option>
-              <option value="ItemsHigh">Items (High-Low)</option>
-              <option value="DateNew">Date (Newest)</option>
-              <option value="DateOld">Date (Oldest)</option>
-            </Form.Select>
-
-            <Button
-              variant="success"
-              className="rounded-pill px-4"
-              onClick={() => setShowAddCategoryModal(true)}
-            >
-              Add Category
-            </Button>
-          </div>
-
-          <AdminTable>
-            <thead className="table-light">
-              <tr>
-                <th>Category</th>
-                <th>Items</th>
-                <th>Last Updated</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {shownCategories.map((cat) => (
-                <LifestyleCategoriesTable
-                  key={cat.id}
-                  {...cat}
-                  onDelete={() => {
-                    setDeleteCategoryId(cat.id);
-                    setDeleteCategoryName(cat.name);
-                    setShowDeleteCategoryModal(true);
-                  }}
-                />
-              ))}
-            </tbody>
-          </AdminTable>
-        </AdminSection>
       </Container>
 
       {/* Add Category Modal */}
@@ -622,9 +866,12 @@ const AdminPage: React.FC = () => {
 
       {/* User Profile Modal */}
       <UserProfileModal
-        email={selectedUserEmail}
+        profile={selectedUserProfile}
         show={showProfileModal}
-        onHide={() => setShowProfileModal(false)}
+        onHide={() => {
+          setShowProfileModal(false);
+          setSelectedUserProfile(null);
+        }}
       />
     </main>
   );

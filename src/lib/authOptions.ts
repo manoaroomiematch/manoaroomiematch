@@ -53,6 +53,10 @@ const authOptions: NextAuthOptions = {
     //   newUser: '/auth/new-user'
   },
   callbacks: {
+    redirect: ({ baseUrl }) => {
+      // Always redirect to home after sign in/out
+      return `${baseUrl}/home`;
+    },
     session: ({ session, token }) => {
       // console.log('Session Callback', { session, token })
       return {

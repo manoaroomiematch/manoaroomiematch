@@ -63,10 +63,11 @@ export async function POST(req: Request) {
 
 /**
  * GET /api/admin/categories
- * Returns all lifestyle categories with question counts
+ * Returns paginated lifestyle categories with question counts
+ * Query parameters: ?page=1&limit=10
  * Admin-only endpoint
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     // Check if user is authenticated and has admin role
     const session = await getServerSession(authOptions);
@@ -85,7 +86,26 @@ export async function GET() {
       );
     }
 
-    // Fetch all lifestyle categories with their question counts
+    // Parse pagination parameters from URL
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10', 10)));
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    let total = 0;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      total = await (prisma as any).lifestyleCategory.count();
+    } catch (err) {
+      console.log('LifestyleCategory table count failed:', err);
+      return NextResponse.json({
+        categories: [],
+        pagination: { total: 0, page, limit, pages: 0 },
+      });
+    }
+
+    // Fetch paginated lifestyle categories with their question counts
     // Wrapped in try-catch to handle cases where LifestyleCategory table doesn't exist yet
     let categories: any[] = [];
     try {
@@ -99,10 +119,15 @@ export async function GET() {
         orderBy: {
           id: 'asc',
         },
+        skip,
+        take: limit,
       });
     } catch (err) {
       console.log('LifestyleCategory table query failed, returning empty list:', err);
-      return NextResponse.json({ categories: [] });
+      return NextResponse.json({
+        categories: [],
+        pagination: { total: 0, page, limit, pages: 0 },
+      });
     }
 
     // Transform the data to match the expected format for the admin UI
@@ -115,7 +140,15 @@ export async function GET() {
       lastUpdated: new Date().toISOString().split('T')[0], // Use current date as placeholder
     }));
 
-    return NextResponse.json({ categories: formattedCategories });
+    return NextResponse.json({
+      categories: formattedCategories,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(
