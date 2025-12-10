@@ -29,6 +29,7 @@ import DeleteUserModal from '@/components/DeleteUserModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminStatisticsCard from '@/components/AdminStatisticsCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { getFromCache, setCache, clearCache } from '@/lib/adminCache';
 
 // NOTE: All mock data has been removed. This admin page now fetches live data
 // from the database via three admin-only API endpoints:
@@ -101,6 +102,8 @@ const AdminPage: React.FC = () => {
           lastUpdated: new Date().toISOString().split('T')[0],
         },
       ]);
+      // Clear category cache on add
+      clearCache('categories-all');
       setCategoryModalError(null);
     } catch (err) {
       setCategoryModalError('Error adding category.');
@@ -119,6 +122,8 @@ const AdminPage: React.FC = () => {
       });
       if (!response.ok) throw new Error('Failed to delete category');
       setCategories((prev) => prev.filter((cat) => cat.id !== deleteCategoryId));
+      // Clear category cache on delete
+      clearCache('categories-all');
       setCategoryModalError(null);
       setShowDeleteCategoryModal(false);
     } catch (err) {
@@ -144,6 +149,8 @@ const AdminPage: React.FC = () => {
         throw new Error('Failed to delete user');
       }
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
+      // Clear user cache on delete
+      clearCache('users-all');
       setUserModalError(null);
       setShowDeleteUserModal(false);
     } catch (err) {
@@ -172,15 +179,9 @@ const AdminPage: React.FC = () => {
 
   /** Data state - fetched from API endpoints instead of hard-coded mock data */
   const [users, setUsers] = useState<User[]>([]);
-  const [usersPagination, setUsersPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
   const [flags, setFlags] = useState<Flag[]>([]);
-  const [flagsPagination, setFlagsPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoriesPagination, setCategoriesPagination] = useState({ total: 0, page: 1, limit: 10, pages: 1 });
   const [initialLoading, setInitialLoading] = useState(true);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [flagsLoading, setFlagsLoading] = useState(false);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
@@ -225,54 +226,81 @@ const AdminPage: React.FC = () => {
   const [categorySort, setCategorySort] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
 
-  /** Fetch users for the current page */
-  const fetchUsers = async () => {
+  /** Fetch all users with caching (client-side pagination) */
+  const fetchUsers = async (skipCache = false) => {
     if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
     try {
-      setUsersLoading(true);
-      const response = await fetch(`/api/admin/users?page=${page}&limit=${pageSize}`);
+      // Check cache first
+      const cacheKey = 'users-all';
+      if (!skipCache) {
+        const cachedUsers = getFromCache<any>(cacheKey);
+        if (cachedUsers) {
+          setUsers(cachedUsers.users || []);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/admin/users?limit=1000');
       if (!response.ok) throw new Error(`Failed to fetch users: ${response.statusText}`);
       const data = await response.json();
       setUsers(data.users || []);
-      setUsersPagination(data.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 });
+
+      // Cache the result
+      setCache(cacheKey, data);
     } catch (err) {
       console.error('Error fetching users:', err);
-    } finally {
-      setUsersLoading(false);
     }
   };
 
-  /** Fetch flags for the current page */
-  const fetchFlags = async () => {
+  /** Fetch all flags with caching (client-side pagination) */
+  const fetchFlags = async (skipCache = false) => {
     if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
     try {
-      setFlagsLoading(true);
-      const response = await fetch(`/api/admin/flags?page=${moderationPage}&limit=${pageSize}`);
+      // Check cache first
+      const cacheKey = 'flags-all';
+      if (!skipCache) {
+        const cachedFlags = getFromCache<any>(cacheKey);
+        if (cachedFlags) {
+          setFlags(cachedFlags.flags || []);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/admin/flags?limit=1000');
       if (!response.ok) throw new Error(`Failed to fetch flags: ${response.statusText}`);
       const data = await response.json();
       setFlags(data.flags || []);
-      setFlagsPagination(data.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 });
+
+      // Cache the result
+      setCache(cacheKey, data);
     } catch (err) {
       console.error('Error fetching flags:', err);
-    } finally {
-      setFlagsLoading(false);
     }
   };
 
-  /** Fetch categories for the current page */
-  const fetchCategories = async () => {
+  /** Fetch all categories with caching (client-side pagination) */
+  const fetchCategories = async (skipCache = false) => {
     if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
     try {
-      setCategoriesLoading(true);
-      const response = await fetch(`/api/admin/categories?page=${categoryPage}&limit=${pageSize}`);
+      // Check cache first
+      const cacheKey = 'categories-all';
+      if (!skipCache) {
+        const cachedCategories = getFromCache<any>(cacheKey);
+        if (cachedCategories) {
+          setCategories(cachedCategories.categories || []);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/admin/categories?limit=1000');
       if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
       const data = await response.json();
       setCategories(data.categories || []);
-      setCategoriesPagination(data.pagination || { total: 0, page: 1, limit: pageSize, pages: 1 });
+
+      // Cache the result
+      setCache(cacheKey, data);
     } catch (err) {
       console.error('Error fetching categories:', err);
-    } finally {
-      setCategoriesLoading(false);
     }
   };
 
@@ -311,29 +339,11 @@ const AdminPage: React.FC = () => {
 
   /** Fetch data from API - replaces all hard-coded mock data */
 
-  // Initial load on component mount and when profile changes
+  // Initial load on component mount
   useEffect(() => {
     fetchAdminData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, status, showProfileModal]);
-
-  // Fetch users when user page changes
-  useEffect(() => {
-    if (!initialLoading) fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
-
-  // Fetch flags when moderation page changes
-  useEffect(() => {
-    if (!initialLoading) fetchFlags();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moderationPage]);
-
-  // Fetch categories when category page changes
-  useEffect(() => {
-    if (!initialLoading) fetchCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryPage]);
+  }, [session, status]);
 
   /** Handle flag resolution - updates local state immediately after successful API call */
   const handleResolveFlag = async (flagId: number, action: 'resolve' | 'deactivate') => {
@@ -358,21 +368,72 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  /** USER MANAGEMENT FILTERS */
-  // Note: Filtering and sorting now handled server-side via API pagination
-  // keeping filter state for UI but not actively filtering/sorting locally
-  const totalPagesUsers = usersPagination.pages;
-  const shownUsers = users;
+  /** USER MANAGEMENT FILTERS - Client-side filtering and sorting */
+  const filteredUsers = users.filter((u) => {
+    const nameMatch = u.name.toLowerCase().includes(search.toLowerCase());
+    const emailMatch = u.email.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = search === '' || nameMatch || emailMatch;
+    const matchesRole = roleFilter === '' || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
-  /** CONTENT MODERATION FILTERS */
-  // Note: Filtering and sorting now handled server-side via API pagination
-  const totalPagesModeration = flagsPagination.pages;
-  const shownFlags = flags;
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (userSort === 'NameA') return a.name.localeCompare(b.name);
+    if (userSort === 'NameZ') return b.name.localeCompare(a.name);
+    return 0;
+  });
 
-  /** LIFESTYLE CATEGORIES FILTERS */
-  // Note: Filtering and sorting now handled server-side via API pagination
-  const totalPagesCategories = categoriesPagination.pages;
-  const shownCategories = categories;
+  // Paginate the filtered/sorted results
+  const startUser = (page - 1) * pageSize;
+  const paginatedUsers = sortedUsers.slice(startUser, startUser + pageSize);
+  const totalUserPages = Math.ceil(sortedUsers.length / pageSize);
+  const totalPagesUsers = totalUserPages;
+  const shownUsers = paginatedUsers;
+
+  /** CONTENT MODERATION FILTERS - Client-side filtering and sorting */
+  const filteredFlags = flags.filter((f) => {
+    const matchesSearch = moderationSearch === '' || f.user.toLowerCase().includes(moderationSearch.toLowerCase());
+    const matchesReason = reasonFilter === '' || f.reason === reasonFilter;
+    return matchesSearch && matchesReason;
+  });
+
+  const sortedFlags = [...filteredFlags].sort((a, b) => {
+    if (moderationSort === 'UserA') return a.user.localeCompare(b.user);
+    if (moderationSort === 'UserZ') return b.user.localeCompare(a.user);
+    if (moderationSort === 'DateNew') return new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (moderationSort === 'DateOld') return new Date(a.date).getTime() - new Date(b.date).getTime();
+    return 0;
+  });
+
+  // Paginate the filtered/sorted results
+  const startFlag = (moderationPage - 1) * pageSize;
+  const paginatedFlags = sortedFlags.slice(startFlag, startFlag + pageSize);
+  const totalFlagPages = Math.ceil(sortedFlags.length / pageSize);
+  const totalPagesModeration = totalFlagPages;
+  const shownFlags = paginatedFlags;
+
+  /** LIFESTYLE CATEGORIES FILTERS - Client-side filtering and sorting */
+  const filteredCategories = categories.filter((c) => {
+    const matchesSearch = categorySearch === '' || c.name.toLowerCase().includes(categorySearch.toLowerCase());
+    return matchesSearch;
+  });
+
+  const sortedCategories = [...filteredCategories].sort((a, b) => {
+    if (categorySort === 'NameA') return a.name.localeCompare(b.name);
+    if (categorySort === 'NameZ') return b.name.localeCompare(a.name);
+    if (categorySort === 'ItemsLow') return a.items - b.items;
+    if (categorySort === 'ItemsHigh') return b.items - a.items;
+    if (categorySort === 'DateNew') return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+    if (categorySort === 'DateOld') return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
+    return 0;
+  });
+
+  // Paginate the filtered/sorted results
+  const startCategory = (categoryPage - 1) * pageSize;
+  const paginatedCategories = sortedCategories.slice(startCategory, startCategory + pageSize);
+  const totalCategoryPages = Math.ceil(sortedCategories.length / pageSize);
+  const totalPagesCategories = totalCategoryPages;
+  const shownCategories = paginatedCategories;
 
   // Compute admin display name from edited profile if available
   const adminDisplayName = (adminProfile.firstName || adminProfile.lastName)
@@ -517,19 +578,11 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="d-flex justify-content-between align-items-center mb-4 gap-3 flex-wrap">
-              <button
-                type="button"
-                className="btn btn-primary shadow-sm px-4 py-2 rounded-pill"
-                style={{ fontWeight: 600, fontSize: '1.05rem', letterSpacing: 0.5 }}
-                onClick={fetchAdminData}
-              >
-                Refresh All Data
-              </button>
+            <div className="d-flex justify-content-start align-items-center mb-4 gap-3 flex-wrap">
               <AdminStatisticsCard
-                totalUsers={usersPagination.total}
-                totalFlags={flagsPagination.total}
-                totalCategories={categoriesPagination.total}
+                totalUsers={users.length}
+                totalFlags={flags.length}
+                totalCategories={categories.length}
                 barColor={colorMap[adminBgColor].stats}
                 barText={colorMap[adminBgColor].statsText}
               />
@@ -586,21 +639,6 @@ const AdminPage: React.FC = () => {
                     <option value="NameA">Name A-Z</option>
                     <option value="NameZ">Name Z-A</option>
                   </Form.Select>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm rounded-pill"
-                    style={{
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      backgroundColor: '#1976d2',
-                      color: '#fff',
-                      border: 'none',
-                    }}
-                    onClick={fetchUsers}
-                    disabled={usersLoading}
-                  >
-                    {usersLoading ? 'Refreshing...' : 'Refresh'}
-                  </button>
                 </div>
                 <AdminTable>
                   <thead className="table-light">
@@ -678,21 +716,6 @@ const AdminPage: React.FC = () => {
                     <option value="DateNew">Date (Newest)</option>
                     <option value="DateOld">Date (Oldest)</option>
                   </Form.Select>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm rounded-pill"
-                    style={{
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      backgroundColor: '#1976d2',
-                      color: '#fff',
-                      border: 'none',
-                    }}
-                    onClick={fetchFlags}
-                    disabled={flagsLoading}
-                  >
-                    {flagsLoading ? 'Refreshing...' : 'Refresh'}
-                  </button>
                 </div>
                 <AdminTable>
                   <thead className="table-light">
@@ -762,21 +785,6 @@ const AdminPage: React.FC = () => {
                   >
                     Add Category
                   </Button>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm rounded-pill"
-                    style={{
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                      backgroundColor: '#1976d2',
-                      color: '#fff',
-                      border: 'none',
-                    }}
-                    onClick={fetchCategories}
-                    disabled={categoriesLoading}
-                  >
-                    {categoriesLoading ? 'Refreshing...' : 'Refresh'}
-                  </button>
                 </div>
                 <AdminTable>
                   <thead className="table-light">
