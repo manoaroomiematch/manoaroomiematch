@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/require-default-props */
 
 'use client';
@@ -57,170 +58,262 @@ interface UserProfileModalProps {
 }
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide }) => (
-  <Modal show={show} onHide={onHide} size="lg" centered>
-    <Modal.Header closeButton>
-      <Modal.Title>User Profile</Modal.Title>
+  <Modal show={show} onHide={onHide} size="lg" centered className="profile-modal" style={{ paddingTop: '80px' }}>
+    <Modal.Header closeButton className="border-bottom border-success border-opacity-25 bg-light rounded-top" style={{ borderRadius: '12px 12px 0 0' }}>
+      <Modal.Title className="fw-bold text-success">
+        {profile?.firstName ? `${profile.firstName}'s Profile` : 'User Profile'}
+      </Modal.Title>
     </Modal.Header>
-    <Modal.Body>
+    <Modal.Body className="bg-light" style={{ borderRadius: '0 0 12px 12px' }}>
       {!profile && (
-      <div className="text-center py-5">
-        <p className="text-muted">No profile data available</p>
-      </div>
+        <div className="text-center py-5">
+          <p className="text-muted">No profile data available</p>
+        </div>
       )}
 
       {profile && (
-      <div>
-        <Card className="mb-3">
-          <Card.Body>
-            <Row>
-              <Col md={4} className="text-center">
-                {profile.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.photoUrl}
-                    alt={profile.name}
-                    className="rounded-circle mb-2"
-                    style={{ width: '120px', height: '120px', objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div
-                    className="rounded-circle bg-secondary d-flex align-items-center
-                         justify-content-center mb-2 mx-auto"
-                    style={{ width: '120px', height: '120px' }}
-                  >
-                    <span className="text-white fs-1">{profile.name.charAt(0)}</span>
+        <div>
+          {/* Basic Information Card */}
+          <Card className="mb-3 border-0 shadow-sm">
+            <Card.Body>
+              <Row>
+                <Col md={4} className="text-center">
+                  {profile.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.photoUrl}
+                      alt={profile.name}
+                      className="rounded-circle mb-3 border border-3 border-success"
+                      style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div
+                      className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-3 mx-auto"
+                      style={{ width: '120px', height: '120px' }}
+                    >
+                      <span className="text-success fs-1 fw-bold">{profile.name.charAt(0)}</span>
+                    </div>
+                  )}
+                  <h5 className="fw-bold">{profile.name}</h5>
+                  {profile.pronouns && <p className="text-muted small">{profile.pronouns}</p>}
+                </Col>
+                <Col md={8}>
+                  <h6 className="fw-bold text-success mb-3">Basic Information</h6>
+                  <div className="mb-2">
+                    <p className="mb-1">
+                      <strong>Email:</strong>
+                    </p>
+                    <p className="text-muted">{profile.email}</p>
                   </div>
-                )}
-                <h5>{profile.name}</h5>
-                {profile.pronouns && <p className="text-muted">{profile.pronouns}</p>}
-              </Col>
-              <Col md={8}>
-                <h6>Basic Information</h6>
-                <p>
-                  <strong>Email:</strong>
-                  {' '}
-                  {profile.email}
-                </p>
-                {profile.major && (
-                <p>
-                  <strong>Major:</strong>
-                  {' '}
-                  {profile.major}
-                </p>
-                )}
-                {profile.classStanding && (
-                <p>
-                  <strong>Class Standing:</strong>
-                  {' '}
-                  {profile.classStanding}
-                </p>
-                )}
-                {profile.graduationYear && (
-                <p>
-                  <strong>Graduation Year:</strong>
-                  {' '}
-                  {profile.graduationYear}
-                </p>
-                )}
-                {profile.bio && (
-                <>
-                  <h6 className="mt-3">Bio</h6>
-                  <p>{profile.bio}</p>
-                </>
-                )}
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
+                  {profile.major && (
+                    <div className="mb-2">
+                      <p className="mb-1">
+                        <strong>Major:</strong>
+                      </p>
+                      <p className="text-muted">{profile.major}</p>
+                    </div>
+                  )}
+                  {profile.classStanding && (
+                    <div className="mb-2">
+                      <p className="mb-1">
+                        <strong>Class Standing:</strong>
+                      </p>
+                      <p className="text-muted">{profile.classStanding}</p>
+                    </div>
+                  )}
+                  {profile.graduationYear && (
+                    <div className="mb-2">
+                      <p className="mb-1">
+                        <strong>Graduation Year:</strong>
+                      </p>
+                      <p className="text-muted">{profile.graduationYear}</p>
+                    </div>
+                  )}
+                  {profile.bio && (
+                    <div className="mt-3 pt-2 border-top border-success border-opacity-25">
+                      <h6 className="fw-bold text-success mb-2">Bio</h6>
+                      <p className="text-muted">{profile.bio}</p>
+                    </div>
+                  )}
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
 
-        <Card className="mb-3">
-          <Card.Body>
-            <h6>Lifestyle Preferences</h6>
-            <Row>
-              <Col md={6}>
-                <p>
-                  <strong>Sleep Schedule:</strong>
-                  {' '}
-                  {profile.sleepSchedule}
-                  /5
-                </p>
-                <p>
-                  <strong>Cleanliness:</strong>
-                  {' '}
-                  {profile.cleanliness}
-                  /5
-                </p>
-                <p>
-                  <strong>Noise Level:</strong>
-                  {' '}
-                  {profile.noiseLevel}
-                  /5
-                </p>
-                <p>
-                  <strong>Social Level:</strong>
-                  {' '}
-                  {profile.socialLevel}
-                  /5
-                </p>
-              </Col>
-              <Col md={6}>
-                <p>
-                  <strong>Guest Frequency:</strong>
-                  {' '}
-                  {profile.guestFrequency}
-                  /5
-                </p>
-                <p>
-                  <strong>Temperature:</strong>
-                  {' '}
-                  {profile.temperature}
-                  /5
-                </p>
-                <p>
-                  <strong>Work Schedule:</strong>
-                  {' '}
-                  {profile.workSchedule}
-                </p>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
+          {/* Lifestyle Preferences Card */}
+          <Card className="mb-3 border-0 shadow-sm">
+            <Card.Body>
+              <h6 className="fw-bold text-success mb-3">Lifestyle Preferences</h6>
+              <Row>
+                <Col md={6}>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Sleep Schedule:</strong>
+                    </p>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        style={{ width: `${(profile.sleepSchedule / 5) * 100}%` }}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.sleepSchedule}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Cleanliness:</strong>
+                    </p>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        style={{ width: `${(profile.cleanliness / 5) * 100}%` }}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.cleanliness}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Noise Level:</strong>
+                    </p>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        style={{ width: `${(profile.noiseLevel / 5) * 100}%` }}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.noiseLevel}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Social Level:</strong>
+                    </p>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        style={{ width: `${(profile.socialLevel / 5) * 100}%` }}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.socialLevel}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+                </Col>
+                <Col md={6}>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Guest Frequency:</strong>
+                    </p>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        style={{ width: `${(profile.guestFrequency / 5) * 100}%` }}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.guestFrequency}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Temperature:</strong>
+                    </p>
+                    <div className="progress" style={{ height: '6px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        style={{ width: `${(profile.temperature / 5) * 100}%` }}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.temperature}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Work Schedule:</strong>
+                    </p>
+                    <p className="text-muted">{profile.workSchedule}</p>
+                  </div>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
 
-        <Card>
-          <Card.Body>
-            <h6>Habits & Interests</h6>
-            <p>
-              <strong>Smoking:</strong>
-              {' '}
-              {profile.smoking ? 'Yes' : 'No'}
-            </p>
-            <p>
-              <strong>Drinking:</strong>
-              {' '}
-              {profile.drinking}
-            </p>
-            <p>
-              <strong>Pets:</strong>
-              {' '}
-              {profile.pets ? `Yes (${profile.petTypes.join(', ')})` : 'No'}
-            </p>
-            {profile.dietary.length > 0 && (
-            <p>
-              <strong>Dietary:</strong>
-              {' '}
-              {profile.dietary.join(', ')}
-            </p>
-            )}
-            {profile.interests.length > 0 && (
-            <p>
-              <strong>Interests:</strong>
-              {' '}
-              {profile.interests.join(', ')}
-            </p>
-            )}
-          </Card.Body>
-        </Card>
-      </div>
+          {/* Habits & Interests Card */}
+          <Card className="border-0 shadow-sm">
+            <Card.Body>
+              <h6 className="fw-bold text-success mb-3">Habits & Interests</h6>
+              <Row>
+                <Col md={6}>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Smoking:</strong>
+                    </p>
+                    <p className="text-muted">{profile.smoking ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Drinking:</strong>
+                    </p>
+                    <p className="text-muted">{profile.drinking}</p>
+                  </div>
+                </Col>
+                <Col md={6}>
+                  <div className="mb-3">
+                    <p className="mb-1">
+                      <strong>Pets:</strong>
+                    </p>
+                    <p className="text-muted">
+                      {profile.pets ? `Yes (${profile.petTypes.join(', ')})` : 'No'}
+                    </p>
+                  </div>
+                </Col>
+              </Row>
+              {profile.dietary.length > 0 && (
+                <div className="mb-3 pt-2 border-top border-success border-opacity-25">
+                  <p className="mb-1">
+                    <strong>Dietary Preferences:</strong>
+                  </p>
+                  <p className="text-muted">{profile.dietary.join(', ')}</p>
+                </div>
+              )}
+              {profile.interests.length > 0 && (
+                <div className="pt-2 border-top border-success border-opacity-25">
+                  <p className="mb-2">
+                    <strong>Interests:</strong>
+                  </p>
+                  <div className="d-flex flex-wrap gap-2">
+                    {profile.interests.map((interest, idx) => (
+                      <span
+                        // eslint-disable-next-line react/no-array-index-key
+                        key={idx}
+                        className="badge bg-success bg-opacity-20 text-success fw-normal"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </div>
       )}
     </Modal.Body>
   </Modal>
