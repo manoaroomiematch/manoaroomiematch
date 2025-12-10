@@ -26,6 +26,8 @@ import UserProfileModal from '@/components/UserProfileModal';
 import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 import DeleteUserModal from '@/components/DeleteUserModal';
+import SuspensionModal from '@/components/SuspensionModal';
+import DeactivationModal from '@/components/DeactivationModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminStatisticsCard from '@/components/AdminStatisticsCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -47,10 +49,13 @@ interface User {
 interface Flag {
   id: number;
   user: string;
+  userId?: number;
   reportedBy: string;
   reason: string;
   status: string;
   date: string;
+  suspensionCount?: number;
+  suspendedUntil?: string;
 }
 
 interface Category {
@@ -230,6 +235,14 @@ const AdminPage: React.FC = () => {
   const [categorySort, setCategorySort] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
 
+  /** SUSPENSION AND DEACTIVATION MODALS */
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  const [showDeactivationModal, setShowDeactivationModal] = useState(false);
+  const [selectedFlagId, setSelectedFlagId] = useState<number | null>(null);
+  const [selectedFlagUserName, setSelectedFlagUserName] = useState('');
+  const [moderationActionLoading, setModerationActionLoading] = useState(false);
+  const [showModerationHistory, setShowModerationHistory] = useState<number | null>(null);
+
   /** Fetch all users with caching (client-side pagination) */
   const fetchUsers = async (skipCache = false) => {
     if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
@@ -350,14 +363,41 @@ const AdminPage: React.FC = () => {
   }, [session, status]);
 
   /** Handle flag resolution - updates local state immediately after successful API call */
-  const handleResolveFlag = async (flagId: number, action: 'resolve' | 'deactivate') => {
+  const handleResolveFlag = async (
+    flagId: number,
+    action: 'resolve' | 'suspend' | 'deactivate' | 'reactivate',
+    durationHours?: number,
+    notes?: string,
+  ) => {
+    // For suspend and deactivate, show modals first
+    if (action === 'suspend' || action === 'deactivate') {
+      const flag = flags.find((f) => f.id === flagId);
+      if (!flag) return;
+
+      setSelectedFlagId(flagId);
+      setSelectedFlagUserName(flag.user);
+
+      if (action === 'suspend') {
+        setShowSuspensionModal(true);
+      } else {
+        setShowDeactivationModal(true);
+      }
+      return;
+    }
+
+    // For resolve, deactivate (via modal), and reactivate actions
     try {
+      setModerationActionLoading(true);
+      const body: any = { flagId, action };
+      if (durationHours) body.durationHours = durationHours;
+      if (notes) body.notes = notes;
+
       const response = await fetch('/api/admin/resolve-flag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ flagId, action }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -365,10 +405,38 @@ const AdminPage: React.FC = () => {
       }
 
       // Update local state immediately instead of re-fetching
-      const newStatus = action === 'resolve' ? 'resolved' : 'user_deactivated';
+      let newStatus = 'pending';
+      if (action === 'resolve') newStatus = 'resolved';
+      if (action === 'reactivate') newStatus = 'active';
+
       setFlags((prev) => prev.map((flag) => (flag.id === flagId ? { ...flag, status: newStatus } : flag)));
+
+      // Clear modals
+      setShowSuspensionModal(false);
+      setShowDeactivationModal(false);
+      setSelectedFlagId(null);
+      setSelectedFlagUserName('');
     } catch (err) {
       console.error(`Error ${action}ing flag:`, err);
+      alert(`Error ${action}ing flag`);
+    } finally {
+      setModerationActionLoading(false);
+    }
+  };
+
+  const handleShowModerationHistory = async (userId: number) => {
+    if (showModerationHistory === userId) {
+      setShowModerationHistory(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/moderation-history?userId=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch history');
+      setShowModerationHistory(userId);
+    } catch (err) {
+      console.error('Error fetching moderation history:', err);
+      alert('Failed to load moderation history');
     }
   };
 
@@ -732,7 +800,12 @@ const AdminPage: React.FC = () => {
                   </thead>
                   <tbody>
                     {shownFlags.map((flag) => (
-                      <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
+                      <ContentModerationTable
+                        key={flag.id}
+                        {...flag}
+                        onResolve={handleResolveFlag}
+                        onShowHistory={handleShowModerationHistory}
+                      />
                     ))}
                   </tbody>
                 </AdminTable>
@@ -878,6 +951,40 @@ const AdminPage: React.FC = () => {
           setSelectedUserIdForModal(undefined);
         }}
         userId={selectedUserIdForModal}
+      />
+
+      {/* Suspension Modal */}
+      <SuspensionModal
+        show={showSuspensionModal}
+        userName={selectedFlagUserName}
+        onClose={() => {
+          setShowSuspensionModal(false);
+          setSelectedFlagId(null);
+          setSelectedFlagUserName('');
+        }}
+        onConfirm={(durationHours, notes) => {
+          if (selectedFlagId) {
+            handleResolveFlag(selectedFlagId, 'suspend', durationHours, notes);
+          }
+        }}
+        isLoading={moderationActionLoading}
+      />
+
+      {/* Deactivation Modal */}
+      <DeactivationModal
+        show={showDeactivationModal}
+        userName={selectedFlagUserName}
+        onClose={() => {
+          setShowDeactivationModal(false);
+          setSelectedFlagId(null);
+          setSelectedFlagUserName('');
+        }}
+        onConfirm={(notes) => {
+          if (selectedFlagId) {
+            handleResolveFlag(selectedFlagId, 'deactivate', undefined, notes);
+          }
+        }}
+        isLoading={moderationActionLoading}
       />
     </main>
   );
