@@ -158,13 +158,16 @@ const AdminPage: React.FC = () => {
     }
   };
   /** View user profile handler - uses pre-fetched user data, then fetches full profile on demand */
-  const handleViewUser = async (email: string) => {
+  const handleViewUser = async (email: string, userId?: string) => {
     // Attempt to fetch the full profile data
     try {
       const response = await fetch(`/api/profile?email=${encodeURIComponent(email)}`);
       if (response.ok) {
         const data = await response.json();
         setSelectedUserProfile(data.profile);
+        if (userId) {
+          setSelectedUserIdForModal(Number(userId));
+        }
       } else {
         setSelectedUserProfile(null);
       }
@@ -183,6 +186,7 @@ const AdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
+  const [selectedUserIdForModal, setSelectedUserIdForModal] = useState<number | undefined>(undefined);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
   const [adminProfile, setAdminProfile] = useState<{
@@ -871,7 +875,9 @@ const AdminPage: React.FC = () => {
         onHide={() => {
           setShowProfileModal(false);
           setSelectedUserProfile(null);
+          setSelectedUserIdForModal(undefined);
         }}
+        userId={selectedUserIdForModal}
       />
     </main>
   );

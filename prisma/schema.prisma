@@ -102,11 +102,15 @@ model Flag {
   reported_by_user_id Int
   reported_user_id Int
   reason           String
-  status           String
+  status           String   @default("pending")
   created_at       DateTime @default(now())
 
   reported_by_user User @relation("ReportedByUser", fields: [reported_by_user_id], references: [id])
   reported_user    User @relation("ReportedUser", fields: [reported_user_id], references: [id])
+
+  @@unique([reported_by_user_id, reported_user_id])
+  @@index([reported_user_id])
+  @@index([status])
 }
 
 model Notification {
