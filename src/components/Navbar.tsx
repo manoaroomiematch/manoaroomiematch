@@ -28,25 +28,25 @@ const NavBar: React.FC = () => {
    */
   const unreadMessageCount = 1; // Mock data - replace with actual API call
   return (
-    <Navbar bg="light" expand="lg">
-      <Container>
+    <Navbar bg="white" expand="lg" sticky="top" className="custom-navbar shadow-sm">
+      <Container fluid className="px-3 px-md-4 py-2">
         <Navbar.Brand
           href={role === 'ADMIN' ? '/admin' : '/'}
-          className="d-flex align-items-center"
+          className="d-flex align-items-center gap-2 navbar-brand-wrapper"
         >
           <Image
             src="/RoomieLogo.png"
             alt="Manoa RoomieMatch"
             width={200}
             height={70}
-            className="d-inline-block align-top"
+            className="d-inline-block align-top brand-logo"
             style={{ objectFit: 'contain', maxHeight: '100%' }}
             priority
           />
         </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Toggle aria-controls="basic-navbar-nav" aria-label="Toggle navigation" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto justify-content-start flex-row flex-wrap">
+          <Nav className="me-auto navbar-links">
             {currentUser ? (
               // eslint-disable-next-line react/jsx-no-useless-fragment
               <>
@@ -89,7 +89,7 @@ const NavBar: React.FC = () => {
               </>
             ) : ''}
           </Nav>
-          <Nav className="align-items-center gap-2 ms-auto">
+          <Nav className="align-items-center gap-3 ms-auto navbar-actions">
             {session ? (
               <>
                 <NavDropdown
