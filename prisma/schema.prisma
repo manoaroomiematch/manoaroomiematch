@@ -167,7 +167,7 @@ model LifestyleCategory {
   name        String
   description String?
   is_active   Boolean  @default(true)
-  lastUpdated DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
   questions   LifestyleQuestion[]
 }
 

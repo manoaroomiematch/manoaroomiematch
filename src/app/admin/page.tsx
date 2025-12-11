@@ -942,8 +942,6 @@ const AdminPage: React.FC = () => {
                     <thead className="table-light">
                       <tr style={{ background: '#e0ffe7', fontWeight: 600, fontSize: '1.05rem' }}>
                         <th>Category</th>
-
-                        <th>Last Updated</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
