@@ -322,8 +322,11 @@ const LifestyleSurvey: React.FC = () => {
       localStorage.removeItem(STORAGE_KEY);
       setShowDraftBanner(false);
 
-      // Redirect to confirmation page
-      window.location.href = '/lifestyle-survey/confirmation';
+      // Set flag for new user flow
+      localStorage.setItem('just-completed-survey', 'true');
+
+      // Redirect to edit profile page for new users
+      window.location.href = '/edit-profile';
     } catch (error) {
       console.error('Error submitting survey:', error);
       console.log('Error submitting survey. Please try again.');
