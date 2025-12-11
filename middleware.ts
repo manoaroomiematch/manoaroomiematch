@@ -1,13 +1,23 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import authOptions from '@/lib/authOptions';
+import { clearExpiredSuspensionsAsync } from '@/lib/suspensionUtils';
 
 /**
  * Middleware to protect routes based on user role
  * Admin users are restricted to admin-only pages
  * Regular users are restricted from admin pages
+ *
+ * Suspension Cleanup:
+ * - Triggers async suspension cleanup (non-blocking)
+ * - Optimized to skip frequent runs (max once every 5 minutes)
+ * - Alternatively, could be moved to a dedicated cron endpoint for better separation of concerns
+ * - Current middleware approach is simpler and doesn't require additional secret keys
  */
 export async function middleware(request: NextRequest) {
+  // Clear expired suspensions asynchronously (doesn't block request)
+  // Throttled to max once every 5 minutes to avoid database load
+  clearExpiredSuspensionsAsync();
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as { randomKey?: string })?.randomKey;
   const { pathname } = request.nextUrl;

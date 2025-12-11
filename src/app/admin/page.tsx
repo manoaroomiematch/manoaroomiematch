@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable global-require */
 /* eslint-disable no-alert */
 /* eslint-disable @typescript-eslint/no-use-before-define */
@@ -26,6 +27,13 @@ import UserProfileModal from '@/components/UserProfileModal';
 import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 import DeleteUserModal from '@/components/DeleteUserModal';
+import SuspensionModal from '@/components/SuspensionModal';
+import {
+  getFlagStatusForAction,
+  updateUserForModerationAction,
+  getErrorMessageForAction,
+} from '@/lib/moderationHelper';
+import DeactivationModal from '@/components/DeactivationModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminStatisticsCard from '@/components/AdminStatisticsCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -47,10 +55,13 @@ interface User {
 interface Flag {
   id: number;
   user: string;
+  userId?: number;
   reportedBy: string;
   reason: string;
   status: string;
   date: string;
+  suspensionCount?: number;
+  suspendedUntil?: string;
 }
 
 interface Category {
@@ -76,6 +87,8 @@ function getTimeBasedGreeting(): string {
 }
 
 const AdminPage: React.FC = () => {
+  // New: Tab state for moderation (active vs resolved)
+  const [moderationTab, setModerationTab] = useState<'active' | 'resolved'>('active');
   // Modal state for add/delete category
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
@@ -158,13 +171,16 @@ const AdminPage: React.FC = () => {
     }
   };
   /** View user profile handler - uses pre-fetched user data, then fetches full profile on demand */
-  const handleViewUser = async (email: string) => {
+  const handleViewUser = async (email: string, userId?: string) => {
     // Attempt to fetch the full profile data
     try {
       const response = await fetch(`/api/profile?email=${encodeURIComponent(email)}`);
       if (response.ok) {
         const data = await response.json();
         setSelectedUserProfile(data.profile);
+        if (userId) {
+          setSelectedUserIdForModal(Number(userId));
+        }
       } else {
         setSelectedUserProfile(null);
       }
@@ -183,6 +199,7 @@ const AdminPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
+  const [selectedUserIdForModal, setSelectedUserIdForModal] = useState<number | undefined>(undefined);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | undefined>(undefined);
   const [adminProfile, setAdminProfile] = useState<{
@@ -217,7 +234,7 @@ const AdminPage: React.FC = () => {
 
   /** CONTENT MODERATION FILTERS */
   const [moderationSearch, setModerationSearch] = useState('');
-  const [reasonFilter, setReasonFilter] = useState('');
+  // Removed reasonFilter as it's no longer used
   const [moderationSort, setModerationSort] = useState('');
   const [moderationPage, setModerationPage] = useState(1);
 
@@ -225,6 +242,14 @@ const AdminPage: React.FC = () => {
   const [categorySearch, setCategorySearch] = useState('');
   const [categorySort, setCategorySort] = useState('');
   const [categoryPage, setCategoryPage] = useState(1);
+
+  /** SUSPENSION AND DEACTIVATION MODALS */
+  const [showSuspensionModal, setShowSuspensionModal] = useState(false);
+  const [showDeactivationModal, setShowDeactivationModal] = useState(false);
+  const [selectedFlagId, setSelectedFlagId] = useState<number | null>(null);
+  const [selectedFlagUserName, setSelectedFlagUserName] = useState('');
+  const [moderationActionLoading, setModerationActionLoading] = useState(false);
+  const [showModerationHistory, setShowModerationHistory] = useState<number | null>(null);
 
   /** Fetch all users with caching (client-side pagination) */
   const fetchUsers = async (skipCache = false) => {
@@ -346,25 +371,91 @@ const AdminPage: React.FC = () => {
   }, [session, status]);
 
   /** Handle flag resolution - updates local state immediately after successful API call */
-  const handleResolveFlag = async (flagId: number, action: 'resolve' | 'deactivate') => {
+  // Use string for action to avoid TypeScript narrowing issues in user update logic
+  const handleResolveFlag = async (
+    flagId: number,
+    action: string,
+    durationHours?: number,
+    notes?: string,
+    fromModal?: boolean,
+  ) => {
+    // For suspend and deactivate, show modals first (unless we're coming from the modal)
+    if ((action === 'suspend' || action === 'deactivate') && !fromModal) {
+      const flag = flags.find((f) => f.id === flagId);
+      if (!flag) return;
+
+      setSelectedFlagId(flagId);
+      setSelectedFlagUserName(flag.user);
+
+      if (action === 'suspend') {
+        setShowSuspensionModal(true);
+      } else {
+        setShowDeactivationModal(true);
+      }
+      return;
+    }
+
+    // For resolve, unsuspend, deactivate (via modal), suspend (via modal), reactivate, and other actions
     try {
+      setModerationActionLoading(true);
+      const body: any = { flagId, action };
+      if (durationHours) body.durationHours = durationHours;
+      if (notes) body.notes = notes;
+
       const response = await fetch('/api/admin/resolve-flag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ flagId, action }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         throw new Error(`Failed to ${action} flag`);
       }
 
-      // Update local state immediately instead of re-fetching
-      const newStatus = action === 'resolve' ? 'resolved' : 'user_deactivated';
+      const data = await response.json();
+
+      // Update local state for flags using helper function
+      const newStatus = getFlagStatusForAction(action);
       setFlags((prev) => prev.map((flag) => (flag.id === flagId ? { ...flag, status: newStatus } : flag)));
+
+      // Update local state for users if needed
+      if (data && data.user && data.user.id) {
+        setUsers((prev) => prev.map((u) => {
+          if (String(u.id) !== String(data.user.id)) return u;
+          return updateUserForModerationAction(u, action, data.user);
+        }));
+      }
+
+      // Clear modals
+      setShowSuspensionModal(false);
+      setShowDeactivationModal(false);
+      setSelectedFlagId(null);
+      setSelectedFlagUserName('');
     } catch (err) {
-      console.error(`Error ${action}ing flag:`, err);
+      // Use helper to get user-friendly error message
+      const errorMessage = getErrorMessageForAction(action);
+      console.error(`${errorMessage}:`, err);
+      alert(errorMessage);
+    } finally {
+      setModerationActionLoading(false);
+    }
+  };
+
+  const handleShowModerationHistory = async (userId: number) => {
+    if (showModerationHistory === userId) {
+      setShowModerationHistory(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/moderation-history?userId=${userId}`);
+      if (!response.ok) throw new Error('Failed to fetch history');
+      setShowModerationHistory(userId);
+    } catch (err) {
+      console.error('Error fetching moderation history:', err);
+      alert('Failed to load moderation history');
     }
   };
 
@@ -393,8 +484,7 @@ const AdminPage: React.FC = () => {
   /** CONTENT MODERATION FILTERS - Client-side filtering and sorting */
   const filteredFlags = flags.filter((f) => {
     const matchesSearch = moderationSearch === '' || f.user.toLowerCase().includes(moderationSearch.toLowerCase());
-    const matchesReason = reasonFilter === '' || f.reason === reasonFilter;
-    return matchesSearch && matchesReason;
+    return matchesSearch;
   });
 
   const sortedFlags = [...filteredFlags].sort((a, b) => {
@@ -412,7 +502,15 @@ const AdminPage: React.FC = () => {
   const totalPagesModeration = totalFlagPages;
   const shownFlags = paginatedFlags;
 
-  /** LIFESTYLE CATEGORIES FILTERS - Client-side filtering and sorting */
+  // Only show unresolved or resolved flags based on tab
+  // Treat suspended and deactivated as resolved for the resolved tab
+  const isFlagResolved = (flag: Flag) => flag.status === 'resolved'
+    || flag.status === 'user_deactivated'
+    || flag.status === 'suspended'
+    || (flag.suspendedUntil && new Date(flag.suspendedUntil) > new Date());
+
+  const shownFlagsActive = shownFlags.filter((flag) => !isFlagResolved(flag));
+  const shownFlagsResolved = shownFlags.filter((flag) => isFlagResolved(flag));
   const filteredCategories = categories.filter((c) => {
     const matchesSearch = categorySearch === '' || c.name.toLowerCase().includes(categorySearch.toLowerCase());
     return matchesSearch;
@@ -674,6 +772,23 @@ const AdminPage: React.FC = () => {
                 onPageChange={setModerationPage}
                 themeColor={adminBgColor}
               >
+                {/* Moderation Tabs */}
+                <div className="d-flex gap-2 mb-3">
+                  <Button
+                    variant={moderationTab === 'active' ? 'primary' : 'outline-primary'}
+                    className="rounded-pill px-4"
+                    onClick={() => setModerationTab('active')}
+                  >
+                    Active Reports
+                  </Button>
+                  <Button
+                    variant={moderationTab === 'resolved' ? 'primary' : 'outline-primary'}
+                    className="rounded-pill px-4"
+                    onClick={() => setModerationTab('resolved')}
+                  >
+                    Resolved/Old Reports
+                  </Button>
+                </div>
                 <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                   <Form.Control
                     style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
@@ -685,19 +800,6 @@ const AdminPage: React.FC = () => {
                       setModerationPage(1);
                     }}
                   />
-                  <Form.Select
-                    style={{ maxWidth: '200px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
-                    value={reasonFilter}
-                    onChange={(e) => {
-                      setReasonFilter(e.target.value);
-                      setModerationPage(1);
-                    }}
-                  >
-                    <option value="">Filter by reason</option>
-                    <option value="Spam">Spam</option>
-                    <option value="Inappropriate content">Inappropriate content</option>
-                    <option value="Harassment">Harassment</option>
-                  </Form.Select>
                   <Form.Select
                     style={{
                       maxWidth: '180px',
@@ -711,8 +813,6 @@ const AdminPage: React.FC = () => {
                     }}
                   >
                     <option value="">Sort by</option>
-                    <option value="UserA">User A-Z</option>
-                    <option value="UserZ">User Z-A</option>
                     <option value="DateNew">Date (Newest)</option>
                     <option value="DateOld">Date (Oldest)</option>
                   </Form.Select>
@@ -727,8 +827,28 @@ const AdminPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {shownFlags.map((flag) => (
-                      <ContentModerationTable key={flag.id} {...flag} onResolve={handleResolveFlag} />
+                    {(moderationTab === 'active' ? shownFlagsActive : shownFlagsResolved).map((flag) => (
+                      <ContentModerationTable
+                        key={flag.id}
+                        {...flag}
+                        onResolve={handleResolveFlag}
+                        onShowHistory={handleShowModerationHistory}
+                        onViewUser={(userId) => {
+                          if (!userId) {
+                            // Debug: log missing userId
+                            console.warn('No userId for flagged user:', flag);
+                            alert('No userId for flagged user. Cannot view profile.');
+                            return;
+                          }
+                          // Find the flagged user in the users list to get their email
+                          const flaggedUser = users.find((u) => u.id === String(userId));
+                          if (flaggedUser) {
+                            handleViewUser(flaggedUser.email, flaggedUser.id);
+                          } else {
+                            alert('User profile not found.');
+                          }
+                        }}
+                      />
                     ))}
                   </tbody>
                 </AdminTable>
@@ -871,7 +991,43 @@ const AdminPage: React.FC = () => {
         onHide={() => {
           setShowProfileModal(false);
           setSelectedUserProfile(null);
+          setSelectedUserIdForModal(undefined);
         }}
+        userId={selectedUserIdForModal}
+      />
+
+      {/* Suspension Modal */}
+      <SuspensionModal
+        show={showSuspensionModal}
+        userName={selectedFlagUserName}
+        onClose={() => {
+          setShowSuspensionModal(false);
+          setSelectedFlagId(null);
+          setSelectedFlagUserName('');
+        }}
+        onConfirm={(durationHours, notes) => {
+          if (selectedFlagId) {
+            handleResolveFlag(selectedFlagId, 'suspend', durationHours, notes, true);
+          }
+        }}
+        isLoading={moderationActionLoading}
+      />
+
+      {/* Deactivation Modal */}
+      <DeactivationModal
+        show={showDeactivationModal}
+        userName={selectedFlagUserName}
+        onClose={() => {
+          setShowDeactivationModal(false);
+          setSelectedFlagId(null);
+          setSelectedFlagUserName('');
+        }}
+        onConfirm={(notes) => {
+          if (selectedFlagId) {
+            handleResolveFlag(selectedFlagId, 'deactivate', undefined, notes, true);
+          }
+        }}
+        isLoading={moderationActionLoading}
       />
     </main>
   );

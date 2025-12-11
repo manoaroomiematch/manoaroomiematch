@@ -14,19 +14,27 @@ enum Role {
 }
 
 model User {
-  id              Int              @id @default(autoincrement())
-  email           String           @unique
-  password        String
-  role            Role             @default(USER)
-  profile         UserProfile?
+  id                Int                @id @default(autoincrement())
+  email             String              @unique
+  password          String
+  role              Role                @default(USER)
+  profile           UserProfile?
+  
+  // Moderation fields
+  active            Boolean             @default(true)
+  suspendedUntil    DateTime?
+  suspensionCount   Int                 @default(0)
+  lastLogin         DateTime?
   
   // New relations from ER diagram
-  flags_reported  Flag[]           @relation("ReportedByUser")
-  flags_against   Flag[]           @relation("ReportedUser")
-  notifications   Notification[]
-  responses       LifestyleResponse[]
-  sentMessages    Message[]        @relation("Sender")
-  recdMessages    Message[]        @relation("Receiver")
+  flags_reported    Flag[]              @relation("ReportedByUser")
+  flags_against     Flag[]              @relation("ReportedUser")
+  notifications     Notification[]
+  responses         LifestyleResponse[]
+  sentMessages      Message[]           @relation("Sender")
+  recdMessages      Message[]           @relation("Receiver")
+  moderationActions ModerationAction[]  @relation("AdminModerator")
+  targetActions     ModerationAction[]  @relation("TargetUser")
 }
 
 model UserProfile {
@@ -102,11 +110,15 @@ model Flag {
   reported_by_user_id Int
   reported_user_id Int
   reason           String
-  status           String
+  status           String   @default("pending")
   created_at       DateTime @default(now())
 
   reported_by_user User @relation("ReportedByUser", fields: [reported_by_user_id], references: [id])
   reported_user    User @relation("ReportedUser", fields: [reported_user_id], references: [id])
+
+  @@unique([reported_by_user_id, reported_user_id])
+  @@index([reported_user_id])
+  @@index([status])
 }
 
 model Notification {
@@ -183,3 +195,16 @@ model LifestyleResponse {
   created_at  DateTime @default(now())
 }
 
+model ModerationAction {
+  id            Int      @id @default(autoincrement())
+  targetUserId  Int
+  adminUserId   Int
+  action        String   // 'resolve', 'suspend', 'deactivate', 'reactivate'
+  durationHours Int?     // For suspensions, duration in hours (null for other actions)
+  notes         String?
+  flagId        Int?     // Reference to the flag that triggered this action
+  createdAt     DateTime @default(now())
+
+  targetUser    User     @relation("TargetUser", fields: [targetUserId], references: [id])
+  adminUser     User     @relation("AdminModerator", fields: [adminUserId], references: [id])
+}

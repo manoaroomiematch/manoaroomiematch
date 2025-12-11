@@ -6,8 +6,10 @@ import authOptions from '@/lib/authOptions';
 
 /**
  * POST /api/admin/resolve-flag
- * Resolves or updates a content moderation flag
- * Admin-only endpoint - updates flag status to either 'RESOLVED' or 'DEACTIVATED'
+ * Resolves, suspends, deactivates, or reactivates a user based on a content moderation flag
+ * Admin-only endpoint - supports actions: 'resolve', 'suspend', 'deactivate', 'reactivate'
+ * For 'suspend': requires durationHours parameter
+ * Optional: notes field for all actions
  */
 export async function POST(req: NextRequest) {
   try {
@@ -28,9 +30,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse request body to get flag ID and action to perform
+    // Parse request body to get flag ID, action, duration, and notes
     const body = await req.json();
-    const { flagId, action } = body;
+    const { flagId, action, durationHours, notes } = body;
 
     if (!flagId || !action) {
       return NextResponse.json(
@@ -39,16 +41,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate action parameter (must be 'resolve' or 'deactivate')
-    if (!['resolve', 'deactivate'].includes(action)) {
+    // Validate action parameter
+    if (!['resolve', 'suspend', 'unsuspend', 'deactivate', 'reactivate'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "resolve" or "deactivate"' },
+        { error: 'Invalid action. Must be "resolve", "suspend", "unsuspend", "deactivate", or "reactivate"' },
+        { status: 400 },
+      );
+    }
+
+    // Validate suspend action has duration
+    if (action === 'suspend' && !durationHours) {
+      return NextResponse.json(
+        { error: 'Missing required field for suspend action: durationHours' },
         { status: 400 },
       );
     }
 
     // Check if flag exists in the database
-    // Uses (prisma as any) workaround due to TypeScript caching issue with Flag model
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const flag = await (prisma as any).flag.findUnique({
       where: { id: parseInt(flagId, 10) },
@@ -61,7 +70,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Handle 'resolve' action - marks the flag as resolved without deactivating the user
+    const adminUserId = parseInt(session.user.id as string, 10);
+    const reportedUserId = flag.reported_user_id;
+
+    // Handle 'resolve' action - marks the flag as resolved without affecting the user
     if (action === 'resolve') {
       // Update flag status to resolved
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,30 +82,164 @@ export async function POST(req: NextRequest) {
         data: { status: 'resolved' },
       });
 
+      // Log the moderation action
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (prisma as any).moderationAction.create({
+        data: {
+          targetUserId: reportedUserId,
+          adminUserId,
+          action: 'resolve',
+          notes: notes || null,
+          flagId: parseInt(flagId, 10),
+        },
+      });
+
       return NextResponse.json({
         message: 'Flag resolved successfully',
         flag: updatedFlag,
       });
     }
 
-    // Handle 'deactivate' action - marks the user as deactivated via flag status
+    // Handle 'suspend' action - temporarily suspends user for specified duration
+    if (action === 'suspend') {
+      const suspendedUntil = new Date(Date.now() + durationHours * 60 * 60 * 1000);
+
+      // Update user suspension
+      const updatedUser = await (prisma as any).user.update({
+        where: { id: reportedUserId },
+        data: {
+          suspendedUntil,
+          suspensionCount: { increment: 1 },
+        },
+      });
+
+      // Update flag status to 'suspended'
+      const updatedFlag = await (prisma as any).flag.update({
+        where: { id: parseInt(flagId, 10) },
+        data: { status: 'suspended' },
+      });
+
+      // Log the moderation action
+      await (prisma as any).moderationAction.create({
+        data: {
+          targetUserId: reportedUserId,
+          adminUserId,
+          action: 'suspend',
+          durationHours,
+          notes: notes || null,
+          flagId: parseInt(flagId, 10),
+        },
+      });
+
+      return NextResponse.json({
+        message: `User suspended successfully for ${durationHours} hours`,
+        user: updatedUser,
+        flag: updatedFlag,
+      });
+    }
+
+    // Handle 'unsuspend' action - removes suspension from user
+    if (action === 'unsuspend') {
+      // Update user to remove suspension
+      const updatedUser = await (prisma as any).user.update({
+        where: { id: reportedUserId },
+        data: {
+          suspendedUntil: null,
+        },
+      });
+
+      // Update flag status to resolved
+      const updatedFlag = await (prisma as any).flag.update({
+        where: { id: parseInt(flagId, 10) },
+        data: { status: 'resolved' },
+      });
+
+      // Log the moderation action
+      await (prisma as any).moderationAction.create({
+        data: {
+          targetUserId: reportedUserId,
+          adminUserId,
+          action: 'unsuspend',
+          notes: notes || null,
+          flagId: parseInt(flagId, 10),
+        },
+      });
+
+      return NextResponse.json({
+        message: 'User unsuspended successfully',
+        user: updatedUser,
+        flag: updatedFlag,
+      });
+    }
+
+    // Handle 'deactivate' action - permanently deactivates user account
     if (action === 'deactivate') {
-      // Update the reported user's account (you might want to add an 'active' field to User model)
-      // For now, we'll just update the flag status to indicate user deactivation
+      // Update user to be inactive
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedUser = await (prisma as any).user.update({
+        where: { id: reportedUserId },
+        data: {
+          active: false,
+          suspendedUntil: null,
+        },
+      });
+
+      // Update flag status
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedFlag = await (prisma as any).flag.update({
         where: { id: parseInt(flagId, 10) },
         data: { status: 'user_deactivated' },
       });
 
-      // TODO: Optionally, you could deactivate the user here by adding an 'active' field to User model
-      // await prisma.user.update({
-      //   where: { id: flag.reported_user_id },
-      //   data: { active: false },
-      // });
+      // Log the moderation action
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (prisma as any).moderationAction.create({
+        data: {
+          targetUserId: reportedUserId,
+          adminUserId,
+          action: 'deactivate',
+          notes: notes || null,
+          flagId: parseInt(flagId, 10),
+        },
+      });
 
       return NextResponse.json({
         message: 'User deactivated successfully',
+        user: updatedUser,
+        flag: updatedFlag,
+      });
+    }
+
+    // Handle 'reactivate' action - reactivates a previously deactivated user
+    if (action === 'reactivate') {
+      // Update user to be active again
+      const updatedUser = await (prisma as any).user.update({
+        where: { id: reportedUserId },
+        data: {
+          active: true,
+        },
+      });
+
+      // Update flag status to resolved
+      const updatedFlag = await (prisma as any).flag.update({
+        where: { id: parseInt(flagId, 10) },
+        data: { status: 'resolved' },
+      });
+
+      // Log the moderation action
+      await (prisma as any).moderationAction.create({
+        data: {
+          targetUserId: reportedUserId,
+          adminUserId,
+          action: 'reactivate',
+          notes: notes || null,
+          flagId: parseInt(flagId, 10),
+        },
+      });
+
+      return NextResponse.json({
+        message: 'User reactivated successfully',
+        user: updatedUser,
         flag: updatedFlag,
       });
     }

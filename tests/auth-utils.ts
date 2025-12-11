@@ -42,7 +42,8 @@ async function fillFormWithRetry(
         if (attempts >= maxAttempts) {
           throw new Error(`Failed to fill field ${field.selector} after ${maxAttempts} attempts`);
         }
-        await page.waitForTimeout(500);
+        // Wait for element to be ready before retrying instead of using arbitrary timeout
+        await page.waitForSelector(field.selector, { timeout: 2000 }).catch(() => {});
       }
     }
   }

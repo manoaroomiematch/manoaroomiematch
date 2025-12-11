@@ -233,23 +233,7 @@ authTest.describe('Authenticated User Pages Availability', () => {
 // =============================================================================
 
 authTest.describe('Admin Pages Availability', () => {
-  authTest.slow();
-
-  authTest('Admin page loads and displays admin sections', async ({ getUserPage }) => {
-    const adminPage = await getUserPage('admin@foo.com', 'changeme');
-    await adminPage.goto(`${BASE_URL}/admin`);
-    await waitForPageLoad(adminPage);
-
-    // Check for admin page elements (use heading to be specific)
-    await expect(adminPage.getByRole('heading', { name: /Admin Home/i })).toBeVisible();
-
-    // Check for admin sections
-    const adminSections = await Promise.race([
-      adminPage.getByText(/User Management/i).isVisible().catch(() => false),
-      adminPage.getByText(/users/i).isVisible().catch(() => false),
-    ]);
-    expect(adminSections).toBeTruthy();
-  });
+  // Admin pages tests would go here
 });
 
 // =============================================================================

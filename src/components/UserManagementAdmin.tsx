@@ -12,7 +12,7 @@ export interface UserManagementProps {
   email: string;
   role: string;
   onDelete: (id: string) => void;
-  onView: (email: string) => void;
+  onView: (email: string, userId?: string) => void;
 }
 
 /* Renders a single row in the User Management table. See admin/page.tsx. */
@@ -27,7 +27,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, 
         variant="primary"
         size="sm"
         className="rounded-pill d-flex align-items-center"
-        onClick={() => onView(email)}
+        onClick={() => onView(email, id)}
       >
         View
       </Button>

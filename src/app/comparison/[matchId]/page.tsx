@@ -59,6 +59,7 @@ export default function ComparisonPage() {
   const [error, setError] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<ProfileData | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | undefined>(undefined);
   const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function ComparisonPage() {
       if (!res.ok) {
         throw new Error('Failed to fetch profile');
       }
-      const { profile } = await res.json();
+      const { profile, userId: reportingUserId } = await res.json();
 
       // Convert Prisma UserProfile to ProfileData format (null to undefined)
       const profileData: ProfileData = {
@@ -125,6 +126,7 @@ export default function ComparisonPage() {
       };
 
       setSelectedProfile(profileData);
+      setSelectedUserId(reportingUserId);
       setShowProfileModal(true);
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -136,6 +138,7 @@ export default function ComparisonPage() {
   const handleCloseModal = () => {
     setShowProfileModal(false);
     setSelectedProfile(null);
+    setSelectedUserId(undefined);
   };
 
   if (status === 'loading' || loading) {
@@ -319,6 +322,7 @@ export default function ComparisonPage() {
         profile={selectedProfile}
         show={showProfileModal}
         onHide={handleCloseModal}
+        userId={selectedUserId}
       />
     </main>
   );

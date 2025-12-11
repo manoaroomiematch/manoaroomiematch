@@ -5,25 +5,30 @@
 
 /**
  * UserProfileModal Component that displays detailed user profile information for admin users.
- * Triggered when an admin clicks the "View" button in the User Management table.
+ * Triggered when an admin clicks the "View" button in the User Management table, or when
+ * a user views a match profile.
  *
  * Features:
  * - Fetches user profile data from the database via API endpoint (/api/profile)
  * - Displays comprehensive profile information including:
  *   - Basic information (name, email, major, class standing, graduation year)
  *   - Profile photo or default avatar with user's initial
+ *   - Housing preferences and timeline
  *   - Lifestyle preferences
  *   - Habits & interests
+ * - Report button for users to flag inappropriate content (with proper timeout cleanup)
  * - Displays error message if profile fetch fails
  * - Admin-only functionality - requires ADMIN role to fetch profile data
  *
- * @param email - The email address of the user whose profile should be displayed
+ * @param profile - User profile data object
  * @param show - Boolean to control modal visibility
  * @param onHide - Callback function to close the modal
+ * @param userId - Optional user ID for reporting functionality
  */
 
-import React from 'react';
-import { Modal, Row, Col } from 'react-bootstrap';
+import React, { useState, useEffect, useRef } from 'react';
+import { Modal, Row, Col, Button, Form, Alert } from 'react-bootstrap';
+import { Flag } from 'react-bootstrap-icons';
 
 interface ProfileData {
   name: string;
@@ -58,9 +63,86 @@ interface UserProfileModalProps {
   profile: ProfileData | null;
   show: boolean;
   onHide: () => void;
+  userId?: number; // Optional user ID for reporting functionality
 }
 
-const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide }) => {
+const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide, userId }) => {
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up timeout if component unmounts or modal closes
+  useEffect(
+    () =>
+      // Clear timeout if it's still pending when component unmounts or modal closes
+      // eslint-disable-next-line implicit-arrow-linebreak
+      () => {
+        if (reportTimeoutRef.current) {
+          clearTimeout(reportTimeoutRef.current);
+        }
+      },
+    [show],
+  );
+
+  const handleReport = async () => {
+    if (!reportReason.trim()) {
+      setReportError('Please provide a reason for the report');
+      return;
+    }
+
+    if (!userId) {
+      setReportError('Unable to report this user');
+      return;
+    }
+
+    setReportLoading(true);
+    setReportError(null);
+
+    try {
+      const response = await fetch('/api/flags', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportedUserId: userId,
+          reason: reportReason.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setReportError(data.error || 'Failed to submit report');
+        return;
+      }
+
+      setReportSuccess(true);
+      setReportReason('');
+      // Store timeout ID so we can clean it up if component unmounts
+      reportTimeoutRef.current = setTimeout(() => {
+        setShowReportForm(false);
+        setReportSuccess(false);
+        reportTimeoutRef.current = null;
+      }, 2000);
+    } catch (err) {
+      setReportError('An error occurred while submitting your report');
+      console.error('Report error:', err);
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleCloseReport = () => {
+    setShowReportForm(false);
+    setReportReason('');
+    setReportError(null);
+    setReportSuccess(false);
+  };
+
   // Filter out empty, null, or undefined interests
   const validInterests = profile?.interests?.filter(
     (item) => item
@@ -94,277 +176,335 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
         <Modal.Title className="w-100 text-center fw-bold">
           Profile
         </Modal.Title>
+        {userId && !showReportForm && (
+          <Button
+            variant="outline-danger"
+            size="sm"
+            className="position-absolute end-0 me-5"
+            onClick={() => setShowReportForm(true)}
+          >
+            <Flag size={16} className="me-1" />
+            Report User
+          </Button>
+        )}
       </Modal.Header>
       <Modal.Body className="p-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
-        {!profile && (
-          <div className="text-center py-5">
-            <p className="text-muted">No profile data available</p>
-          </div>
-        )}
-
-        {profile && (
-          <div>
-            {/* Top Section: Avatar and Basic Info */}
-            <Row className="mb-4">
-              <Col md={4} className="text-center">
-                {profile.photoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.photoUrl}
-                    alt={profile.name}
-                    className="rounded-circle mb-3"
-                    style={{
-                      width: '150px',
-                      height: '150px',
-                      objectFit: 'cover',
-                      backgroundColor: '#d1e7dd',
-                    }}
+        {showReportForm ? (
+          <div className="mb-4">
+            <h6 className="fw-bold text-danger mb-3">Report User</h6>
+            {reportSuccess ? (
+              <Alert variant="success">
+                Thank you! Your report has been submitted successfully. The moderation team will review it shortly.
+              </Alert>
+            ) : (
+              <>
+                {reportError && <Alert variant="danger">{reportError}</Alert>}
+                <Form.Group className="mb-3">
+                  <Form.Label className="fw-bold">Report Reason</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    placeholder="Please describe why you're reporting this user..."
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    disabled={reportLoading}
                   />
-                ) : (
-                  <div
-                    className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-3 mx-auto"
-                    style={{ width: '150px', height: '150px' }}
+                  <Form.Text className="text-muted d-block mt-1">
+                    Please be specific and factual in your report.
+                  </Form.Text>
+                </Form.Group>
+                <div className="d-flex gap-2">
+                  <Button
+                    variant="danger"
+                    onClick={handleReport}
+                    disabled={reportLoading || !reportReason.trim()}
                   >
-                    <span className="text-success display-3 fw-bold">
-                      {profile.firstName?.charAt(0) || profile.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-                <h4 className="fw-bold mb-1">{profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : profile.name}</h4>
-                {profile.pronouns && <p className="text-muted mb-0">{profile.pronouns}</p>}
-              </Col>
-
-              <Col md={8}>
-                <h5 className="fw-bold text-success mb-3">Basic Information</h5>
-
-                <div className="mb-3">
-                  <strong>Email:</strong>
-                  <div className="text-muted">{profile.email}</div>
+                    {reportLoading ? 'Submitting...' : 'Submit Report'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleCloseReport}
+                    disabled={reportLoading}
+                  >
+                    Cancel
+                  </Button>
                 </div>
-
-                {profile.major && (
-                  <div className="mb-3">
-                    <strong>Major:</strong>
-                    <div className="text-muted">{profile.major}</div>
-                  </div>
-                )}
-
-                {profile.classStanding && (
-                  <div className="mb-3">
-                    <strong>Class Standing:</strong>
-                    <div className="text-muted">{profile.classStanding}</div>
-                  </div>
-                )}
-
-                {profile.graduationYear && (
-                  <div className="mb-3">
-                    <strong>Graduation Year:</strong>
-                    <div className="text-muted">{profile.graduationYear}</div>
-                  </div>
-                )}
-
-                {/* Housing Cards - Compact Version */}
-                {(profile.needRoommateBy || profile.housingType || profile.preferredDorm) && (
-                  <Row className="g-2 mt-2 mb-3">
-                    {profile.needRoommateBy && (
-                      <Col md={6}>
-                        <div className="card border-success border-opacity-25 h-100">
-                          <div className="card-body p-2">
-                            <div className="d-flex align-items-center mb-1">
-                              <i className="bi bi-calendar-event text-success fs-6 me-2" />
-                              <small className="fw-bold text-success mb-0">Need Roommate By</small>
-                            </div>
-                            <div className="fs-6 fw-semibold">{formatDate(profile.needRoommateBy)}</div>
-                          </div>
-                        </div>
-                      </Col>
-                    )}
-                    {(profile.housingType || profile.preferredDorm) && (
-                      <Col md={6}>
-                        <div className="card border-success border-opacity-25 h-100">
-                          <div className="card-body p-2">
-                            <div className="d-flex align-items-center mb-1">
-                              <i className="bi bi-house text-success fs-6 me-2" />
-                              <small className="fw-bold text-success mb-0">Housing Preference</small>
-                            </div>
-                            {profile.housingType && (
-                              <div className="fs-6 fw-semibold text-capitalize">
-                                {profile.housingType.replace('-', ' ')}
-                              </div>
-                            )}
-                            {profile.preferredDorm && (
-                              <small className="text-muted d-block">
-                                <strong>Preferred:</strong>
-                                {' '}
-                                {profile.preferredDorm}
-                              </small>
-                            )}
-                          </div>
-                        </div>
-                      </Col>
-                    )}
-                  </Row>
-                )}
-
-                {profile.bio && (
-                  <div className="mt-4 pt-3 border-top">
-                    <h6 className="fw-bold text-success mb-2">Bio</h6>
-                    <p className="text-muted mb-0">{profile.bio}</p>
-                  </div>
-                )}
-              </Col>
-            </Row>
-
-            {/* Lifestyle Preferences Section */}
-            <div className="mt-4 pt-4 border-top">
-              <h5 className="fw-bold text-success mb-4">Lifestyle Preferences</h5>
-
-              <Row className="g-4">
-                <Col md={6}>
-                  <div className="mb-3">
-                    <strong className="d-block mb-2">Sleep Schedule:</strong>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: `${(profile.sleepSchedule / 5) * 100}%` }}
-                        aria-valuenow={profile.sleepSchedule}
-                        aria-valuemin={1}
-                        aria-valuemax={5}
-                        aria-label={`Sleep Schedule: ${profile.sleepSchedule} out of 5`}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.sleepSchedule}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-
-                  <div className="mb-3">
-                    <strong className="d-block mb-2">Cleanliness:</strong>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: `${(profile.cleanliness / 5) * 100}%` }}
-                        aria-valuenow={profile.cleanliness}
-                        aria-valuemin={1}
-                        aria-valuemax={5}
-                        aria-label={`Cleanliness: ${profile.cleanliness} out of 5`}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.cleanliness}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-
-                  <div className="mb-3">
-                    <strong className="d-block mb-2">Social Level:</strong>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: `${(profile.socialLevel / 5) * 100}%` }}
-                        aria-valuenow={profile.socialLevel}
-                        aria-valuemin={1}
-                        aria-valuemax={5}
-                        aria-label={`Social Level: ${profile.socialLevel} out of 5`}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.socialLevel}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-                </Col>
-
-                <Col md={6}>
-                  <div className="mb-3">
-                    <strong className="d-block mb-2">Guest Frequency:</strong>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: `${(profile.guestFrequency / 5) * 100}%` }}
-                        aria-valuenow={profile.guestFrequency}
-                        aria-valuemin={1}
-                        aria-valuemax={5}
-                        aria-label={`Guest Frequency: ${profile.guestFrequency} out of 5`}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.guestFrequency}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-
-                  <div className="mb-3">
-                    <strong className="d-block mb-2">Noise Level:</strong>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: `${(profile.noiseLevel / 5) * 100}%` }}
-                        aria-valuenow={profile.noiseLevel}
-                        aria-valuemin={1}
-                        aria-valuemax={5}
-                        aria-label={`Noise Level: ${profile.noiseLevel} out of 5`}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.noiseLevel}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-
-                  <div className="mb-3">
-                    <strong className="d-block mb-2">Temperature Preference:</strong>
-                    <div className="progress" style={{ height: '8px' }}>
-                      <div
-                        className="progress-bar bg-success"
-                        role="progressbar"
-                        style={{ width: `${(profile.temperature / 5) * 100}%` }}
-                        aria-valuenow={profile.temperature}
-                        aria-valuemin={1}
-                        aria-valuemax={5}
-                        aria-label={`Temperature: ${profile.temperature} out of 5`}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.temperature}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-
-            {/* Interests Section */}
-            {validInterests.length > 0 && (
-              <div className="mt-4 pt-4 border-top">
-                <h6 className="fw-bold text-success mb-3">Interests & Hobbies</h6>
-                <div className="d-flex flex-wrap gap-2">
-                  {validInterests.map((interest, idx) => (
-                    <span
-                      // eslint-disable-next-line react/no-array-index-key
-                      key={idx}
-                      className="badge bg-success px-3 py-2"
-                      style={{ fontSize: '0.9rem' }}
-                    >
-                      {interest}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              </>
             )}
           </div>
+        ) : (
+          <>
+            {!profile && (
+              <div className="text-center py-5">
+                <p className="text-muted">No profile data available</p>
+              </div>
+            )}
+
+            {profile && (
+              <div>
+                {/* Top Section: Avatar and Basic Info */}
+                <Row className="mb-4">
+                  <Col md={4} className="text-center">
+                    {profile.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={profile.photoUrl}
+                        alt={profile.name}
+                        className="rounded-circle mb-3"
+                        style={{
+                          width: '150px',
+                          height: '150px',
+                          objectFit: 'cover',
+                          backgroundColor: '#d1e7dd',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-3 mx-auto"
+                        style={{ width: '150px', height: '150px' }}
+                      >
+                        <span className="text-success display-3 fw-bold">
+                          {profile.firstName?.charAt(0) || profile.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <h4 className="fw-bold mb-1">{profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : profile.name}</h4>
+                    {profile.pronouns && <p className="text-muted mb-0">{profile.pronouns}</p>}
+                  </Col>
+
+                  <Col md={8}>
+                    <h5 className="fw-bold text-success mb-3">Basic Information</h5>
+
+                    <div className="mb-3">
+                      <strong>Email:</strong>
+                      <div className="text-muted">{profile.email}</div>
+                    </div>
+
+                    {profile.major && (
+                      <div className="mb-3">
+                        <strong>Major:</strong>
+                        <div className="text-muted">{profile.major}</div>
+                      </div>
+                    )}
+
+                    {profile.classStanding && (
+                      <div className="mb-3">
+                        <strong>Class Standing:</strong>
+                        <div className="text-muted">{profile.classStanding}</div>
+                      </div>
+                    )}
+
+                    {profile.graduationYear && (
+                      <div className="mb-3">
+                        <strong>Graduation Year:</strong>
+                        <div className="text-muted">{profile.graduationYear}</div>
+                      </div>
+                    )}
+
+                    {/* Housing Cards - Compact Version */}
+                    {(profile.needRoommateBy || profile.housingType || profile.preferredDorm) && (
+                      <Row className="g-2 mt-2 mb-3">
+                        {profile.needRoommateBy && (
+                          <Col md={6}>
+                            <div className="card border-success border-opacity-25 h-100">
+                              <div className="card-body p-2">
+                                <div className="d-flex align-items-center mb-1">
+                                  <i className="bi bi-calendar-event text-success fs-6 me-2" />
+                                  <small className="fw-bold text-success mb-0">Need Roommate By</small>
+                                </div>
+                                <div className="fs-6 fw-semibold">{formatDate(profile.needRoommateBy)}</div>
+                              </div>
+                            </div>
+                          </Col>
+                        )}
+                        {(profile.housingType || profile.preferredDorm) && (
+                          <Col md={6}>
+                            <div className="card border-success border-opacity-25 h-100">
+                              <div className="card-body p-2">
+                                <div className="d-flex align-items-center mb-1">
+                                  <i className="bi bi-house text-success fs-6 me-2" />
+                                  <small className="fw-bold text-success mb-0">Housing Preference</small>
+                                </div>
+                                {profile.housingType && (
+                                  <div className="fs-6 fw-semibold text-capitalize">
+                                    {profile.housingType.replace('-', ' ')}
+                                  </div>
+                                )}
+                                {profile.preferredDorm && (
+                                  <small className="text-muted d-block">
+                                    <strong>Preferred:</strong>
+                                    {' '}
+                                    {profile.preferredDorm}
+                                  </small>
+                                )}
+                              </div>
+                            </div>
+                          </Col>
+                        )}
+                      </Row>
+                    )}
+
+                    {profile.bio && (
+                      <div className="mt-4 pt-3 border-top">
+                        <h6 className="fw-bold text-success mb-2">Bio</h6>
+                        <p className="text-muted mb-0">{profile.bio}</p>
+                      </div>
+                    )}
+                  </Col>
+                </Row>
+
+                {/* Lifestyle Preferences Section */}
+                <div className="mt-4 pt-4 border-top">
+                  <h5 className="fw-bold text-success mb-4">Lifestyle Preferences</h5>
+
+                  <Row className="g-4">
+                    <Col md={6}>
+                      <div className="mb-3">
+                        <strong className="d-block mb-2">Sleep Schedule:</strong>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: `${(profile.sleepSchedule / 5) * 100}%` }}
+                            aria-valuenow={profile.sleepSchedule}
+                            aria-valuemin={1}
+                            aria-valuemax={5}
+                            aria-label={`Sleep Schedule: ${profile.sleepSchedule} out of 5`}
+                          />
+                        </div>
+                        <small className="text-muted">
+                          {profile.sleepSchedule}
+                          {' '}
+                          / 5
+                        </small>
+                      </div>
+
+                      <div className="mb-3">
+                        <strong className="d-block mb-2">Cleanliness:</strong>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: `${(profile.cleanliness / 5) * 100}%` }}
+                            aria-valuenow={profile.cleanliness}
+                            aria-valuemin={1}
+                            aria-valuemax={5}
+                            aria-label={`Cleanliness: ${profile.cleanliness} out of 5`}
+                          />
+                        </div>
+                        <small className="text-muted">
+                          {profile.cleanliness}
+                          {' '}
+                          / 5
+                        </small>
+                      </div>
+
+                      <div className="mb-3">
+                        <strong className="d-block mb-2">Social Level:</strong>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: `${(profile.socialLevel / 5) * 100}%` }}
+                            aria-valuenow={profile.socialLevel}
+                            aria-valuemin={1}
+                            aria-valuemax={5}
+                            aria-label={`Social Level: ${profile.socialLevel} out of 5`}
+                          />
+                        </div>
+                        <small className="text-muted">
+                          {profile.socialLevel}
+                          {' '}
+                          / 5
+                        </small>
+                      </div>
+                    </Col>
+
+                    <Col md={6}>
+                      <div className="mb-3">
+                        <strong className="d-block mb-2">Guest Frequency:</strong>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: `${(profile.guestFrequency / 5) * 100}%` }}
+                            aria-valuenow={profile.guestFrequency}
+                            aria-valuemin={1}
+                            aria-valuemax={5}
+                            aria-label={`Guest Frequency: ${profile.guestFrequency} out of 5`}
+                          />
+                        </div>
+                        <small className="text-muted">
+                          {profile.guestFrequency}
+                          {' '}
+                          / 5
+                        </small>
+                      </div>
+
+                      <div className="mb-3">
+                        <strong className="d-block mb-2">Noise Level:</strong>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: `${(profile.noiseLevel / 5) * 100}%` }}
+                            aria-valuenow={profile.noiseLevel}
+                            aria-valuemin={1}
+                            aria-valuemax={5}
+                            aria-label={`Noise Level: ${profile.noiseLevel} out of 5`}
+                          />
+                        </div>
+                        <small className="text-muted">
+                          {profile.noiseLevel}
+                          {' '}
+                          / 5
+                        </small>
+                      </div>
+
+                      <div className="mb-3">
+                        <strong className="d-block mb-2">Temperature Preference:</strong>
+                        <div className="progress" style={{ height: '8px' }}>
+                          <div
+                            className="progress-bar bg-success"
+                            role="progressbar"
+                            style={{ width: `${(profile.temperature / 5) * 100}%` }}
+                            aria-valuenow={profile.temperature}
+                            aria-valuemin={1}
+                            aria-valuemax={5}
+                            aria-label={`Temperature: ${profile.temperature} out of 5`}
+                          />
+                        </div>
+                        <small className="text-muted">
+                          {profile.temperature}
+                          {' '}
+                          / 5
+                        </small>
+                      </div>
+                    </Col>
+                  </Row>
+                </div>
+
+                {/* Interests Section */}
+                {validInterests.length > 0 && (
+                  <div className="mt-4 pt-4 border-top">
+                    <h6 className="fw-bold text-success mb-3">Interests & Hobbies</h6>
+                    <div className="d-flex flex-wrap gap-2">
+                      {validInterests.map((interest, idx) => (
+                        <span
+                          // eslint-disable-next-line react/no-array-index-key
+                          key={idx}
+                          className="badge bg-success px-3 py-2"
+                          style={{ fontSize: '0.9rem' }}
+                        >
+                          {interest}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </Modal.Body>
     </Modal>
