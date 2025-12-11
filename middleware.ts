@@ -1,13 +1,18 @@
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import authOptions from '@/lib/authOptions';
+import { clearExpiredSuspensionsAsync } from '@/lib/suspensionUtils';
 
 /**
  * Middleware to protect routes based on user role
  * Admin users are restricted to admin-only pages
  * Regular users are restricted from admin pages
+ * Also triggers async suspension cleanup (non-blocking)
  */
 export async function middleware(request: NextRequest) {
+  // Clear expired suspensions asynchronously (doesn't block request)
+  // Optimized to skip frequent runs (max once every 5 minutes)
+  clearExpiredSuspensionsAsync();
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as { randomKey?: string })?.randomKey;
   const { pathname } = request.nextUrl;

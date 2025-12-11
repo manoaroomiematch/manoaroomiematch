@@ -42,9 +42,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate action parameter
-    if (!['resolve', 'suspend', 'deactivate', 'reactivate'].includes(action)) {
+    if (!['resolve', 'suspend', 'unsuspend', 'deactivate', 'reactivate'].includes(action)) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "resolve", "suspend", "deactivate", or "reactivate"' },
+        { error: 'Invalid action. Must be "resolve", "suspend", "unsuspend", "deactivate", or "reactivate"' },
         { status: 400 },
       );
     }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const adminUserId = session.user.id;
+    const adminUserId = parseInt(session.user.id as string, 10);
     const reportedUserId = flag.reported_user_id;
 
     // Handle 'resolve' action - marks the flag as resolved without affecting the user
@@ -105,7 +105,6 @@ export async function POST(req: NextRequest) {
       const suspendedUntil = new Date(Date.now() + durationHours * 60 * 60 * 1000);
 
       // Update user suspension
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedUser = await (prisma as any).user.update({
         where: { id: reportedUserId },
         data: {
@@ -114,15 +113,13 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Update flag status
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // Update flag status to 'suspended'
       const updatedFlag = await (prisma as any).flag.update({
         where: { id: parseInt(flagId, 10) },
-        data: { status: 'resolved' },
+        data: { status: 'suspended' },
       });
 
       // Log the moderation action
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).moderationAction.create({
         data: {
           targetUserId: reportedUserId,
@@ -136,6 +133,40 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         message: `User suspended successfully for ${durationHours} hours`,
+        user: updatedUser,
+        flag: updatedFlag,
+      });
+    }
+
+    // Handle 'unsuspend' action - removes suspension from user
+    if (action === 'unsuspend') {
+      // Update user to remove suspension
+      const updatedUser = await (prisma as any).user.update({
+        where: { id: reportedUserId },
+        data: {
+          suspendedUntil: null,
+        },
+      });
+
+      // Update flag status to resolved
+      const updatedFlag = await (prisma as any).flag.update({
+        where: { id: parseInt(flagId, 10) },
+        data: { status: 'resolved' },
+      });
+
+      // Log the moderation action
+      await (prisma as any).moderationAction.create({
+        data: {
+          targetUserId: reportedUserId,
+          adminUserId,
+          action: 'unsuspend',
+          notes: notes || null,
+          flagId: parseInt(flagId, 10),
+        },
+      });
+
+      return NextResponse.json({
+        message: 'User unsuspended successfully',
         user: updatedUser,
         flag: updatedFlag,
       });
@@ -182,29 +213,34 @@ export async function POST(req: NextRequest) {
     // Handle 'reactivate' action - reactivates a previously deactivated user
     if (action === 'reactivate') {
       // Update user to be active again
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedUser = await (prisma as any).user.update({
         where: { id: reportedUserId },
         data: {
           active: true,
-          suspendedUntil: null,
         },
       });
 
+      // Update flag status to resolved
+      const updatedFlag = await (prisma as any).flag.update({
+        where: { id: parseInt(flagId, 10) },
+        data: { status: 'resolved' },
+      });
+
       // Log the moderation action
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).moderationAction.create({
         data: {
           targetUserId: reportedUserId,
           adminUserId,
           action: 'reactivate',
           notes: notes || null,
+          flagId: parseInt(flagId, 10),
         },
       });
 
       return NextResponse.json({
         message: 'User reactivated successfully',
         user: updatedUser,
+        flag: updatedFlag,
       });
     }
 

@@ -42,21 +42,12 @@ export async function GET(req: NextRequest) {
     const userIdInt = parseInt(userId, 10);
 
     // Fetch moderation history for the user
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const history = await (prisma as any).moderationAction.findMany({
+    const history = await prisma.moderationAction.findMany({
       where: { targetUserId: userIdInt },
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        action: true,
-        durationHours: true,
-        notes: true,
-        createdAt: true,
-        flagId: true,
+      include: {
         adminUser: {
-          select: {
-            id: true,
-            email: true,
+          include: {
             profile: {
               select: {
                 firstName: true,
@@ -69,7 +60,20 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({
-      history,
+      history: history.map((action) => {
+        const firstName = action.adminUser.profile?.firstName || '';
+        const lastName = action.adminUser.profile?.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        return {
+          id: action.id,
+          action: action.action,
+          durationHours: action.durationHours,
+          notes: action.notes,
+          date: action.createdAt.toISOString().split('T')[0],
+          flagId: action.flagId,
+          adminName: fullName || action.adminUser.email,
+        };
+      }),
       totalActions: history.length,
     });
   } catch (error) {

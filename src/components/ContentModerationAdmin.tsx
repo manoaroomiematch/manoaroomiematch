@@ -8,6 +8,7 @@ import { Button, Collapse } from 'react-bootstrap';
 import { CheckCircle, XCircle, Ban, ArrowClockwise, ChevronDown, ChevronUp } from 'react-bootstrap-icons';
 
 export interface ContentFlag {
+  onViewUser?: (userId: number, userName: string) => void;
   id: number;
   user: string;
   userId?: number;
@@ -18,11 +19,21 @@ export interface ContentFlag {
   suspendedUntil?: string;
   onResolve?: (
     flagId: number,
-    action: 'resolve' | 'suspend' | 'deactivate' | 'reactivate',
+    action: 'resolve' | 'suspend' | 'unsuspend' | 'deactivate' | 'reactivate',
     durationHours?: number,
     notes?: string,
   ) => void;
   onShowHistory?: (userId: number) => void;
+}
+
+interface ModerationHistoryAction {
+  id: number;
+  action: string;
+  durationHours?: number;
+  notes?: string;
+  date: string;
+  flagId?: number;
+  adminName: string;
 }
 
 /* Renders a single row for the content moderation table with expandable history section */
@@ -37,11 +48,28 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
   suspendedUntil,
   onResolve = () => {},
   onShowHistory = () => {},
+  onViewUser = () => {},
 }) => {
+  // Unsuspend handler
+  const handleUnsuspend = () => {
+    onResolve(id, 'unsuspend', undefined, 'User unsuspended by admin');
+  };
   const [showHistory, setShowHistory] = useState(false);
-  const isResolved = status === 'resolved' || status === 'user_deactivated';
-  const isSuspended = suspendedUntil && new Date(suspendedUntil) > new Date();
+  const [historyData, setHistoryData] = useState<ModerationHistoryAction[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyFetched, setHistoryFetched] = useState(false);
+  const isSuspended = status === 'suspended' || (suspendedUntil && new Date(suspendedUntil) > new Date());
   const isDeactivated = status === 'user_deactivated';
+  const isResolved = status === 'resolved';
+
+  // Debug logging
+  React.useEffect(() => {
+    if (isSuspended || isDeactivated) {
+      console.log(
+        `Flag ${id} for ${user}: status=${status}, suspended=${isSuspended}, deactivated=${isDeactivated}`,
+      );
+    }
+  }, [id, user, status, suspendedUntil, isSuspended, isDeactivated]);
 
   const handleResolve = () => {
     onResolve(id, 'resolve', undefined, '');
@@ -75,8 +103,19 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
         <td>{reason}</td>
         <td>{date}</td>
         <td>
-          <div className="d-flex gap-2 align-items-center">
+          <div className="d-flex flex-column gap-2">
+            {/* Primary Actions Row */}
             <div className="d-flex gap-2 flex-wrap">
+              {userId && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="rounded-pill d-flex align-items-center"
+                  onClick={() => onViewUser(userId, user)}
+                >
+                  View
+                </Button>
+              )}
               <Button
                 variant="success"
                 size="sm"
@@ -88,18 +127,34 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                 {' '}
                 Resolve
               </Button>
+            </div>
 
+            {/* Moderation Actions Row */}
+            <div className="d-flex gap-2 flex-wrap">
               <Button
                 variant="warning"
                 size="sm"
                 className="rounded-pill d-flex align-items-center"
                 onClick={handleSuspend}
-                disabled={isDeactivated}
+                disabled={Boolean(isDeactivated || isSuspended)}
               >
                 <Ban className="me-1" style={{ fontSize: '0.9rem' }} />
                 {' '}
                 Suspend
               </Button>
+
+              {isSuspended && !isDeactivated && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-pill d-flex align-items-center"
+                  onClick={handleUnsuspend}
+                >
+                  <ArrowClockwise className="me-1" style={{ fontSize: '0.9rem' }} />
+                  {' '}
+                  Unsuspend
+                </Button>
+              )}
 
               <Button
                 variant="danger"
@@ -127,28 +182,59 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
               )}
             </div>
 
-            {userId && (
-              <Button
-                variant="outline-secondary"
-                size="sm"
-                onClick={() => {
-                  setShowHistory(!showHistory);
-                  if (!showHistory) onShowHistory(userId);
-                }}
-                className="d-flex align-items-center"
-              >
-                {showHistory ? <ChevronUp /> : <ChevronDown />}
-              </Button>
-            )}
+            {/* Status and History Row */}
+            <div className="d-flex gap-2 align-items-center flex-wrap">
+              <div>{getStatusBadge()}</div>
+              {suspensionCount > 0 && (
+                <small className="text-muted">
+                  Suspensions:
+                  {' '}
+                  {suspensionCount}
+                </small>
+              )}
+              {userId && (
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  onClick={async () => {
+                    if (showHistory) {
+                      setShowHistory(false);
+                    } else {
+                      setShowHistory(true);
+                      // Only fetch if not already fetched
+                      if (!historyFetched) {
+                        setHistoryLoading(true);
+                        try {
+                          const response = await fetch(`/api/admin/moderation-history?userId=${userId}`);
+                          if (response.ok) {
+                            const data = await response.json();
+                            console.log('History data received:', data);
+                            setHistoryData(data.history || []);
+                          } else {
+                            console.error('Failed to fetch history:', response.statusText);
+                            setHistoryData([]);
+                          }
+                        } catch (err) {
+                          console.error('Error fetching history:', err);
+                          setHistoryData([]);
+                        } finally {
+                          setHistoryLoading(false);
+                          setHistoryFetched(true);
+                        }
+                      }
+                    }
+                    onShowHistory(userId);
+                  }}
+                  className="d-flex align-items-center"
+                  title="View moderation history"
+                >
+                  {showHistory ? <ChevronUp /> : <ChevronDown />}
+                  {' '}
+                  History
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="mt-2">{getStatusBadge()}</div>
-          {suspensionCount > 0 && (
-            <small className="text-muted d-block mt-1">
-              Suspensions:
-              {' '}
-              {suspensionCount}
-            </small>
-          )}
         </td>
       </tr>
 
@@ -163,8 +249,49 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                 {user}
               </h6>
               <div id="history-content">
-                {/* History content will be loaded dynamically */}
-                <p className="text-muted">Loading history...</p>
+                {historyLoading && (
+                  <p className="text-muted">Loading history...</p>
+                )}
+                {!historyLoading && historyData && historyData.length > 0 && (
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {historyData.map((action) => (
+                      <div key={action.id} className="border-bottom pb-2 mb-2">
+                        <div className="d-flex justify-content-between">
+                          <strong className="text-capitalize">{action.action}</strong>
+                          <small className="text-muted">{action.date}</small>
+                        </div>
+                        <small className="text-muted">
+                          By:
+                          {' '}
+                          {action.adminName}
+                        </small>
+                        {action.durationHours && (
+                          <div>
+                            <small className="text-muted">
+                              Duration:
+                              {' '}
+                              {action.durationHours}
+                              {' '}
+                              hours
+                            </small>
+                          </div>
+                        )}
+                        {action.notes && (
+                          <div>
+                            <small className="text-secondary">
+                              Notes:
+                              {' '}
+                              {action.notes}
+                            </small>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!historyLoading && (!historyData || historyData.length === 0) && (
+                  <p className="text-muted">No moderation history found.</p>
+                )}
               </div>
             </div>
           </Collapse>

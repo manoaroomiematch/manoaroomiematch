@@ -99,11 +99,14 @@ export async function GET(req: Request) {
       return {
         id: flag.id,
         user: reportedProfile?.name || reportedUser?.email || 'Unknown User',
+        userId: flag.reported_user_id,
         reportedBy: reportedByProfile?.name || reportedByUser?.email || 'Unknown User',
         reason: flag.reason,
         status: flag.status,
         date: flag.created_at.toISOString().split('T')[0],
         createdAt: flag.created_at,
+        suspensionCount: reportedUser?.suspensionCount || 0,
+        suspendedUntil: reportedUser?.suspendedUntil || undefined,
       };
     });
 

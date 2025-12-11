@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable global-require */
 /* eslint-disable no-alert */
 /* eslint-disable @typescript-eslint/no-use-before-define */
@@ -81,6 +82,8 @@ function getTimeBasedGreeting(): string {
 }
 
 const AdminPage: React.FC = () => {
+  // New: Tab state for moderation (active vs resolved)
+  const [moderationTab, setModerationTab] = useState<'active' | 'resolved'>('active');
   // Modal state for add/delete category
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
@@ -226,7 +229,7 @@ const AdminPage: React.FC = () => {
 
   /** CONTENT MODERATION FILTERS */
   const [moderationSearch, setModerationSearch] = useState('');
-  const [reasonFilter, setReasonFilter] = useState('');
+  // Removed reasonFilter as it's no longer used
   const [moderationSort, setModerationSort] = useState('');
   const [moderationPage, setModerationPage] = useState(1);
 
@@ -363,14 +366,16 @@ const AdminPage: React.FC = () => {
   }, [session, status]);
 
   /** Handle flag resolution - updates local state immediately after successful API call */
+  // Use string for action to avoid TypeScript narrowing issues in user update logic
   const handleResolveFlag = async (
     flagId: number,
-    action: 'resolve' | 'suspend' | 'deactivate' | 'reactivate',
+    action: string,
     durationHours?: number,
     notes?: string,
+    fromModal?: boolean,
   ) => {
-    // For suspend and deactivate, show modals first
-    if (action === 'suspend' || action === 'deactivate') {
+    // For suspend and deactivate, show modals first (unless we're coming from the modal)
+    if ((action === 'suspend' || action === 'deactivate') && !fromModal) {
       const flag = flags.find((f) => f.id === flagId);
       if (!flag) return;
 
@@ -385,7 +390,7 @@ const AdminPage: React.FC = () => {
       return;
     }
 
-    // For resolve, deactivate (via modal), and reactivate actions
+    // For resolve, unsuspend, deactivate (via modal), suspend (via modal), reactivate, and other actions
     try {
       setModerationActionLoading(true);
       const body: any = { flagId, action };
@@ -404,12 +409,51 @@ const AdminPage: React.FC = () => {
         throw new Error(`Failed to ${action} flag`);
       }
 
-      // Update local state immediately instead of re-fetching
+      const data = await response.json();
+
+      // Update local state for flags
       let newStatus = 'pending';
-      if (action === 'resolve') newStatus = 'resolved';
-      if (action === 'reactivate') newStatus = 'active';
+      if (action === 'resolve' || action === 'unsuspend') newStatus = 'resolved';
+      else if (action === 'reactivate') newStatus = 'active';
+      else if (action === 'deactivate') newStatus = 'user_deactivated';
+      else if (action === 'suspend') newStatus = 'suspended';
 
       setFlags((prev) => prev.map((flag) => (flag.id === flagId ? { ...flag, status: newStatus } : flag)));
+
+      // Update local state for users if needed
+      if (data && data.user && data.user.id) {
+        setUsers((prev) => prev.map((u) => {
+          if (String(u.id) !== String(data.user.id)) return u;
+          if (action === 'suspend') {
+            return {
+              ...u,
+              suspendedUntil: data.user.suspendedUntil,
+              suspensionCount: data.user.suspensionCount,
+            };
+          }
+          if (action === 'unsuspend') {
+            return {
+              ...u,
+              suspendedUntil: null,
+            };
+          }
+          if (action === 'deactivate') {
+            return {
+              ...u,
+              active: false,
+              suspendedUntil: null,
+            };
+          }
+          if (action === 'reactivate') {
+            return {
+              ...u,
+              active: true,
+              suspendedUntil: null,
+            };
+          }
+          return u;
+        }));
+      }
 
       // Clear modals
       setShowSuspensionModal(false);
@@ -465,8 +509,7 @@ const AdminPage: React.FC = () => {
   /** CONTENT MODERATION FILTERS - Client-side filtering and sorting */
   const filteredFlags = flags.filter((f) => {
     const matchesSearch = moderationSearch === '' || f.user.toLowerCase().includes(moderationSearch.toLowerCase());
-    const matchesReason = reasonFilter === '' || f.reason === reasonFilter;
-    return matchesSearch && matchesReason;
+    return matchesSearch;
   });
 
   const sortedFlags = [...filteredFlags].sort((a, b) => {
@@ -484,7 +527,15 @@ const AdminPage: React.FC = () => {
   const totalPagesModeration = totalFlagPages;
   const shownFlags = paginatedFlags;
 
-  /** LIFESTYLE CATEGORIES FILTERS - Client-side filtering and sorting */
+  // Only show unresolved or resolved flags based on tab
+  // Treat suspended and deactivated as resolved for the resolved tab
+  const isFlagResolved = (flag: Flag) => flag.status === 'resolved'
+    || flag.status === 'user_deactivated'
+    || flag.status === 'suspended'
+    || (flag.suspendedUntil && new Date(flag.suspendedUntil) > new Date());
+
+  const shownFlagsActive = shownFlags.filter((flag) => !isFlagResolved(flag));
+  const shownFlagsResolved = shownFlags.filter((flag) => isFlagResolved(flag));
   const filteredCategories = categories.filter((c) => {
     const matchesSearch = categorySearch === '' || c.name.toLowerCase().includes(categorySearch.toLowerCase());
     return matchesSearch;
@@ -746,6 +797,23 @@ const AdminPage: React.FC = () => {
                 onPageChange={setModerationPage}
                 themeColor={adminBgColor}
               >
+                {/* Moderation Tabs */}
+                <div className="d-flex gap-2 mb-3">
+                  <Button
+                    variant={moderationTab === 'active' ? 'primary' : 'outline-primary'}
+                    className="rounded-pill px-4"
+                    onClick={() => setModerationTab('active')}
+                  >
+                    Active Reports
+                  </Button>
+                  <Button
+                    variant={moderationTab === 'resolved' ? 'primary' : 'outline-primary'}
+                    className="rounded-pill px-4"
+                    onClick={() => setModerationTab('resolved')}
+                  >
+                    Resolved/Old Reports
+                  </Button>
+                </div>
                 <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                   <Form.Control
                     style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
@@ -757,19 +825,6 @@ const AdminPage: React.FC = () => {
                       setModerationPage(1);
                     }}
                   />
-                  <Form.Select
-                    style={{ maxWidth: '200px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
-                    value={reasonFilter}
-                    onChange={(e) => {
-                      setReasonFilter(e.target.value);
-                      setModerationPage(1);
-                    }}
-                  >
-                    <option value="">Filter by reason</option>
-                    <option value="Spam">Spam</option>
-                    <option value="Inappropriate content">Inappropriate content</option>
-                    <option value="Harassment">Harassment</option>
-                  </Form.Select>
                   <Form.Select
                     style={{
                       maxWidth: '180px',
@@ -783,8 +838,6 @@ const AdminPage: React.FC = () => {
                     }}
                   >
                     <option value="">Sort by</option>
-                    <option value="UserA">User A-Z</option>
-                    <option value="UserZ">User Z-A</option>
                     <option value="DateNew">Date (Newest)</option>
                     <option value="DateOld">Date (Oldest)</option>
                   </Form.Select>
@@ -799,12 +852,27 @@ const AdminPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {shownFlags.map((flag) => (
+                    {(moderationTab === 'active' ? shownFlagsActive : shownFlagsResolved).map((flag) => (
                       <ContentModerationTable
                         key={flag.id}
                         {...flag}
                         onResolve={handleResolveFlag}
                         onShowHistory={handleShowModerationHistory}
+                        onViewUser={(userId) => {
+                          if (!userId) {
+                            // Debug: log missing userId
+                            console.warn('No userId for flagged user:', flag);
+                            alert('No userId for flagged user. Cannot view profile.');
+                            return;
+                          }
+                          // Find the flagged user in the users list to get their email
+                          const flaggedUser = users.find((u) => u.id === String(userId));
+                          if (flaggedUser) {
+                            handleViewUser(flaggedUser.email, flaggedUser.id);
+                          } else {
+                            alert('User profile not found.');
+                          }
+                        }}
                       />
                     ))}
                   </tbody>
@@ -964,7 +1032,7 @@ const AdminPage: React.FC = () => {
         }}
         onConfirm={(durationHours, notes) => {
           if (selectedFlagId) {
-            handleResolveFlag(selectedFlagId, 'suspend', durationHours, notes);
+            handleResolveFlag(selectedFlagId, 'suspend', durationHours, notes, true);
           }
         }}
         isLoading={moderationActionLoading}
@@ -981,7 +1049,7 @@ const AdminPage: React.FC = () => {
         }}
         onConfirm={(notes) => {
           if (selectedFlagId) {
-            handleResolveFlag(selectedFlagId, 'deactivate', undefined, notes);
+            handleResolveFlag(selectedFlagId, 'deactivate', undefined, notes, true);
           }
         }}
         isLoading={moderationActionLoading}
