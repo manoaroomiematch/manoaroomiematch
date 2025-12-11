@@ -24,6 +24,9 @@ const EditProfilePage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Check if user just completed the survey
+  const [justCompletedSurvey, setJustCompletedSurvey] = useState(false);
+
   // Mock initial data - TODO: Replace with actual data from database
   const currentUserEmail = session?.user?.email || '';
   const isJohnDoe = currentUserEmail === 'john@foo.com';
@@ -71,6 +74,16 @@ const EditProfilePage = () => {
     error: string | null;
     showPassword?: boolean;
   }>({ show: false, password: '', loading: false, error: null, showPassword: false });
+
+  // Check if user just completed survey on mount
+  useEffect(() => {
+    const justCompleted = localStorage.getItem('just-completed-survey');
+    if (justCompleted === 'true') {
+      setJustCompletedSurvey(true);
+      // Clear the flag
+      localStorage.removeItem('just-completed-survey');
+    }
+  }, []);
 
   // Fetch profile data
   useEffect(() => {
@@ -219,6 +232,36 @@ const EditProfilePage = () => {
         <Row className="justify-content-center">
           <Col lg={8} md={10}>
             <h1 className="mb-4 fw-bold">Edit Profile</h1>
+
+            {/* Welcome Banner for New Users */}
+            {justCompletedSurvey && (
+              <Card className="shadow-sm mb-4 border-success" style={{ borderWidth: '2px', borderRadius: '12px' }}>
+                <Card.Body className="p-4 bg-success bg-opacity-10">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <h4 className="fw-bold text-success mb-2">🎉 Survey Complete!</h4>
+                      <p className="mb-3">
+                        Great job! Now let&apos;s complete your profile so potential roommates
+                        can get to know you better. Add your photo, bio, and other details to
+                        make a great first impression!
+                      </p>
+                    </div>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="outline-success"
+                      size="sm"
+                      onClick={() => {
+                        // Generate matches and redirect
+                        router.push('/lifestyle-survey/confirmation');
+                      }}
+                    >
+                      Skip for Now → View Matches
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
 
             <Form onSubmit={handleSubmit}>
               {/* Profile Photo Section */}
