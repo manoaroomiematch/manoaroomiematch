@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { markMessageAsRead } from '@/lib/messaging';
@@ -10,7 +11,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { messageId } = await request.json();
-    const result = await markMessageAsRead(parseInt(messageId));
+    const result = await markMessageAsRead(parseInt(messageId, 10));
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 });
@@ -25,4 +26,3 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
-
