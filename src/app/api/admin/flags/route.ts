@@ -107,6 +107,7 @@ export async function GET(req: Request) {
         createdAt: flag.created_at,
         suspensionCount: reportedUser?.suspensionCount || 0,
         suspendedUntil: reportedUser?.suspendedUntil || undefined,
+        active: reportedUser?.active !== false,
       };
     });
 

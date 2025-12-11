@@ -32,6 +32,18 @@ const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Check if user account is deactivated
+        if (!user.active) {
+          console.log(`Login denied: User account is deactivated - ${credentials.email}`);
+          return null;
+        }
+
+        // Check if user is currently suspended
+        if (user.suspendedUntil && user.suspendedUntil > new Date()) {
+          console.log(`Login denied: User is suspended until ${user.suspendedUntil} - ${credentials.email}`);
+          return null;
+        }
+
         const isPasswordValid = await compare(credentials.password, user.password);
         if (!isPasswordValid) {
           return null;
@@ -48,9 +60,6 @@ const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/signin',
     signOut: '/auth/signout',
-    //   error: '/auth/error',
-    //   verifyRequest: '/auth/verify-request',
-    //   newUser: '/auth/new-user'
   },
   callbacks: {
     redirect: ({ baseUrl }) => {

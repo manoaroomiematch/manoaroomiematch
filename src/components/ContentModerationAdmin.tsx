@@ -17,6 +17,7 @@ export interface ContentFlag {
   status?: string;
   suspensionCount?: number;
   suspendedUntil?: string;
+  active?: boolean;
   onResolve?: (
     flagId: number,
     action: 'resolve' | 'suspend' | 'unsuspend' | 'deactivate' | 'reactivate',
@@ -46,6 +47,7 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
   status = 'pending',
   suspensionCount = 0,
   suspendedUntil,
+  active = true,
   onResolve = () => {},
   onShowHistory = () => {},
   onViewUser = () => {},
@@ -59,7 +61,7 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyFetched, setHistoryFetched] = useState(false);
   const isSuspended = status === 'suspended' || (suspendedUntil && new Date(suspendedUntil) > new Date());
-  const isDeactivated = status === 'user_deactivated';
+  const isDeactivated = !active || status === 'user_deactivated';
   const isResolved = status === 'resolved';
 
   // Debug logging
