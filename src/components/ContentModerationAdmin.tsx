@@ -204,8 +204,11 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                     } else {
                       setShowHistory(true);
                       // Only fetch if not already fetched
+                      // Set loading and fetched flags immediately to prevent race condition
+                      // from multiple rapid clicks on the History button
                       if (!historyFetched) {
                         setHistoryLoading(true);
+                        setHistoryFetched(true); // Set BEFORE fetch to prevent duplicate requests
                         try {
                           const response = await fetch(`/api/admin/moderation-history?userId=${userId}`);
                           if (response.ok) {
@@ -221,7 +224,6 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                           setHistoryData([]);
                         } finally {
                           setHistoryLoading(false);
-                          setHistoryFetched(true);
                         }
                       }
                     }

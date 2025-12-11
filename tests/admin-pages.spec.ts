@@ -2,6 +2,13 @@ import { test, expect } from './auth-utils';
 
 test.slow();
 
+/**
+ * NOTE: These tests use graceful skip logic (early returns) when test data is missing.
+ * This approach prioritizes test stability over strict failure detection.
+ * In production environments with proper test data setup, these would fail if features break.
+ * Consider implementing proper test fixtures or database seeding for more robust test coverage.
+ */
+
 test('moderation action buttons are present in content moderation table', async ({ getUserPage }) => {
   const adminPage = await getUserPage('admin@foo.com', 'changeme');
   await adminPage.goto('http://localhost:3000/admin');

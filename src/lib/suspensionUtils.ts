@@ -4,9 +4,11 @@
  */
 import { prisma } from '@/lib/prisma';
 
-// Last time we ran the cleanup (prevents running too frequently)
-let lastCleanupTime = 0;
+// NOTE: Module-level timing state is not suitable for serverless environments
+// where multiple instances may be running concurrently. Consider using
+// a database-based locking mechanism for distributed deployments.
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Run at most once every 5 minutes
+let lastCleanupTime = 0;
 
 /**
  * Clears expired suspensions for all users
@@ -14,12 +16,15 @@ const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Run at most once every 5 minutes
  * - Run asynchronously (non-blocking)
  * - Skip if run recently (within 5 minutes)
  * - Use single database query instead of find + update
+ *
+ * SERVERLESS NOTE: In serverless environments, consider using a database-based
+ * locking mechanism or accepting that cleanup may run more frequently across instances.
  */
 export async function clearExpiredSuspensions() {
   try {
     const now = Date.now();
 
-    // Skip if we ran cleanup recently
+    // Skip if we ran cleanup recently (local instance check only)
     if (now - lastCleanupTime < CLEANUP_INTERVAL_MS) {
       return 0;
     }
@@ -27,8 +32,7 @@ export async function clearExpiredSuspensions() {
     lastCleanupTime = now;
 
     // Single query to update all expired suspensions at once
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (prisma as any).user.updateMany({
+    const result = await prisma.user.updateMany({
       where: {
         suspendedUntil: {
           not: null,
@@ -68,8 +72,7 @@ export function clearExpiredSuspensionsAsync() {
  */
 export async function checkUserSuspensionStatus(userId: number) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = await (prisma as any).user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         suspendedUntil: true,

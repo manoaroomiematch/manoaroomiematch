@@ -12,9 +12,9 @@ test.describe('Sign-in Suspension and Deactivation Notifications', () => {
     await page.locator('input[type="password"]').fill('changeme');
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    // Wait for modal or error
-    await page.waitForTimeout(1500);
-    const modalVisible = await page.locator('div[role="dialog"]').isVisible().catch(() => false);
+    // Wait for modal dialog to appear instead of using arbitrary timeout
+    const modal = page.locator('div[role="dialog"]');
+    const modalVisible = await modal.isVisible({ timeout: 5000 }).catch(() => false);
     if (!modalVisible) {
       return;
     }
@@ -29,9 +29,10 @@ test.describe('Sign-in Suspension and Deactivation Notifications', () => {
     await page.locator('input[type="email"]').fill('suspended@foo.com');
     await page.locator('input[type="password"]').fill('changeme');
     await page.getByRole('button', { name: /sign in/i }).click();
-    await page.waitForTimeout(1500);
+
+    // Wait for modal dialog to appear with 5 second timeout
     const modal = page.locator('div[role="dialog"]');
-    const modalVisible = await modal.isVisible().catch(() => false);
+    const modalVisible = await modal.isVisible({ timeout: 5000 }).catch(() => false);
     if (!modalVisible) {
       return;
     }
@@ -56,8 +57,8 @@ test.describe('Sign-in Suspension and Deactivation Notifications', () => {
       }
     });
 
-    // Wait a moment for any potential errors
-    await page.waitForTimeout(1000);
+    // Wait for page to load with DOM content loaded event instead of arbitrary timeout
+    await page.waitForLoadState('domcontentloaded');
 
     expect(!hasConsoleError).toBeTruthy();
   });
@@ -73,11 +74,11 @@ test.describe('Sign-in Suspension and Deactivation Notifications', () => {
     // Click sign-in button
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    // Wait for redirect or navigation
-    await page.waitForNavigation({ timeout: 5000 }).catch(() => {});
+    // Wait for URL to change from sign-in page (use waitForURL instead of waitForNavigation)
+    await page.waitForURL((url) => !url.toString().includes('/auth/signin'), { timeout: 5000 }).catch(() => {});
 
     // Verify we're not on the sign-in page anymore (or error message doesn't appear)
-    const stillOnSignIn = await page.url().includes('/auth/signin');
+    const stillOnSignIn = page.url().includes('/auth/signin');
     if (stillOnSignIn) {
       // If user doesn't exist, skip
       return;
@@ -96,14 +97,9 @@ test.describe('Sign-in Suspension and Deactivation Notifications', () => {
     // Click sign-in button
     await page.getByRole('button', { name: /sign in/i }).click();
 
-    // Wait for error or response
-    await page.waitForTimeout(2000);
-
-    // Should show an error message
-    const errorVisible = await page
-      .locator('text=/error|invalid|incorrect|failed/i')
-      .isVisible()
-      .catch(() => false);
+    // Wait for error message to appear instead of arbitrary timeout
+    const errorLocator = page.locator('text=/error|invalid|incorrect|failed/i');
+    const errorVisible = await errorLocator.isVisible({ timeout: 5000 }).catch(() => false);
 
     // Either error message is visible or we're still on sign-in page
     expect(errorVisible || page.url().includes('/auth/signin')).toBeTruthy();

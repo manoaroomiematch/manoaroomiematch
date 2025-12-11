@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { compare } from 'bcrypt';
 import { prisma } from '@/lib/prisma';
 
+interface CheckUserRequest {
+  email?: string;
+  password?: string;
+}
+
 /**
  * POST /api/auth/check-user
  * Check if a user is suspended or deactivated WITHOUT attempting authentication
@@ -11,7 +16,7 @@ import { prisma } from '@/lib/prisma';
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body: CheckUserRequest = await req.json();
     const { email, password } = body;
 
     if (!email || !password) {

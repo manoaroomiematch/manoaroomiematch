@@ -28,6 +28,11 @@ import CategoryModal from '@/components/CategoryModal';
 import DeleteCategoryModal from '@/components/DeleteCategoryModal';
 import DeleteUserModal from '@/components/DeleteUserModal';
 import SuspensionModal from '@/components/SuspensionModal';
+import {
+  getFlagStatusForAction,
+  updateUserForModerationAction,
+  getErrorMessageForAction,
+} from '@/lib/moderationHelper';
 import DeactivationModal from '@/components/DeactivationModal';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminStatisticsCard from '@/components/AdminStatisticsCard';
@@ -411,47 +416,15 @@ const AdminPage: React.FC = () => {
 
       const data = await response.json();
 
-      // Update local state for flags
-      let newStatus = 'pending';
-      if (action === 'resolve' || action === 'unsuspend') newStatus = 'resolved';
-      else if (action === 'reactivate') newStatus = 'active';
-      else if (action === 'deactivate') newStatus = 'user_deactivated';
-      else if (action === 'suspend') newStatus = 'suspended';
-
+      // Update local state for flags using helper function
+      const newStatus = getFlagStatusForAction(action);
       setFlags((prev) => prev.map((flag) => (flag.id === flagId ? { ...flag, status: newStatus } : flag)));
 
       // Update local state for users if needed
       if (data && data.user && data.user.id) {
         setUsers((prev) => prev.map((u) => {
           if (String(u.id) !== String(data.user.id)) return u;
-          if (action === 'suspend') {
-            return {
-              ...u,
-              suspendedUntil: data.user.suspendedUntil,
-              suspensionCount: data.user.suspensionCount,
-            };
-          }
-          if (action === 'unsuspend') {
-            return {
-              ...u,
-              suspendedUntil: null,
-            };
-          }
-          if (action === 'deactivate') {
-            return {
-              ...u,
-              active: false,
-              suspendedUntil: null,
-            };
-          }
-          if (action === 'reactivate') {
-            return {
-              ...u,
-              active: true,
-              suspendedUntil: null,
-            };
-          }
-          return u;
+          return updateUserForModerationAction(u, action, data.user);
         }));
       }
 
@@ -461,8 +434,10 @@ const AdminPage: React.FC = () => {
       setSelectedFlagId(null);
       setSelectedFlagUserName('');
     } catch (err) {
-      console.error(`Error ${action}ing flag:`, err);
-      alert(`Error ${action}ing flag`);
+      // Use helper to get user-friendly error message
+      const errorMessage = getErrorMessageForAction(action);
+      console.error(`${errorMessage}:`, err);
+      alert(errorMessage);
     } finally {
       setModerationActionLoading(false);
     }

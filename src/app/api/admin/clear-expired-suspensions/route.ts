@@ -10,12 +10,13 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(req: NextRequest) {
   try {
-    // Optional: Verify request is from a trusted source (e.g., cron job with API key)
+    // Verify request is from a trusted source (e.g., cron job with API key)
+    // SECURITY: Require the secret key to be set - if not set, endpoint is not protected
     const authHeader = req.headers.get('authorization');
     const expectedKey = process.env.CRON_SECRET_KEY;
 
-    if (expectedKey && authHeader !== `Bearer ${expectedKey}`) {
-      console.warn('Unauthorized cron job attempt');
+    if (!expectedKey || authHeader !== `Bearer ${expectedKey}`) {
+      console.warn('Unauthorized cron job attempt - missing or invalid CRON_SECRET_KEY');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 },
@@ -23,8 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Find all users with suspensions that have expired
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const expiredSuspensions = await (prisma as any).user.findMany({
+    const expiredSuspensions = await prisma.user.findMany({
       where: {
         suspendedUntil: {
           not: null,
@@ -47,8 +47,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Clear suspension for all users with expired periods
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await (prisma as any).user.updateMany({
+    const clearResult = await prisma.user.updateMany({
       where: {
         suspendedUntil: {
           not: null,
@@ -61,13 +60,12 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    console.log(`Cleared ${result.count} expired suspensions`);
+    console.log(`Cleared ${clearResult.count} expired suspensions`);
 
     return NextResponse.json({
-      message: `Cleared ${result.count} expired suspensions`,
-      cleared: result.count,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clearedUsers: expiredSuspensions.map((user: any) => ({
+      message: `Cleared ${clearResult.count} expired suspensions`,
+      cleared: clearResult.count,
+      clearedUsers: expiredSuspensions.map((user) => ({
         id: user.id,
         email: user.email,
         wasSuspendedUntil: user.suspendedUntil,
