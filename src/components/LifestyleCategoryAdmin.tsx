@@ -11,7 +11,6 @@ export interface Category {
   // eslint-disable-next-line react/no-unused-prop-types
   id: number; // Used as key in parent component
   name: string;
-  lastUpdated: string;
 }
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
@@ -27,14 +26,11 @@ interface CategoryRowProps extends Category {
 const LifestyleCategoriesTable: React.FC<CategoryRowProps> = ({
   id,
   name,
-  lastUpdated,
   onEdit,
   onDelete = undefined,
 }) => (
   <tr>
     <td>{capitalize(name)}</td>
-
-    <td>{lastUpdated}</td>
     <td className="d-flex gap-2">
       <Button
         variant="primary"

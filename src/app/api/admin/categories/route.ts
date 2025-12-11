@@ -67,9 +67,6 @@ export async function POST(req: Request) {
         name: newCategory.name,
         description: newCategory.description,
         items: newCategory.questions.length,
-        lastUpdated: newCategory.lastUpdated
-          ? new Date(newCategory.lastUpdated).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0],
       },
     });
   } catch (error) {
@@ -116,9 +113,6 @@ export async function PUT(req: Request) {
         name: updatedCategory.name,
         description: updatedCategory.description,
         items: updatedCategory.questions.length,
-        lastUpdated: updatedCategory.lastUpdated
-          ? new Date(updatedCategory.lastUpdated).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0],
       },
     });
   } catch (error) {
@@ -200,18 +194,12 @@ export async function GET(req: Request) {
 
     // Transform the data to match the expected format for the admin UI
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const formattedCategories = categories.map((category: any) => {
-      const formattedDate = category.lastUpdated
-        ? new Date(category.lastUpdated).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0];
-      return {
-        id: category.id,
-        name: category.name,
-        description: category.description || '',
-        items: category.questions.length,
-        lastUpdated: formattedDate,
-      };
-    });
+    const formattedCategories = categories.map((category: any) => ({
+      id: category.id,
+      name: category.name,
+      description: category.description || '',
+      items: category.questions.length,
+    }));
 
     return NextResponse.json({
       categories: formattedCategories,
