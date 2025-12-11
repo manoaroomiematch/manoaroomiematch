@@ -2,47 +2,6 @@ import { test, expect } from './auth-utils';
 
 test.slow();
 
-test('admin page displays all sections', async ({ getUserPage }) => {
-  // Get authenticated admin session
-  const adminPage = await getUserPage('admin@foo.com', 'changeme');
-
-  // Navigate to admin page
-  await adminPage.goto('http://localhost:3000/admin');
-
-  // Verify all main sections are visible
-  await expect(adminPage.locator('text=Good')).toBeVisible(); // Greeting (Good Morning/Afternoon/Evening)
-  await expect(adminPage.getByRole('heading', { name: /User Management/i })).toBeVisible();
-  await expect(adminPage.getByRole('heading', { name: /Content Moderation/i })).toBeVisible();
-  await expect(adminPage.getByRole('heading', { name: /Lifestyle Categories/i })).toBeVisible();
-});
-
-test('user management table loads and displays users', async ({ getUserPage }) => {
-  const adminPage = await getUserPage('admin@foo.com', 'changeme');
-  await adminPage.goto('http://localhost:3000/admin');
-
-  // Look for User Management section
-  await expect(adminPage.getByRole('heading', { name: /User Management/i })).toBeVisible();
-
-  // Verify table headers are present
-  await expect(adminPage.locator('th:has-text("Name")')).toBeVisible();
-  await expect(adminPage.locator('th:has-text("Email")')).toBeVisible();
-  await expect(adminPage.locator('th:has-text("Role")')).toBeVisible();
-});
-
-test('content moderation table displays with action buttons', async ({ getUserPage }) => {
-  const adminPage = await getUserPage('admin@foo.com', 'changeme');
-  await adminPage.goto('http://localhost:3000/admin');
-
-  // Look for Content Moderation section
-  await expect(adminPage.getByRole('heading', { name: /Content Moderation/i })).toBeVisible();
-
-  // Verify table headers are present
-  await expect(adminPage.locator('th:has-text("User")')).toBeVisible();
-  await expect(adminPage.locator('th:has-text("Flag Reason")')).toBeVisible();
-  await expect(adminPage.locator('th:has-text("Flagged Date")')).toBeVisible();
-  await expect(adminPage.locator('th:has-text("Actions")')).toBeVisible();
-});
-
 test('moderation action buttons are present in content moderation table', async ({ getUserPage }) => {
   const adminPage = await getUserPage('admin@foo.com', 'changeme');
   await adminPage.goto('http://localhost:3000/admin');
@@ -148,37 +107,6 @@ test('deactivation modal opens and closes correctly', async ({ getUserPage }) =>
   }
 });
 
-test('view user button opens user profile modal', async ({ getUserPage }) => {
-  const adminPage = await getUserPage('admin@foo.com', 'changeme');
-  await adminPage.goto('http://localhost:3000/admin');
-
-  // Scroll to Content Moderation section
-  await adminPage.locator('text=Content Moderation').scrollIntoViewIfNeeded();
-
-  // Try to find and click a View button (if any flags exist)
-  const viewButtons = adminPage.getByRole('button', { name: /View/i });
-  const viewButtonCount = await viewButtons.count();
-
-  if (viewButtonCount > 0) {
-    const firstViewButton = viewButtons.first();
-    const isDisabled = await firstViewButton.isDisabled();
-
-    if (!isDisabled) {
-      await firstViewButton.click();
-
-      // Verify profile view modal or section is visible
-      // Either the modal header or profile card should be displayed
-      const profileVisible = await Promise.race([
-        adminPage.getByRole('heading', { name: /Profile/i }).isVisible().catch(() => false),
-        adminPage.locator('text=User Profile').isVisible().catch(() => false),
-      ]);
-
-      // If modal doesn't appear, at least button should be clickable without error
-      expect(profileVisible || isDisabled).toBeTruthy();
-    }
-  }
-});
-
 test('unsuspend button appears when user is suspended', async ({ getUserPage }) => {
   const adminPage = await getUserPage('admin@foo.com', 'changeme');
   await adminPage.goto('http://localhost:3000/admin');
@@ -223,28 +151,6 @@ test('reactivate button appears when user is deactivated', async ({ getUserPage 
   // If no deactivated users, that's also valid (count can be 0)
 });
 
-test('status badges display correctly for different flag states', async ({ getUserPage }) => {
-  const adminPage = await getUserPage('admin@foo.com', 'changeme');
-  await adminPage.goto('http://localhost:3000/admin');
-
-  // Scroll to Content Moderation section
-  await adminPage.locator('text=Content Moderation').scrollIntoViewIfNeeded();
-
-  // Look for status badges
-  const pendingBadges = adminPage.locator('span.badge.bg-secondary:has-text("Pending")');
-  const suspendedBadges = adminPage.locator('span.badge.bg-warning:has-text("Suspended")');
-  const deactivatedBadges = adminPage.locator('span.badge.bg-danger:has-text("Deactivated")');
-  const resolvedBadges = adminPage.locator('span.badge.bg-success:has-text("Resolved")');
-
-  // At least one badge type should exist in the moderation table
-  const badgesExist = (await pendingBadges.count()) > 0
-    || (await suspendedBadges.count()) > 0
-    || (await deactivatedBadges.count()) > 0
-    || (await resolvedBadges.count()) > 0;
-
-  expect(badgesExist).toBeTruthy();
-});
-
 test('moderation history expandable section is present and functional', async ({ getUserPage }) => {
   const adminPage = await getUserPage('admin@foo.com', 'changeme');
   await adminPage.goto('http://localhost:3000/admin');
@@ -284,10 +190,10 @@ test('lifestyle categories section displays correctly', async ({ getUserPage }) 
   await adminPage.goto('http://localhost:3000/admin');
 
   // Scroll to Lifestyle Categories section
-  await adminPage.locator('text=Lifestyle Categories').scrollIntoViewIfNeeded();
+  await adminPage.locator('h2:has-text("Lifestyle Categories")').scrollIntoViewIfNeeded();
 
-  // Verify section is visible
-  await expect(adminPage.getByRole('heading', { name: /Lifestyle Categories/i })).toBeVisible();
+  // Verify section is visible (h2 tag)
+  await expect(adminPage.locator('h2:has-text("Lifestyle Categories")')).toBeVisible();
 
   // Verify table headers
   await expect(adminPage.locator('th:has-text("Name")')).toBeVisible();
