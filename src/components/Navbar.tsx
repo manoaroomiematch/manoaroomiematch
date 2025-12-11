@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/jsx-indent, @typescript-eslint/indent */
 
 'use client';
@@ -55,9 +56,14 @@ const NavBar: React.FC = () => {
                     <Nav.Link id="admin-dashboard-nav" href="/admin" active={pathName === '/admin'}>
                       Admin Dashboard
                     </Nav.Link>
-                    <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
-                      Resources
-                    </Nav.Link>
+                    <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
+                      <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
+                        Housing Resources
+                      </NavDropdown.Item>
+                      <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
+                        Campus Life
+                      </NavDropdown.Item>
+                    </NavDropdown>
                   </>
                 ) : (
                   <>
@@ -71,9 +77,14 @@ const NavBar: React.FC = () => {
                     >
                       Lifestyle Survey
                     </Nav.Link>
-                    <Nav.Link id="resources-nav" href="/resources" active={pathName === '/resources'}>
-                      Resources
-                    </Nav.Link>
+                    <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
+                      <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
+                        Housing Resources
+                      </NavDropdown.Item>
+                      <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
+                        Campus Life
+                      </NavDropdown.Item>
+                    </NavDropdown>
                     <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
                       My Profile
                     </Nav.Link>

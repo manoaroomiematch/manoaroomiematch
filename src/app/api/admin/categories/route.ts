@@ -50,13 +50,79 @@ export async function POST(req: Request) {
     const newCategory = await prisma.lifestyleCategory.create({
       data: {
         name,
-        description,
+        description: description || '',
+      },
+      include: {
+        questions: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({ category: newCategory });
+    return NextResponse.json({
+      category: {
+        id: newCategory.id,
+        name: newCategory.name,
+        description: newCategory.description,
+        items: newCategory.questions.length,
+        lastUpdated: newCategory.lastUpdated
+          ? new Date(newCategory.lastUpdated).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+      },
+    });
   } catch (error) {
     console.error('Error adding category:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
+ * PUT /api/admin/categories
+ * Updates an existing lifestyle category (admin only)
+ * Expects JSON body: { id: number, name: string, description?: string }
+ */
+export async function PUT(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.randomKey !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id, name, description } = await req.json();
+    if (!id || !name) {
+      return NextResponse.json({ error: 'Missing category id or name' }, { status: 400 });
+    }
+
+    const updatedCategory = await prisma.lifestyleCategory.update({
+      where: { id: Number(id) },
+      data: {
+        name,
+        description: description || '',
+      },
+      include: {
+        questions: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json({
+      category: {
+        id: updatedCategory.id,
+        name: updatedCategory.name,
+        description: updatedCategory.description,
+        items: updatedCategory.questions.length,
+        lastUpdated: updatedCategory.lastUpdated
+          ? new Date(updatedCategory.lastUpdated).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+      },
+    });
+  } catch (error) {
+    console.error('Error updating category:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -112,12 +178,14 @@ export async function GET(req: Request) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       categories = await (prisma as any).lifestyleCategory.findMany({
         include: {
-          _count: {
-            select: { questions: true }, // Count related questions for each category
+          questions: {
+            select: {
+              id: true,
+            },
           },
         },
         orderBy: {
-          id: 'asc',
+          name: 'asc', // Sort by name alphabetically
         },
         skip,
         take: limit,
@@ -132,13 +200,18 @@ export async function GET(req: Request) {
 
     // Transform the data to match the expected format for the admin UI
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const formattedCategories = categories.map((category: any) => ({
-      id: category.id,
-      name: category.name,
-      // eslint-disable-next-line no-underscore-dangle
-      items: category._count.questions, // Number of questions in this category
-      lastUpdated: new Date().toISOString().split('T')[0], // Use current date as placeholder
-    }));
+    const formattedCategories = categories.map((category: any) => {
+      const formattedDate = category.lastUpdated
+        ? new Date(category.lastUpdated).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0];
+      return {
+        id: category.id,
+        name: category.name,
+        description: category.description || '',
+        items: category.questions.length,
+        lastUpdated: formattedDate,
+      };
+    });
 
     return NextResponse.json({
       categories: formattedCategories,
