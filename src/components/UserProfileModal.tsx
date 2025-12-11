@@ -23,7 +23,7 @@
  */
 
 import React from 'react';
-import { Modal, Card, Row, Col } from 'react-bootstrap';
+import { Modal, Row, Col } from 'react-bootstrap';
 
 interface ProfileData {
   name: string;
@@ -36,6 +36,9 @@ interface ProfileData {
   major?: string;
   classStanding?: string;
   graduationYear?: number;
+  needRoommateBy?: string | Date;
+  housingType?: string;
+  preferredDorm?: string;
   sleepSchedule: number;
   cleanliness: number;
   noiseLevel: number;
@@ -57,103 +60,178 @@ interface UserProfileModalProps {
   onHide: () => void;
 }
 
-const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide }) => (
-  <Modal show={show} onHide={onHide} size="lg" centered className="profile-modal" style={{ paddingTop: '80px' }}>
-    <Modal.Header closeButton className="border-bottom border-success border-opacity-25 bg-light rounded-top" style={{ borderRadius: '12px 12px 0 0' }}>
-      <Modal.Title className="fw-bold text-success">
-        {profile?.firstName ? `${profile.firstName}'s Profile` : 'User Profile'}
-      </Modal.Title>
-    </Modal.Header>
-    <Modal.Body className="bg-light" style={{ borderRadius: '0 0 12px 12px' }}>
-      {!profile && (
-        <div className="text-center py-5">
-          <p className="text-muted">No profile data available</p>
-        </div>
-      )}
+const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide }) => {
+  // Filter out empty, null, or undefined interests
+  const validInterests = profile?.interests?.filter(
+    (item) => item
+      && String(item).trim()
+      && String(item).trim() !== 'null'
+      && String(item).trim() !== 'undefined',
+  ) || [];
 
-      {profile && (
-        <div>
-          {/* Basic Information Card */}
-          <Card className="mb-3 border-0 shadow-sm">
-            <Card.Body>
-              <Row>
-                <Col md={4} className="text-center">
-                  {profile.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={profile.photoUrl}
-                      alt={profile.name}
-                      className="rounded-circle mb-3 border border-3 border-success"
-                      style={{ width: '120px', height: '120px', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div
-                      className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-3 mx-auto"
-                      style={{ width: '120px', height: '120px' }}
-                    >
-                      <span className="text-success fs-1 fw-bold">{profile.name.charAt(0)}</span>
-                    </div>
-                  )}
-                  <h5 className="fw-bold">{profile.name}</h5>
-                  {profile.pronouns && <p className="text-muted small">{profile.pronouns}</p>}
-                </Col>
-                <Col md={8}>
-                  <h6 className="fw-bold text-success mb-3">Basic Information</h6>
-                  <div className="mb-2">
-                    <p className="mb-1">
-                      <strong>Email:</strong>
-                    </p>
-                    <p className="text-muted">{profile.email}</p>
+  // Format date helper
+  const formatDate = (date: string | Date | undefined) => {
+    if (!date) return null;
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch {
+      return null;
+    }
+  };
+
+  return (
+    <Modal
+      show={show}
+      onHide={onHide}
+      size="lg"
+      centered
+      className="profile-modal"
+      style={{ zIndex: 1060 }}
+      backdropClassName="profile-modal-backdrop"
+    >
+      <Modal.Header closeButton className="border-0">
+        <Modal.Title className="w-100 text-center fw-bold">
+          Profile
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body className="p-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+        {!profile && (
+          <div className="text-center py-5">
+            <p className="text-muted">No profile data available</p>
+          </div>
+        )}
+
+        {profile && (
+          <div>
+            {/* Top Section: Avatar and Basic Info */}
+            <Row className="mb-4">
+              <Col md={4} className="text-center">
+                {profile.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.photoUrl}
+                    alt={profile.name}
+                    className="rounded-circle mb-3"
+                    style={{
+                      width: '150px',
+                      height: '150px',
+                      objectFit: 'cover',
+                      backgroundColor: '#d1e7dd',
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center mb-3 mx-auto"
+                    style={{ width: '150px', height: '150px' }}
+                  >
+                    <span className="text-success display-3 fw-bold">
+                      {profile.firstName?.charAt(0) || profile.name.charAt(0)}
+                    </span>
                   </div>
-                  {profile.major && (
-                    <div className="mb-2">
-                      <p className="mb-1">
-                        <strong>Major:</strong>
-                      </p>
-                      <p className="text-muted">{profile.major}</p>
-                    </div>
-                  )}
-                  {profile.classStanding && (
-                    <div className="mb-2">
-                      <p className="mb-1">
-                        <strong>Class Standing:</strong>
-                      </p>
-                      <p className="text-muted">{profile.classStanding}</p>
-                    </div>
-                  )}
-                  {profile.graduationYear && (
-                    <div className="mb-2">
-                      <p className="mb-1">
-                        <strong>Graduation Year:</strong>
-                      </p>
-                      <p className="text-muted">{profile.graduationYear}</p>
-                    </div>
-                  )}
-                  {profile.bio && (
-                    <div className="mt-3 pt-2 border-top border-success border-opacity-25">
-                      <h6 className="fw-bold text-success mb-2">Bio</h6>
-                      <p className="text-muted">{profile.bio}</p>
-                    </div>
-                  )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+                )}
+                <h4 className="fw-bold mb-1">{profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : profile.name}</h4>
+                {profile.pronouns && <p className="text-muted mb-0">{profile.pronouns}</p>}
+              </Col>
 
-          {/* Lifestyle Preferences Card */}
-          <Card className="mb-3 border-0 shadow-sm">
-            <Card.Body>
-              <h6 className="fw-bold text-success mb-3">Lifestyle Preferences</h6>
-              <Row>
+              <Col md={8}>
+                <h5 className="fw-bold text-success mb-3">Basic Information</h5>
+
+                <div className="mb-3">
+                  <strong>Email:</strong>
+                  <div className="text-muted">{profile.email}</div>
+                </div>
+
+                {profile.major && (
+                  <div className="mb-3">
+                    <strong>Major:</strong>
+                    <div className="text-muted">{profile.major}</div>
+                  </div>
+                )}
+
+                {profile.classStanding && (
+                  <div className="mb-3">
+                    <strong>Class Standing:</strong>
+                    <div className="text-muted">{profile.classStanding}</div>
+                  </div>
+                )}
+
+                {profile.graduationYear && (
+                  <div className="mb-3">
+                    <strong>Graduation Year:</strong>
+                    <div className="text-muted">{profile.graduationYear}</div>
+                  </div>
+                )}
+
+                {/* Housing Cards - Compact Version */}
+                {(profile.needRoommateBy || profile.housingType || profile.preferredDorm) && (
+                  <Row className="g-2 mt-2 mb-3">
+                    {profile.needRoommateBy && (
+                      <Col md={6}>
+                        <div className="card border-success border-opacity-25 h-100">
+                          <div className="card-body p-2">
+                            <div className="d-flex align-items-center mb-1">
+                              <i className="bi bi-calendar-event text-success fs-6 me-2" />
+                              <small className="fw-bold text-success mb-0">Need Roommate By</small>
+                            </div>
+                            <div className="fs-6 fw-semibold">{formatDate(profile.needRoommateBy)}</div>
+                          </div>
+                        </div>
+                      </Col>
+                    )}
+                    {(profile.housingType || profile.preferredDorm) && (
+                      <Col md={6}>
+                        <div className="card border-success border-opacity-25 h-100">
+                          <div className="card-body p-2">
+                            <div className="d-flex align-items-center mb-1">
+                              <i className="bi bi-house text-success fs-6 me-2" />
+                              <small className="fw-bold text-success mb-0">Housing Preference</small>
+                            </div>
+                            {profile.housingType && (
+                              <div className="fs-6 fw-semibold text-capitalize">
+                                {profile.housingType.replace('-', ' ')}
+                              </div>
+                            )}
+                            {profile.preferredDorm && (
+                              <small className="text-muted d-block">
+                                <strong>Preferred:</strong>
+                                {' '}
+                                {profile.preferredDorm}
+                              </small>
+                            )}
+                          </div>
+                        </div>
+                      </Col>
+                    )}
+                  </Row>
+                )}
+
+                {profile.bio && (
+                  <div className="mt-4 pt-3 border-top">
+                    <h6 className="fw-bold text-success mb-2">Bio</h6>
+                    <p className="text-muted mb-0">{profile.bio}</p>
+                  </div>
+                )}
+              </Col>
+            </Row>
+
+            {/* Lifestyle Preferences Section */}
+            <div className="mt-4 pt-4 border-top">
+              <h5 className="fw-bold text-success mb-4">Lifestyle Preferences</h5>
+
+              <Row className="g-4">
                 <Col md={6}>
                   <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Sleep Schedule:</strong>
-                    </p>
-                    <div className="progress" style={{ height: '6px' }}>
+                    <strong className="d-block mb-2">Sleep Schedule:</strong>
+                    <div className="progress" style={{ height: '8px' }}>
                       <div
                         className="progress-bar bg-success"
+                        role="progressbar"
                         style={{ width: `${(profile.sleepSchedule / 5) * 100}%` }}
+                        aria-valuenow={profile.sleepSchedule}
+                        aria-valuemin={1}
+                        aria-valuemax={5}
+                        aria-label={`Sleep Schedule: ${profile.sleepSchedule} out of 5`}
                       />
                     </div>
                     <small className="text-muted">
@@ -162,14 +240,18 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
                       / 5
                     </small>
                   </div>
+
                   <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Cleanliness:</strong>
-                    </p>
-                    <div className="progress" style={{ height: '6px' }}>
+                    <strong className="d-block mb-2">Cleanliness:</strong>
+                    <div className="progress" style={{ height: '8px' }}>
                       <div
                         className="progress-bar bg-success"
+                        role="progressbar"
                         style={{ width: `${(profile.cleanliness / 5) * 100}%` }}
+                        aria-valuenow={profile.cleanliness}
+                        aria-valuemin={1}
+                        aria-valuemax={5}
+                        aria-label={`Cleanliness: ${profile.cleanliness} out of 5`}
                       />
                     </div>
                     <small className="text-muted">
@@ -178,30 +260,18 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
                       / 5
                     </small>
                   </div>
+
                   <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Noise Level:</strong>
-                    </p>
-                    <div className="progress" style={{ height: '6px' }}>
+                    <strong className="d-block mb-2">Social Level:</strong>
+                    <div className="progress" style={{ height: '8px' }}>
                       <div
                         className="progress-bar bg-success"
-                        style={{ width: `${(profile.noiseLevel / 5) * 100}%` }}
-                      />
-                    </div>
-                    <small className="text-muted">
-                      {profile.noiseLevel}
-                      {' '}
-                      / 5
-                    </small>
-                  </div>
-                  <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Social Level:</strong>
-                    </p>
-                    <div className="progress" style={{ height: '6px' }}>
-                      <div
-                        className="progress-bar bg-success"
+                        role="progressbar"
                         style={{ width: `${(profile.socialLevel / 5) * 100}%` }}
+                        aria-valuenow={profile.socialLevel}
+                        aria-valuemin={1}
+                        aria-valuemax={5}
+                        aria-label={`Social Level: ${profile.socialLevel} out of 5`}
                       />
                     </div>
                     <small className="text-muted">
@@ -211,15 +281,19 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
                     </small>
                   </div>
                 </Col>
+
                 <Col md={6}>
                   <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Guest Frequency:</strong>
-                    </p>
-                    <div className="progress" style={{ height: '6px' }}>
+                    <strong className="d-block mb-2">Guest Frequency:</strong>
+                    <div className="progress" style={{ height: '8px' }}>
                       <div
                         className="progress-bar bg-success"
+                        role="progressbar"
                         style={{ width: `${(profile.guestFrequency / 5) * 100}%` }}
+                        aria-valuenow={profile.guestFrequency}
+                        aria-valuemin={1}
+                        aria-valuemax={5}
+                        aria-label={`Guest Frequency: ${profile.guestFrequency} out of 5`}
                       />
                     </div>
                     <small className="text-muted">
@@ -228,14 +302,38 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
                       / 5
                     </small>
                   </div>
+
                   <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Temperature:</strong>
-                    </p>
-                    <div className="progress" style={{ height: '6px' }}>
+                    <strong className="d-block mb-2">Noise Level:</strong>
+                    <div className="progress" style={{ height: '8px' }}>
                       <div
                         className="progress-bar bg-success"
+                        role="progressbar"
+                        style={{ width: `${(profile.noiseLevel / 5) * 100}%` }}
+                        aria-valuenow={profile.noiseLevel}
+                        aria-valuemin={1}
+                        aria-valuemax={5}
+                        aria-label={`Noise Level: ${profile.noiseLevel} out of 5`}
+                      />
+                    </div>
+                    <small className="text-muted">
+                      {profile.noiseLevel}
+                      {' '}
+                      / 5
+                    </small>
+                  </div>
+
+                  <div className="mb-3">
+                    <strong className="d-block mb-2">Temperature Preference:</strong>
+                    <div className="progress" style={{ height: '8px' }}>
+                      <div
+                        className="progress-bar bg-success"
+                        role="progressbar"
                         style={{ width: `${(profile.temperature / 5) * 100}%` }}
+                        aria-valuenow={profile.temperature}
+                        aria-valuemin={1}
+                        aria-valuemax={5}
+                        aria-label={`Temperature: ${profile.temperature} out of 5`}
                       />
                     </div>
                     <small className="text-muted">
@@ -244,79 +342,33 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
                       / 5
                     </small>
                   </div>
-                  <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Work Schedule:</strong>
-                    </p>
-                    <p className="text-muted">{profile.workSchedule}</p>
-                  </div>
                 </Col>
               </Row>
-            </Card.Body>
-          </Card>
+            </div>
 
-          {/* Habits & Interests Card */}
-          <Card className="border-0 shadow-sm">
-            <Card.Body>
-              <h6 className="fw-bold text-success mb-3">Habits & Interests</h6>
-              <Row>
-                <Col md={6}>
-                  <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Smoking:</strong>
-                    </p>
-                    <p className="text-muted">{profile.smoking ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Drinking:</strong>
-                    </p>
-                    <p className="text-muted">{profile.drinking}</p>
-                  </div>
-                </Col>
-                <Col md={6}>
-                  <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Pets:</strong>
-                    </p>
-                    <p className="text-muted">
-                      {profile.pets ? `Yes (${profile.petTypes.join(', ')})` : 'No'}
-                    </p>
-                  </div>
-                </Col>
-              </Row>
-              {profile.dietary.length > 0 && (
-                <div className="mb-3 pt-2 border-top border-success border-opacity-25">
-                  <p className="mb-1">
-                    <strong>Dietary Preferences:</strong>
-                  </p>
-                  <p className="text-muted">{profile.dietary.join(', ')}</p>
+            {/* Interests Section */}
+            {validInterests.length > 0 && (
+              <div className="mt-4 pt-4 border-top">
+                <h6 className="fw-bold text-success mb-3">Interests & Hobbies</h6>
+                <div className="d-flex flex-wrap gap-2">
+                  {validInterests.map((interest, idx) => (
+                    <span
+                      // eslint-disable-next-line react/no-array-index-key
+                      key={idx}
+                      className="badge bg-success px-3 py-2"
+                      style={{ fontSize: '0.9rem' }}
+                    >
+                      {interest}
+                    </span>
+                  ))}
                 </div>
-              )}
-              {profile.interests.length > 0 && (
-                <div className="pt-2 border-top border-success border-opacity-25">
-                  <p className="mb-2">
-                    <strong>Interests:</strong>
-                  </p>
-                  <div className="d-flex flex-wrap gap-2">
-                    {profile.interests.map((interest, idx) => (
-                      <span
-                        // eslint-disable-next-line react/no-array-index-key
-                        key={idx}
-                        className="badge bg-success bg-opacity-20 text-success fw-normal"
-                      >
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </div>
-      )}
-    </Modal.Body>
-  </Modal>
-);
+              </div>
+            )}
+          </div>
+        )}
+      </Modal.Body>
+    </Modal>
+  );
+};
 
 export default UserProfileModal;

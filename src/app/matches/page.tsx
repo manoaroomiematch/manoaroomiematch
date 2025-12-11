@@ -250,28 +250,6 @@ const BrowseMatches: React.FC = () => {
         }
       }
 
-      // Smoking filter (multi-select)
-      if (filters.smoking.length > 0) {
-        const hasMatch = filters.smoking.some((filterValue) => {
-          const expectsSmoking = filterValue === 'yes';
-          return profile.smoking === expectsSmoking;
-        });
-        if (!hasMatch) {
-          return false;
-        }
-      }
-
-      // Pets filter (multi-select)
-      if (filters.pets.length > 0) {
-        const hasMatch = filters.pets.some((filterValue) => {
-          const expectsPets = filterValue === 'yes';
-          return profile.pets === expectsPets;
-        });
-        if (!hasMatch) {
-          return false;
-        }
-      }
-
       // Budget filter (multi-select, approximate parsing)
       if (filters.budget.length > 0 && profile.budget) {
         const budgetValue = parseInt(profile.budget.replace(/[^0-9]/g, ''), 10);
@@ -334,8 +312,6 @@ const BrowseMatches: React.FC = () => {
     if (filters.sleepSchedule.length > 0) count += 1;
     if (filters.cleanliness.length > 0) count += 1;
     if (filters.socialLevel.length > 0) count += 1;
-    if (filters.smoking.length > 0) count += 1;
-    if (filters.pets.length > 0) count += 1;
     if (filters.budget.length > 0) count += 1;
     if (filters.moveInTimeline.length > 0) count += 1;
     return count;

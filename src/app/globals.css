@@ -343,3 +343,23 @@ main {
 .nav-login-dropdown .dropdown-toggle::after {
   margin-left: 0.5rem;
 }
+
+/* ===== MODAL STYLES ===== */
+/* Ensure modals appear above navbar and have proper z-index hierarchy */
+
+/* Modal backdrop should be above navbar but below modal content */
+.profile-modal-backdrop,
+.modal-backdrop {
+  z-index: 2050 !important;
+}
+
+/* Modal content should be above backdrop */
+.profile-modal,
+.modal {
+  z-index: 2060 !important;
+}
+
+/* Ensure modal dialog is properly positioned */
+.modal-dialog {
+  z-index: 2070 !important;
+}

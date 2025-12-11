@@ -28,8 +28,6 @@ export interface MatchFilters {
   sleepSchedule: string[];
   cleanliness: string[];
   socialLevel: string[];
-  smoking: string[];
-  pets: string[];
   budget: string[];
   moveInTimeline: string[];
 }
@@ -44,8 +42,6 @@ export const DEFAULT_FILTERS: MatchFilters = {
   sleepSchedule: [],
   cleanliness: [],
   socialLevel: [],
-  smoking: [],
-  pets: [],
   budget: [],
   moveInTimeline: [],
 };
@@ -393,53 +389,6 @@ const MatchFilterPanel: React.FC<MatchFiltersProps> = ({
                             label={option.label}
                             checked={filters.socialLevel.includes(option.value)}
                             onChange={(e) => handleCheckboxChange('socialLevel', option.value, e.target.checked)}
-                          />
-                        ))}
-                      </div>
-                    </Form.Group>
-                  </Col>
-
-                  {/* Habits */}
-                  <Col xs={12}>
-                    <h6 className="fw-bold mb-3 mt-2">Habits</h6>
-                  </Col>
-
-                  <Col xs={12} md={6}>
-                    <Form.Group>
-                      <Form.Label className="small">Smoking</Form.Label>
-                      <div className="d-flex flex-column gap-1">
-                        {[
-                          { value: 'yes', label: 'Smoker' },
-                          { value: 'no', label: 'Non-Smoker' },
-                        ].map((option) => (
-                          <Form.Check
-                            key={option.value}
-                            type="checkbox"
-                            id={`smoking-${option.value}`}
-                            label={option.label}
-                            checked={filters.smoking.includes(option.value)}
-                            onChange={(e) => handleCheckboxChange('smoking', option.value, e.target.checked)}
-                          />
-                        ))}
-                      </div>
-                    </Form.Group>
-                  </Col>
-
-                  <Col xs={12} md={6}>
-                    <Form.Group>
-                      <Form.Label className="small">Pets</Form.Label>
-                      <div className="d-flex flex-column gap-1">
-                        {[
-                          { value: 'yes', label: 'Has Pets' },
-                          { value: 'no', label: 'No Pets' },
-                        ].map((option) => (
-                          <Form.Check
-                            key={option.value}
-                            type="checkbox"
-                            id={`pets-${option.value}`}
-                            label={option.label}
-                            checked={filters.pets.includes(option.value)}
-                            onChange={(e) => handleCheckboxChange('pets', option.value, e.target.checked)}
                           />
                         ))}
                       </div>

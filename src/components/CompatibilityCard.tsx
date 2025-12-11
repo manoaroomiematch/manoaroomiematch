@@ -9,9 +9,6 @@ interface CompatibilityCardProps {
     socialLevel: number;
     sleepSchedule: number;
     guestFrequency: number;
-    smoking: boolean;
-    drinking: string;
-    pets: boolean;
   };
 }
 
@@ -25,8 +22,6 @@ const CompatibilityCard: React.FC<CompatibilityCardProps> = ({ interests = [], l
     if (lifestyle.sleepSchedule > 3) personalities.push('Night Owl');
     if (lifestyle.sleepSchedule < 3) personalities.push('Early Bird');
     if (lifestyle.guestFrequency > 3) personalities.push('Host');
-    if (lifestyle.smoking) personalities.push('Smoker');
-    if (lifestyle.pets) personalities.push('Pet Friendly');
   }
 
   return (

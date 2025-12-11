@@ -22,9 +22,6 @@ function getSocialLabel(val: number): string {
 
 function getLifestyleLabel(user: UserProfile): string {
   const traits: string[] = [];
-  if (user.smoking) traits.push('Smoker');
-  if (user.drinking === 'regularly') traits.push('Social drinker');
-  if (user.pets) traits.push('Has pets');
   if (user.dietary.length > 0) traits.push(user.dietary[0]);
   return traits.length > 0 ? traits.join(', ') : 'Standard';
 }
@@ -72,7 +69,7 @@ export default function buildComparisonData(
       yourValue: getLifestyleLabel(currentUser),
       theirValue: getLifestyleLabel(matchUser),
       compatibility: scores.lifestyleCompatibility,
-      description: 'Smoking, drinking, pets, and habits',
+      description: 'Dietary preferences and habits',
     },
     {
       category: 'Shared Interests',
