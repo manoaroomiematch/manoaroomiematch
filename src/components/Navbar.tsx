@@ -61,7 +61,7 @@ const NavBar: React.FC = () => {
                         Housing Resources
                       </NavDropdown.Item>
                       <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
-                        Lifestyle Resources
+                        Campus Life
                       </NavDropdown.Item>
                     </NavDropdown>
                   </>
@@ -82,7 +82,7 @@ const NavBar: React.FC = () => {
                         Housing Resources
                       </NavDropdown.Item>
                       <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
-                        Lifestyle Tips
+                        Campus Life
                       </NavDropdown.Item>
                     </NavDropdown>
                     <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>

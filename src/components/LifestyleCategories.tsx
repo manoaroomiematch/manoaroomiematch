@@ -103,78 +103,54 @@ const LifestyleCategoriesTips: React.FC = () => {
 
   if (loading) {
     return (
-      <Container className="py-5">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div>
-      </Container>
+      <main style={{ background: '#f8f9fa', minHeight: '100vh', paddingTop: '3rem', paddingBottom: '3rem' }}>
+        <Container className="py-5">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <Spinner animation="border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
+          </div>
+        </Container>
+      </main>
     );
   }
 
   return (
-    <Container className="py-5">
-      <div className="mb-5">
-        <h1 className="mb-3">Lifestyle Categories</h1>
-        <p className="lead text-muted">
-          Explore these lifestyle categories to better understand what aspects are considered when matching with potential roommates.
-        </p>
-      </div>
+    <main style={{ background: '#f8f9fa', minHeight: '100vh', paddingTop: '3rem', paddingBottom: '3rem' }}>
+      <Container className="py-5">
+        <div className="mb-5">
+          <h1 className="mb-3 fw-bold">Campus Life</h1>
+          <p className="lead text-muted">
+            Find key information for living on campus, including housing documents, move-in details, community expectations, dining, maintenance support, staff contacts, campus services, and job opportunities.
+          </p>
+        </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+        {error && <Alert variant="danger">{error}</Alert>}
 
-      {categories.length === 0 ? (
-        <Alert variant="info">No lifestyle categories available at this time.</Alert>
-      ) : (
-        <Row className="g-4">
-          {categories.map((category) => (
-            <Col md={6} lg={4} key={category.id}>
-              <Card className="h-100 shadow-sm border-0" style={{ transition: 'transform 0.2s' }}>
-                <Card.Body>
-                  <Card.Title className="fw-bold text-dark mb-3">
-                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                  </Card.Title>
-                  <Card.Text className="text-muted">
-                    {renderDescriptionWithLinks(category.description || 'No description available')}
-                  </Card.Text>
-                  {/* Quick Links Section */}
-                  <div className="mt-3 pt-2 border-top">
-                    <h6 className="fw-bold mb-2" style={{ fontSize: '1rem' }}>Quick Links:</h6>
-                    <ul className="list-unstyled mb-0">
-                      <li className="mb-2">
-                        <a
-                          href={`/resources?category=${encodeURIComponent(category.name)}`}
-                          className="text-decoration-none"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          → Learn more about
-                          {' '}
-                          {category.name}
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          href={`/search?category=${encodeURIComponent(category.name)}`}
-                          className="text-decoration-none"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          → Find resources for
-                          {' '}
-                          {category.name}
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      )}
-    </Container>
+        {categories.length === 0 ? (
+          <Alert variant="info">No lifestyle categories available at this time.</Alert>
+        ) : (
+          <Row className="g-4">
+            {categories.map((category) => (
+              <Col md={6} lg={4} key={category.id}>
+                <Card className="h-100 shadow-sm border-0" style={{ transition: 'transform 0.2s' }}>
+                  <Card.Header className="bg-success bg-opacity-10 border-0 py-3">
+                    <Card.Title className="fw-bold text-success mb-0">
+                      {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                    </Card.Title>
+                  </Card.Header>
+                  <Card.Body>
+                    <Card.Text className="text-muted">
+                      {renderDescriptionWithLinks(category.description || 'No description available')}
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        )}
+      </Container>
+    </main>
   );
 };
 
