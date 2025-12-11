@@ -1,270 +1,124 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable max-len */
 /* eslint-disable react/jsx-indent, @typescript-eslint/indent */
 
 'use client';
 
-import { useState } from 'react';
-import { Container, Row, Col, Card, ListGroup, Form, Button, Badge, Dropdown } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Container, Row, Col, Card, ListGroup, Form, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import {
   Search,
   PersonCircle,
-  Send,
-  PersonFill,
-  ShieldX,
-  ExclamationTriangle,
   PlusCircle,
-  EnvelopeFill,
-  BellSlash,
-  Pin,
-  Trash,
 } from 'react-bootstrap-icons';
 
-/**
- * Messages Page Component (Mockup)
- *
- * Non-functional messaging interface mockup for the application.
- * Features:
- * - Conversation list with user avatars and latest messages
- * - Message thread view with timestamp
- * - Message input area
- * - Search functionality placeholder
- *
- * TODO: Implement Prisma schema for messages
- * TODO: Create API routes for:
- *   - Fetching conversations
- *   - Sending messages
- *   - Marking messages as read
- * TODO: Add real-time messaging with WebSockets or polling
- * TODO: Add message notifications
- * TODO: Add message pagination/infinite scroll
- * TODO: Add file/image sharing capability
- */
-
-interface MockConversation {
-  id: string;
-  name: string;
+interface Conversation {
+  userId: number;
+  userName: string;
+  userPhoto: string | null;
   lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-  photoUrl?: string;
+  lastMessageTime: string;
+  unreadCount: number;
 }
-
-interface MockMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  timestamp: string;
-  date: string;
-  isCurrentUser: boolean;
-}
-
-/**
- * MOCK DATA - Placeholder for development
- * TODO: Replace with actual API calls to fetch conversations and messages
- */
-const mockConversations: MockConversation[] = [
-  {
-    id: '1',
-    name: 'Kai Nakamura',
-    lastMessage: "Sounds good! Let me know when you're free.",
-    timestamp: '10:30 AM',
-    unread: true,
-  },
-  {
-    id: '2',
-    name: 'Leilani Santos',
-    lastMessage: 'Thanks for reaching out!',
-    timestamp: 'Yesterday',
-    unread: false,
-  },
-  {
-    id: '3',
-    name: 'Noa Tanaka',
-    lastMessage: "I'm interested in being roommates!",
-    timestamp: 'Monday',
-    unread: false,
-  },
-  {
-    id: '4',
-    name: 'Makani Lee',
-    lastMessage: 'Do you have any pets?',
-    timestamp: '11/21/25',
-    unread: false,
-  },
-];
-
-const mockMessages: { [key: string]: MockMessage[] } = {
-  1: [
-    {
-      id: '1',
-      senderId: '1',
-      senderName: 'Kai Nakamura',
-      content: 'Hi! I saw we share many interests. Would you like to chat about possibly being roommates?',
-      timestamp: '9:45 AM',
-      date: 'Today',
-      isCurrentUser: false,
-    },
-    {
-      id: '2',
-      senderId: 'current',
-      senderName: 'You',
-      content: "Hi Kai! Yes, I'd love to chat. When are you free to meet up?",
-      timestamp: '10:15 AM',
-      date: 'Today',
-      isCurrentUser: true,
-    },
-    {
-      id: '3',
-      senderId: '1',
-      senderName: 'Kai Nakamura',
-      content: "Sounds good! Let me know when you're free.",
-      timestamp: '10:30 AM',
-      date: 'Today',
-      isCurrentUser: false,
-    },
-  ],
-  2: [
-    {
-      id: '1',
-      senderId: 'current',
-      senderName: 'You',
-      content: 'Hi Leilani! I noticed we share similar lifestyle preferences.',
-      timestamp: '2:30 PM',
-      date: 'Yesterday',
-      isCurrentUser: true,
-    },
-    {
-      id: '2',
-      senderId: '2',
-      senderName: 'Leilani Santos',
-      content: 'Thanks for reaching out!',
-      timestamp: '3:00 PM',
-      date: 'Yesterday',
-      isCurrentUser: false,
-    },
-  ],
-  3: [
-    {
-      id: '1',
-      senderId: '3',
-      senderName: 'Noa Tanaka',
-      content: "Hi! I saw your profile and we have a lot in common. I'm interested in being roommates!",
-      timestamp: '11:20 AM',
-      date: 'Monday',
-      isCurrentUser: false,
-    },
-    {
-      id: '2',
-      senderId: 'current',
-      senderName: 'You',
-      content: 'Hey Noa! That sounds great. What are you studying?',
-      timestamp: '1:45 PM',
-      date: 'Monday',
-      isCurrentUser: true,
-    },
-    {
-      id: '3',
-      senderId: '3',
-      senderName: 'Noa Tanaka',
-      content: "I'm majoring in Business. How about you?",
-      timestamp: '2:10 PM',
-      date: 'Monday',
-      isCurrentUser: false,
-    },
-    {
-      id: '4',
-      senderId: 'current',
-      senderName: 'You',
-      content: "Computer Science! I'd love to meet up and chat more about living arrangements.",
-      timestamp: '2:30 PM',
-      date: 'Monday',
-      isCurrentUser: true,
-    },
-  ],
-  4: [
-    {
-      id: '1',
-      senderId: 'current',
-      senderName: 'You',
-      content: 'Hi Makani! I saw we matched. Wanted to ask about your living preferences.',
-      timestamp: '4:15 PM',
-      date: 'Wed, Nov 20',
-      isCurrentUser: true,
-    },
-    {
-      id: '2',
-      senderId: '4',
-      senderName: 'Makani Lee',
-      content: 'Hi! Sure, what would you like to know?',
-      timestamp: '5:30 PM',
-      date: 'Wed, Nov 20',
-      isCurrentUser: false,
-    },
-    {
-      id: '3',
-      senderId: 'current',
-      senderName: 'You',
-      content: 'Do you have any pets?',
-      timestamp: '5:45 PM',
-      date: 'Wed, Nov 20',
-      isCurrentUser: true,
-    },
-    {
-      id: '4',
-      senderId: '4',
-      senderName: 'Makani Lee',
-      content: 'No pets, but I love animals! Are you thinking of getting one?',
-      timestamp: '6:00 PM',
-      date: 'Wed, Nov 20',
-      isCurrentUser: false,
-    },
-    {
-      id: '5',
-      senderId: 'current',
-      senderName: 'You',
-      content: "Not right away, but maybe in the future. What's your ideal study/sleep schedule?",
-      timestamp: '10:20 AM',
-      date: 'Thu, Nov 21',
-      isCurrentUser: true,
-    },
-    {
-      id: '6',
-      senderId: '4',
-      senderName: 'Makani Lee',
-      content: "I'm definitely a morning person! Usually study from 8 AM to 3 PM, and I'm in bed by 10 PM.",
-      timestamp: '11:05 AM',
-      date: 'Thu, Nov 21',
-      isCurrentUser: false,
-    },
-  ],
-};
 
 const MessagesPage = () => {
-  const [selectedConversation, setSelectedConversation] = useState<string>('1');
-  const [messageInput, setMessageInput] = useState('');
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const currentMessages = mockMessages[selectedConversation] || [];
-  const selectedConvInfo = mockConversations.find((c) => c.id === selectedConversation);
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/api/auth/signin');
+      return;
+    }
 
-  // Determine online status based on conversation
-  // TODO: Replace with actual online status from API
-  const getOnlineStatus = (conversationId: string) =>
-    // Kai (1) and Leilani (2) are online, Noa (3) and Makani (4) are offline
-    // eslint-disable-next-line implicit-arrow-linebreak
-    (['1', '2'].includes(conversationId) ? 'Online' : 'Offline');
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement actual message sending via API
-    console.log('Sending message:', messageInput);
-    setMessageInput('');
+    if (status === 'authenticated') {
+      fetchConversations();
+    }
+  }, [status, router]);
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/messages/conversations');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch conversations');
+      }
+
+      const data = await response.json();
+      setConversations(data.conversations || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const getRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    }
+    if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    }
+    if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    }
+    if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days}d ago`;
+    }
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getInitials = (name: string): string => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const filteredConversations = conversations.filter((conv) => conv.userName.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  if (status === 'loading' || loading) {
+    return (
+      <main className="bg-light py-4">
+        <Container className="py-4 text-center">
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </Container>
+      </main>
+    );
+  }
 
   return (
     <main className="bg-light py-4">
       <Container className="py-4">
         <h1 className="mb-4">Messages</h1>
+
+        {error && (
+          <Alert variant="danger" dismissible onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
 
         <Row className="g-3">
           {/* LEFT COLUMN - Conversations List */}
@@ -289,7 +143,7 @@ const MessagesPage = () => {
                     <Button
                       variant="link"
                       className="p-0 text-primary flex-shrink-0"
-                      onClick={() => console.log('New message')}
+                      onClick={() => router.push('/search')}
                       title="New message"
                     >
                       <PlusCircle size={20} />
@@ -298,236 +152,78 @@ const MessagesPage = () => {
                 </Form.Group>
               </Card.Header>
               <Card.Body className="p-0" style={{ overflowY: 'auto' }}>
-                <ListGroup variant="flush">
-                  {mockConversations.map((conversation) => (
-                    <ListGroup.Item
-                      key={conversation.id}
-                      active={selectedConversation === conversation.id}
-                      onClick={() => setSelectedConversation(conversation.id)}
-                      className="border-0 px-3 py-3"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <div className="d-flex align-items-start">
-                        <div className="me-3 position-relative">
-                          <PersonCircle size={50} color="#6c757d" />
-                          {/* Green dot indicator for online status */}
-                          {getOnlineStatus(conversation.id) === 'Online' && (
-                            <span
-                              className="position-absolute rounded-circle bg-success border border-white"
-                              style={{
-                                width: '14px',
-                                height: '14px',
-                                bottom: '2px',
-                                right: '2px',
-                                borderWidth: '2px',
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                          <div className="d-flex justify-content-between align-items-baseline mb-1">
-                            <h6 className={`mb-0 text-truncate ${conversation.unread ? 'fw-bold text-dark' : 'fw-semibold'}`}>
-                              {conversation.name}
-                            </h6>
-                            <small className="text-muted ms-2 flex-shrink-0">{conversation.timestamp}</small>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <p className={`mb-0 small text-truncate ${conversation.unread ? 'text-dark fw-semibold' : 'text-muted'}`}>
-                              {conversation.lastMessage}
-                            </p>
-                            {conversation.unread && (
-                              <Badge bg="primary" pill className="ms-2 flex-shrink-0">
-                                New
-                              </Badge>
+                {filteredConversations.length === 0 ? (
+                  <div className="text-center py-5 text-muted">
+                    <PersonCircle size={64} className="mb-3" />
+                    <p className="mb-0">No conversations yet</p>
+                    <small>Start chatting with potential roommates!</small>
+                  </div>
+                ) : (
+                  <ListGroup variant="flush">
+                    {filteredConversations.map((conversation) => (
+                      <ListGroup.Item
+                        key={conversation.userId}
+                        onClick={() => router.push(`/messages/${conversation.userId}`)}
+                        className="border-0 px-3 py-3"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div className="d-flex align-items-start">
+                          <div className="me-3 position-relative">
+                            {conversation.userPhoto ? (
+                              <img
+                                src={conversation.userPhoto}
+                                alt={conversation.userName}
+                                className="rounded-circle"
+                                style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div
+                                className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold"
+                                style={{ width: '50px', height: '50px' }}
+                              >
+                                {getInitials(conversation.userName)}
+                              </div>
                             )}
                           </div>
+                          <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                            <div className="d-flex justify-content-between align-items-baseline mb-1">
+                              <h6 className={`mb-0 text-truncate ${conversation.unreadCount > 0 ? 'fw-bold text-dark' : 'fw-semibold'}`}>
+                                {conversation.userName}
+                              </h6>
+                              <small className="text-muted ms-2 flex-shrink-0">
+                                {getRelativeTime(conversation.lastMessageTime)}
+                              </small>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <p className={`mb-0 small text-truncate ${conversation.unreadCount > 0 ? 'text-dark fw-semibold' : 'text-muted'}`}>
+                                {conversation.lastMessage}
+                              </p>
+                              {conversation.unreadCount > 0 && (
+                                <Badge bg="primary" pill className="ms-2 flex-shrink-0">
+                                  {conversation.unreadCount}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        {/* Dropdown menu for conversation actions */}
-                        <Dropdown align="end" onClick={(e) => e.stopPropagation()} drop="down">
-                          <Dropdown.Toggle
-                            as="div"
-                            className="text-muted p-0 border-0 ms-2"
-                            style={{ boxShadow: 'none', background: 'none', textDecoration: 'none', cursor: 'pointer' }}
-                            id={`conversation-dropdown-${conversation.id}`}
-                          />
-                          <Dropdown.Menu>
-                            <Dropdown.Item
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(`Mark as unread: ${conversation.name}`);
-                                // TODO: Implement mark as unread functionality
-                              }}
-                            >
-                              <EnvelopeFill className="me-2" />
-                              Mark as Unread
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(`Mute: ${conversation.name}`);
-                                // TODO: Implement mute functionality
-                              }}
-                            >
-                              <BellSlash className="me-2" />
-                              Mute
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(`Pin: ${conversation.name}`);
-                                // TODO: Implement pin functionality
-                              }}
-                            >
-                              <Pin className="me-2" />
-                              Pin
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item
-                              className="text-danger"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(`Delete: ${conversation.name}`);
-                                // TODO: Implement delete functionality
-                              }}
-                            >
-                              <Trash className="me-2" />
-                              Delete
-                            </Dropdown.Item>
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      </div>
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                )}
               </Card.Body>
             </Card>
           </Col>
 
-          {/* RIGHT COLUMN - Message Thread */}
+          {/* RIGHT COLUMN - Select a conversation prompt */}
           <Col lg={8} md={7}>
             <Card className="shadow-sm" style={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
-              {/* Conversation Header */}
-              <Card.Header className="bg-white border-bottom py-3">
-                <div className="d-flex align-items-center">
-                  <PersonCircle size={40} color="#6c757d" className="me-3" />
-                  <div className="d-flex align-items-center">
-                    <div>
-                      <div className="d-flex align-items-center">
-                        <h5 className="mb-0 me-1">{selectedConvInfo?.name}</h5>
-                        {/* Dropdown menu for conversation actions */}
-                        <Dropdown align="start" drop="down">
-                          <Dropdown.Toggle
-                            as="div"
-                            className="text-dark p-0 border-0"
-                            style={{ boxShadow: 'none', background: 'none', textDecoration: 'none', cursor: 'pointer' }}
-                            id="conversation-header-dropdown"
-                          />
-                          <Dropdown.Menu>
-                            {/* TODO: Replace with actual user profile link when API is ready
-                                This should link to /profile/{userId} or similar endpoint */}
-                            <Dropdown.Item
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                console.log(`View profile for: ${selectedConvInfo?.name}`);
-                                // TODO: Navigate to actual profile page: router.push(`/profile/${selectedConvInfo?.userId}`);
-                              }}
-                            >
-                              <PersonFill className="me-2" />
-                              View Profile
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item
-                              className="text-warning"
-                              onClick={() => {
-                                console.log(`Block user: ${selectedConvInfo?.name}`);
-                                // TODO: Implement block user functionality
-                              }}
-                            >
-                              <ShieldX className="me-2" />
-                              Block User
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                              className="text-danger"
-                              onClick={() => {
-                                console.log(`Report user: ${selectedConvInfo?.name}`);
-                                // TODO: Implement report user functionality
-                              }}
-                            >
-                              <ExclamationTriangle className="me-2" />
-                              Report User
-                            </Dropdown.Item>
-                          </Dropdown.Menu>
-                        </Dropdown>
-                      </div>
-                      <small className="text-muted">{getOnlineStatus(selectedConversation)}</small>
-                    </div>
-                  </div>
+              <Card.Body className="d-flex align-items-center justify-content-center">
+                <div className="text-center text-muted">
+                  <PersonCircle size={80} className="mb-3" />
+                  <h5>Select a conversation</h5>
+                  <p>Choose a conversation from the list to start messaging</p>
                 </div>
-              </Card.Header>
-
-              {/* Messages Area */}
-              <Card.Body style={{ overflowY: 'auto', flex: 1 }}>
-                {currentMessages.map((message, index) => {
-                  const showDateHeader = index === 0 || currentMessages[index - 1].date !== message.date;
-                  return (
-                    <div key={message.id}>
-                      {showDateHeader && (
-                        <div className="text-center my-3">
-                          <Badge bg="secondary" className="px-3 py-2">
-                            {message.date}
-                          </Badge>
-                        </div>
-                      )}
-                      <div
-                        className={`d-flex mb-3 ${message.isCurrentUser ? 'justify-content-end' : 'justify-content-start'}`}
-                      >
-                        <div
-                          style={{
-                            maxWidth: '70%',
-                            padding: '10px 15px',
-                            borderRadius: '15px',
-                            backgroundColor: message.isCurrentUser ? '#0d6efd' : '#e9ecef',
-                            color: message.isCurrentUser ? 'white' : 'black',
-                          }}
-                        >
-                          <p className="mb-1">{message.content}</p>
-                          <small
-                            style={{
-                              fontSize: '0.75rem',
-                              opacity: 0.8,
-                            }}
-                          >
-                            {message.timestamp}
-                          </small>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
               </Card.Body>
-
-              {/* Message Input */}
-              <Card.Footer className="bg-white border-top">
-                <Form onSubmit={handleSendMessage}>
-                  <div className="d-flex gap-2">
-                    <Form.Control
-                      type="text"
-                      placeholder="Type a message..."
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      disabled
-                    />
-                    <Button type="submit" variant="primary" disabled>
-                      <Send />
-                    </Button>
-                  </div>
-                  {/* Remove note when messaging functionality is implemented */}
-                  <small className="text-muted d-block mt-2">
-                    * Messaging functionality coming soon - currently non-functional mockup
-                  </small>
-                </Form>
-              </Card.Footer>
             </Card>
           </Col>
         </Row>
