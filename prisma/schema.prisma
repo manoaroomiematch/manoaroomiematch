@@ -148,9 +148,18 @@ model Message {
   receiverId  Int
   content     String
   sentAt      DateTime @default(now())
+  
+  // Add these new fields for read tracking
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
 
   sender   User @relation("Sender", fields: [senderId], references: [id])
   receiver User @relation("Receiver", fields: [receiverId], references: [id])
+  
+  // Added these indexes for better performance
+  @@index([senderId, receiverId, sentAt])
+  @@index([receiverId, senderId, sentAt])
+  @@index([receiverId, isRead])
 }
 
 model LifestyleCategory {
@@ -208,3 +217,4 @@ model ModerationAction {
   targetUser    User     @relation("TargetUser", fields: [targetUserId], references: [id])
   adminUser     User     @relation("AdminModerator", fields: [adminUserId], references: [id])
 }
+
