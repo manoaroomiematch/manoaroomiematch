@@ -76,6 +76,7 @@ const SignIn = () => {
     try {
       // Check if user is suspended or deactivated FIRST
       // This avoids unnecessary redirect logic and provides better UX
+      // Reuse role from this call to avoid a second API call
       const checkResponse = await fetch('/api/auth/check-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,24 +108,17 @@ const SignIn = () => {
           setIsLoading(false);
           return;
         }
+
+        // Credentials are valid and user is not suspended - proceed with sign-in
+        // Reuse role from checkData instead of making a second API call
+        const callbackUrl = checkData.role === 'ADMIN' ? '/admin' : '/home';
+
+        await signIn('credentials', {
+          callbackUrl,
+          email,
+          password,
+        });
       }
-
-      // Credentials are valid and user is not suspended - proceed with sign-in
-      // Determine callback URL based on user role
-      const userResponse = await fetch('/api/auth/check-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const userData = await userResponse.json();
-      const callbackUrl = userData.role === 'ADMIN' ? '/admin' : '/home';
-
-      await signIn('credentials', {
-        callbackUrl,
-        email,
-        password,
-      });
     } catch (err) {
       console.error('Sign in error:', err);
       setIsLoading(false);
