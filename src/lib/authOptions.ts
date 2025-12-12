@@ -62,9 +62,19 @@ const authOptions: NextAuthOptions = {
     signOut: '/auth/signout',
   },
   callbacks: {
-    redirect: ({ url }) => {
-      // Allow redirects to auth pages or respect the callbackUrl passed to signIn
-      return url;
+    redirect: ({ url, baseUrl }) => {
+      // Validate redirect URL to prevent open redirect attacks
+      // Only allow relative paths or URLs within the same domain
+      if (url.startsWith('/')) {
+        // Relative path is safe
+        return url;
+      }
+      if (new URL(url, baseUrl).origin === baseUrl) {
+        // Same origin redirect is safe
+        return url;
+      }
+      // Invalid redirect - return to home
+      return baseUrl;
     },
     session: ({ session, token }) => {
       // console.log('Session Callback', { session, token })
@@ -80,11 +90,12 @@ const authOptions: NextAuthOptions = {
     jwt: ({ token, user }) => {
       // console.log('JWT Callback', { token, user })
       if (user) {
-        const u = user as unknown as any;
+        // Properly type the user object instead of casting to 'any'
+        const typedUser = user as { id: string; randomKey: string };
         return {
           ...token,
-          id: u.id,
-          randomKey: u.randomKey,
+          id: typedUser.id,
+          randomKey: typedUser.randomKey,
         };
       }
       return token;
