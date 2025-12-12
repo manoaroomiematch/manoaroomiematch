@@ -64,9 +64,10 @@ interface UserProfileModalProps {
   show: boolean;
   onHide: () => void;
   userId?: number; // Optional user ID for reporting functionality
+  isAdmin?: boolean; // If true, hides the report button (admins use moderation tools instead)
 }
 
-const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide, userId }) => {
+const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide, userId, isAdmin = false }) => {
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportError, setReportError] = useState<string | null>(null);
@@ -102,6 +103,13 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
     setReportError(null);
 
     try {
+      // Send report to /api/flags endpoint
+      // The userId must be the User table ID (numeric), not the UserProfile ID
+      // The endpoint will:
+      // 1. Validate the user exists
+      // 2. Prevent duplicate reports from the same user
+      // 3. Create a flag that ties to this specific user
+      // 4. Admins will then see this flag in their moderation dashboard
       const response = await fetch('/api/flags', {
         method: 'POST',
         headers: {
@@ -176,7 +184,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
         <Modal.Title className="w-100 text-center fw-bold">
           Profile
         </Modal.Title>
-        {userId && !showReportForm && (
+        {userId && !showReportForm && !isAdmin && (
           <Button
             variant="outline-danger"
             size="sm"

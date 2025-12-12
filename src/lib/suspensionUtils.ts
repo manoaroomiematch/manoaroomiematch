@@ -16,6 +16,7 @@ let lastCleanupTime = 0;
  * - Run asynchronously (non-blocking)
  * - Skip if run recently (within 5 minutes)
  * - Use single database query instead of find + update
+ * - Auto-resolve flags when suspension expires
  *
  * SERVERLESS NOTE: In serverless environments, consider using a database-based
  * locking mechanism or accepting that cleanup may run more frequently across instances.
@@ -30,6 +31,38 @@ export async function clearExpiredSuspensions() {
     }
 
     lastCleanupTime = now;
+
+    // Get users with expired suspensions to find their associated flags
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const expiredUsers = await (prisma as any).user.findMany({
+      where: {
+        suspendedUntil: {
+          not: null,
+          lt: new Date(),
+        },
+        active: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    // Auto-resolve any active flags for users with expired suspensions
+    if (expiredUsers.length > 0) {
+      const userIds = expiredUsers.map((u: any) => u.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (prisma as any).flag.updateMany({
+        where: {
+          reported_user_id: {
+            in: userIds,
+          },
+          status: 'suspended',
+        },
+        data: {
+          status: 'resolved',
+        },
+      });
+    }
 
     // Single query to update all expired suspensions at once
     const result = await prisma.user.updateMany({
@@ -46,7 +79,7 @@ export async function clearExpiredSuspensions() {
     });
 
     if (result.count > 0) {
-      console.log(`[SuspensionCleanup] Cleared ${result.count} expired suspensions`);
+      console.log(`[SuspensionCleanup] Cleared ${result.count} expired suspensions and auto-resolved associated flags`);
     }
 
     return result.count;

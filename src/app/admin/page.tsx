@@ -386,6 +386,19 @@ const AdminPage: React.FC = () => {
 
   /** Handle flag resolution - updates local state immediately after successful API call */
   // Use string for action to avoid TypeScript narrowing issues in user update logic
+  //
+  // IMPORTANT: All moderation actions (suspend, deactivate, etc.) must be tied to a specific flagId.
+  // This ensures that:
+  // 1. Only users who have been explicitly reported can be moderated
+  // 2. The action is tied to the original report
+  // 3. Admins cannot accidentally deactivate the wrong user
+  //
+  // The flagId is validated on the backend to ensure:
+  // 1. The flag actually exists in the database
+  // 2. The flag has a valid reported_user_id
+  // 3. The reported user actually exists
+  //
+  // This prevents "magical" deactivations of random users.
   const handleResolveFlag = async (
     flagId: number,
     action: string,
@@ -788,6 +801,7 @@ const AdminPage: React.FC = () => {
                             setShowDeleteUserModal(true);
                           }}
                           onView={handleViewUser}
+                          onFlagged={() => fetchFlags(true)}
                         />
                       ))}
                     </tbody>
@@ -1045,6 +1059,7 @@ const AdminPage: React.FC = () => {
           setSelectedUserIdForModal(undefined);
         }}
         userId={selectedUserIdForModal}
+        isAdmin
       />
 
       {/* Suspension Modal */}

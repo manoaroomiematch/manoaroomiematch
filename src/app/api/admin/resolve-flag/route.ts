@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { flagId, action, durationHours, notes } = body;
 
+    // Validate required fields
     if (!flagId || !action) {
       return NextResponse.json(
         { error: 'Missing required fields: flagId and action' },
@@ -41,10 +42,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate action parameter
-    if (!['resolve', 'suspend', 'unsuspend', 'deactivate', 'reactivate'].includes(action)) {
+    // Validate flagId is a valid number
+    const flagIdNum = parseInt(String(flagId), 10);
+    if (Number.isNaN(flagIdNum) || flagIdNum <= 0) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "resolve", "suspend", "unsuspend", "deactivate", or "reactivate"' },
+        { error: 'Invalid flagId: must be a positive integer' },
+        { status: 400 },
+      );
+    }
+
+    // Validate action parameter
+    const validActions = ['resolve', 'suspend', 'unsuspend', 'deactivate', 'reactivate'];
+    if (!validActions.includes(action)) {
+      return NextResponse.json(
+        { error: `Invalid action. Must be one of: ${validActions.join(', ')}` },
         { status: 400 },
       );
     }
@@ -57,28 +68,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if flag exists in the database
+    // Validate durationHours is valid if provided
+    if (durationHours && (typeof durationHours !== 'number' || durationHours <= 0)) {
+      return NextResponse.json(
+        { error: 'Invalid durationHours: must be a positive number' },
+        { status: 400 },
+      );
+    }
+
+    // Check if flag exists in the database - CRITICAL SAFETY CHECK
+    // This ensures we only modify users that have been explicitly reported
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const flag = await (prisma as any).flag.findUnique({
-      where: { id: parseInt(flagId, 10) },
+      where: { id: flagIdNum },
     });
 
     if (!flag) {
       return NextResponse.json(
-        { error: 'Flag not found' },
+        { error: `Flag not found: No flag exists with ID ${flagIdNum}` },
         { status: 404 },
+      );
+    }
+
+    // Additional safety check: verify the flag has a valid reported_user_id
+    if (!flag.reported_user_id || flag.reported_user_id <= 0) {
+      return NextResponse.json(
+        { error: 'Flag has invalid reported user ID' },
+        { status: 400 },
       );
     }
 
     const adminUserId = parseInt(session.user.id as string, 10);
     const reportedUserId = flag.reported_user_id;
 
+    // Critical safety check: verify the reported user actually exists
+    // This prevents moderation actions from affecting non-existent users
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reportedUser = await (prisma as any).user.findUnique({
+      where: { id: reportedUserId },
+    });
+
+    if (!reportedUser) {
+      return NextResponse.json(
+        { error: `Reported user not found: User ID ${reportedUserId} does not exist in the database` },
+        { status: 404 },
+      );
+    }
+
     // Handle 'resolve' action - marks the flag as resolved without affecting the user
     if (action === 'resolve') {
       // Update flag status to resolved
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedFlag = await (prisma as any).flag.update({
-        where: { id: parseInt(flagId, 10) },
+        where: { id: flagIdNum },
         data: { status: 'resolved' },
       });
 
@@ -90,7 +132,7 @@ export async function POST(req: NextRequest) {
           adminUserId,
           action: 'resolve',
           notes: notes || null,
-          flagId: parseInt(flagId, 10),
+          flagId: flagIdNum,
         },
       });
 
@@ -115,7 +157,7 @@ export async function POST(req: NextRequest) {
 
       // Update flag status to 'suspended'
       const updatedFlag = await (prisma as any).flag.update({
-        where: { id: parseInt(flagId, 10) },
+        where: { id: flagIdNum },
         data: { status: 'suspended' },
       });
 
@@ -127,7 +169,7 @@ export async function POST(req: NextRequest) {
           action: 'suspend',
           durationHours,
           notes: notes || null,
-          flagId: parseInt(flagId, 10),
+          flagId: flagIdNum,
         },
       });
 
@@ -150,7 +192,7 @@ export async function POST(req: NextRequest) {
 
       // Update flag status to resolved
       const updatedFlag = await (prisma as any).flag.update({
-        where: { id: parseInt(flagId, 10) },
+        where: { id: flagIdNum },
         data: { status: 'resolved' },
       });
 
@@ -161,7 +203,7 @@ export async function POST(req: NextRequest) {
           adminUserId,
           action: 'unsuspend',
           notes: notes || null,
-          flagId: parseInt(flagId, 10),
+          flagId: flagIdNum,
         },
       });
 
@@ -187,7 +229,7 @@ export async function POST(req: NextRequest) {
       // Update flag status
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updatedFlag = await (prisma as any).flag.update({
-        where: { id: parseInt(flagId, 10) },
+        where: { id: flagIdNum },
         data: { status: 'user_deactivated' },
       });
 
@@ -199,7 +241,7 @@ export async function POST(req: NextRequest) {
           adminUserId,
           action: 'deactivate',
           notes: notes || null,
-          flagId: parseInt(flagId, 10),
+          flagId: flagIdNum,
         },
       });
 
@@ -222,7 +264,7 @@ export async function POST(req: NextRequest) {
 
       // Update flag status to resolved
       const updatedFlag = await (prisma as any).flag.update({
-        where: { id: parseInt(flagId, 10) },
+        where: { id: flagIdNum },
         data: { status: 'resolved' },
       });
 
@@ -233,7 +275,7 @@ export async function POST(req: NextRequest) {
           adminUserId,
           action: 'reactivate',
           notes: notes || null,
-          flagId: parseInt(flagId, 10),
+          flagId: flagIdNum,
         },
       });
 

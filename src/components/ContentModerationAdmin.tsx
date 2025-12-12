@@ -106,14 +106,15 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
         <td>{date}</td>
         <td>
           <div className="d-flex flex-column gap-2">
-            {/* Primary Actions Row */}
-            <div className="d-flex gap-2 flex-wrap">
+            {/* Main Actions Row - View, Resolve, and Status */}
+            <div className="d-flex gap-2 flex-wrap align-items-center">
               {userId && (
                 <Button
                   variant="primary"
                   size="sm"
                   className="rounded-pill d-flex align-items-center"
                   onClick={() => onViewUser(userId, user)}
+                  disabled={isResolved}
                 >
                   View
                 </Button>
@@ -123,27 +124,40 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                 size="sm"
                 className="rounded-pill d-flex align-items-center"
                 onClick={handleResolve}
-                disabled={isResolved}
+                disabled={isResolved || isSuspended || isDeactivated}
+                title={isSuspended || isDeactivated ? 'User is under active moderation - unsuspend or reactivate first' : 'Mark this report as resolved'}
               >
                 <CheckCircle className="me-1" style={{ fontSize: '0.9rem' }} />
-                {' '}
                 Resolve
               </Button>
-            </div>
 
-            {/* Moderation Actions Row */}
-            <div className="d-flex gap-2 flex-wrap">
-              <Button
-                variant="warning"
-                size="sm"
-                className="rounded-pill d-flex align-items-center"
-                onClick={handleSuspend}
-                disabled={Boolean(isDeactivated || isSuspended)}
-              >
-                <Ban className="me-1" style={{ fontSize: '0.9rem' }} />
-                {' '}
-                Suspend
-              </Button>
+              {/* Conditional Moderation Buttons - Replace each other based on state */}
+              {!isSuspended && !isDeactivated && (
+                <>
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    className="rounded-pill d-flex align-items-center"
+                    onClick={handleSuspend}
+                    disabled={isResolved}
+                    title="Temporarily suspend this user"
+                  >
+                    <Ban className="me-1" style={{ fontSize: '0.9rem' }} />
+                    Suspend
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    className="rounded-pill d-flex align-items-center"
+                    onClick={handleDeactivate}
+                    disabled={isResolved}
+                    title="Permanently deactivate this user"
+                  >
+                    <XCircle className="me-1" style={{ fontSize: '0.9rem' }} />
+                    Deactivate
+                  </Button>
+                </>
+              )}
 
               {isSuspended && !isDeactivated && (
                 <Button
@@ -151,24 +165,13 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                   size="sm"
                   className="rounded-pill d-flex align-items-center"
                   onClick={handleUnsuspend}
+                  disabled={isResolved}
+                  title="Remove suspension from this user"
                 >
                   <ArrowClockwise className="me-1" style={{ fontSize: '0.9rem' }} />
-                  {' '}
                   Unsuspend
                 </Button>
               )}
-
-              <Button
-                variant="danger"
-                size="sm"
-                className="rounded-pill d-flex align-items-center"
-                onClick={handleDeactivate}
-                disabled={isDeactivated}
-              >
-                <XCircle className="me-1" style={{ fontSize: '0.9rem' }} />
-                {' '}
-                Deactivate
-              </Button>
 
               {isDeactivated && (
                 <Button
@@ -176,25 +179,31 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                   size="sm"
                   className="rounded-pill d-flex align-items-center"
                   onClick={handleReactivate}
+                  disabled={isResolved}
+                  title="Reactivate this user"
                 >
                   <ArrowClockwise className="me-1" style={{ fontSize: '0.9rem' }} />
-                  {' '}
                   Reactivate
                 </Button>
               )}
+
+              {/* Status Badge and Info */}
+              <div className="d-flex gap-2 align-items-center ms-auto">
+                {getStatusBadge()}
+                {suspensionCount > 0 && (
+                  <small className="text-muted">
+                    {suspensionCount}
+                    {' '}
+                    suspension
+                    {suspensionCount !== 1 ? 's' : ''}
+                  </small>
+                )}
+              </div>
             </div>
 
-            {/* Status and History Row */}
-            <div className="d-flex gap-2 align-items-center flex-wrap">
-              <div>{getStatusBadge()}</div>
-              {suspensionCount > 0 && (
-                <small className="text-muted">
-                  Suspensions:
-                  {' '}
-                  {suspensionCount}
-                </small>
-              )}
-              {userId && (
+            {/* History Row - Utility section */}
+            {userId && (
+              <div className="d-flex gap-2">
                 <Button
                   variant="outline-secondary"
                   size="sm"
@@ -236,8 +245,8 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                   {' '}
                   History
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </td>
       </tr>
