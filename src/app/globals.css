@@ -367,3 +367,41 @@ main {
 .modal-dialog {
   z-index: 2070 !important;
 }
+
+/* Admin table row spacing */
+.table-rounded tbody tr {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease;
+}
+
+.table-rounded tbody tr:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.table-rounded tbody td {
+  border: none;
+  padding: 1rem 1rem;
+  vertical-align: middle;
+}
+
+.table-rounded tbody tr:first-child td:first-child {
+  border-radius: 0.5rem 0 0 0;
+}
+
+.table-rounded tbody tr:first-child td:last-child {
+  border-radius: 0 0.5rem 0 0;
+}
+
+.table-rounded tbody tr:last-child td:first-child {
+  border-radius: 0 0 0 0.5rem;
+}
+
+.table-rounded tbody tr:last-child td:last-child {
+  border-radius: 0 0 0.5rem 0;
+}
+
+.table-rounded thead th {
+  border: none;
+}

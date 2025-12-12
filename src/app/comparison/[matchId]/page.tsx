@@ -75,6 +75,13 @@ export default function ComparisonPage() {
         return;
       }
 
+      // Admins don't have access to the comparison page
+      if (session?.user?.randomKey === 'ADMIN') {
+        setError('Admins do not have access to match comparisons');
+        setLoading(false);
+        return;
+      }
+
       try {
         console.log('[Comparison Page] Fetching match:', matchId);
 
@@ -101,7 +108,7 @@ export default function ComparisonPage() {
     }
 
     fetchComparison();
-  }, [matchId, status]);
+  }, [matchId, status, session?.user?.randomKey]);
 
   const handleViewProfile = async (userId: string) => {
     setProfileLoading(true);

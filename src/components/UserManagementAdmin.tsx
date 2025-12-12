@@ -171,154 +171,143 @@ const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, 
           </Button>
         </td>
       </tr>
-
-      {/* Role Change Modal */}
-      <tr>
-        <td colSpan={4}>
-          <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>Change User Role</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <p className="mb-3">
-                <strong>User:</strong>
-                {' '}
-                {name}
-              </p>
-              <p className="mb-3">
-                <strong>Current Role:</strong>
-                {' '}
-                {currentRole}
-              </p>
-              {roleSuccess ? (
-                <Alert variant="success">
-                  User role updated to
-                  {' '}
-                  {currentRole}
-                  successfully.
-                </Alert>
-              ) : (
-                <>
-                  {roleError && <Alert variant="danger">{roleError}</Alert>}
-                  <Alert variant="info">
-                    {currentRole === 'ADMIN' ? (
-                      <>
-                        This will demote the user from
-                        {' '}
-                        <strong>ADMIN</strong>
-                        {' '}
-                        to
-                        {' '}
-                        <strong>USER</strong>
-                        .
-                        They will no longer be able to access the admin panel.
-                      </>
-                    ) : (
-                      <>
-                        This will promote the user from
-                        {' '}
-                        <strong>USER</strong>
-                        {' '}
-                        to
-                        {' '}
-                        <strong>ADMIN</strong>
-                        .
-                        They will gain full admin access.
-                      </>
-                    )}
-                  </Alert>
-                </>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setShowRoleModal(false);
-                  setRoleError(null);
-                  setRoleSuccess(false);
-                }}
-                disabled={roleLoading}
-              >
-                Cancel
-              </Button>
-              {!roleSuccess && (
-                <Button
-                  variant={currentRole === 'ADMIN' ? 'warning' : 'info'}
-                  onClick={handleChangeRole}
-                  disabled={roleLoading}
-                >
-                  {roleButtonText}
-                </Button>
-              )}
-            </Modal.Footer>
-          </Modal>
-        </td>
-      </tr>
-
-      {/* Flag User Modal */}
-      <tr>
-        <td colSpan={4}>
-          <Modal show={showFlagModal} onHide={() => setShowFlagModal(false)} centered>
-            <Modal.Header closeButton>
-              <Modal.Title>Flag User</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <p className="mb-3">
-                <strong>User:</strong>
-                {' '}
-                {name}
-              </p>
-              {flagSuccess ? (
-                <Alert variant="success">
-                  User flagged successfully and will be added to content moderation.
-                </Alert>
-              ) : (
-                <>
-                  {flagError && <Alert variant="danger">{flagError}</Alert>}
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-bold">Flag Reason</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      placeholder="Describe why you're flagging this user..."
-                      value={flagReason}
-                      onChange={(e) => setFlagReason(e.target.value)}
-                      disabled={flagLoading}
-                    />
-                    <Form.Text className="text-muted d-block mt-1">
-                      Be specific about the issue.
-                    </Form.Text>
-                  </Form.Group>
-                </>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setShowFlagModal(false);
-                  setFlagReason('');
-                  setFlagError(null);
-                  setFlagSuccess(false);
-                }}
-                disabled={flagLoading}
-              >
-                Close
-              </Button>
-              {!flagSuccess && (
-                <Button
-                  variant="danger"
-                  onClick={handleFlagUser}
-                  disabled={flagLoading || !flagReason.trim()}
-                >
-                  {flagLoading ? 'Flagging...' : 'Flag User'}
-                </Button>
-              )}
-            </Modal.Footer>
-          </Modal>
-        </td>
-      </tr>
+      {/* Modals rendered outside the table row for accessibility and spacing consistency */}
+      <Modal show={showRoleModal} onHide={() => setShowRoleModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Change User Role</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-3">
+            <strong>User:</strong>
+            {' '}
+            {name}
+          </p>
+          <p className="mb-3">
+            <strong>Current Role:</strong>
+            {' '}
+            {currentRole}
+          </p>
+          {roleSuccess ? (
+            <Alert variant="success">
+              User role updated to
+              {' '}
+              {currentRole}
+              successfully.
+            </Alert>
+          ) : (
+            <>
+              {roleError && <Alert variant="danger">{roleError}</Alert>}
+              <Alert variant="info">
+                {currentRole === 'ADMIN' ? (
+                  <>
+                    This will demote the user from
+                    {' '}
+                    <strong>ADMIN</strong>
+                    {' '}
+                    to
+                    {' '}
+                    <strong>USER</strong>
+                    .
+                    They will no longer be able to access the admin panel.
+                  </>
+                ) : (
+                  <>
+                    This will promote the user from
+                    {' '}
+                    <strong>USER</strong>
+                    {' '}
+                    to
+                    {' '}
+                    <strong>ADMIN</strong>
+                    .
+                    They will gain full admin access.
+                  </>
+                )}
+              </Alert>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowRoleModal(false);
+              setRoleError(null);
+              setRoleSuccess(false);
+            }}
+            disabled={roleLoading}
+          >
+            Cancel
+          </Button>
+          {!roleSuccess && (
+            <Button
+              variant={currentRole === 'ADMIN' ? 'warning' : 'info'}
+              onClick={handleChangeRole}
+              disabled={roleLoading}
+            >
+              {roleButtonText}
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
+      <Modal show={showFlagModal} onHide={() => setShowFlagModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Flag User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-3">
+            <strong>User:</strong>
+            {' '}
+            {name}
+          </p>
+          {flagSuccess ? (
+            <Alert variant="success">
+              User flagged successfully and will be added to content moderation.
+            </Alert>
+          ) : (
+            <>
+              {flagError && <Alert variant="danger">{flagError}</Alert>}
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-bold">Flag Reason</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  placeholder="Describe why you're flagging this user..."
+                  value={flagReason}
+                  onChange={(e) => setFlagReason(e.target.value)}
+                  disabled={flagLoading}
+                />
+                <Form.Text className="text-muted d-block mt-1">
+                  Be specific about the issue.
+                </Form.Text>
+              </Form.Group>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowFlagModal(false);
+              setFlagReason('');
+              setFlagError(null);
+              setFlagSuccess(false);
+            }}
+            disabled={flagLoading}
+          >
+            Close
+          </Button>
+          {!flagSuccess && (
+            <Button
+              variant="danger"
+              onClick={handleFlagUser}
+              disabled={flagLoading || !flagReason.trim()}
+            >
+              {flagLoading ? 'Flagging...' : 'Flag User'}
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

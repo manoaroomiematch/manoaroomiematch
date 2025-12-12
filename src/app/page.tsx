@@ -13,10 +13,12 @@ const Home = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Redirect logged-in users to the profile page
+  // Redirect logged-in users: admins to /admin, others to /profile
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      router.push('/profile');
+      const userRole = (session as any)?.user?.randomKey;
+      const destination = userRole === 'ADMIN' ? '/admin' : '/profile';
+      router.push(destination);
     }
   }, [status, session, router]);
 

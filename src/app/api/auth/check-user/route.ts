@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         status: 'deactivated',
+        role: user.role || 'USER',
         flag: latestFlag ? {
           reason: latestFlag.reason,
           status: latestFlag.status,
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         status: 'suspended',
         suspendedUntil: user.suspendedUntil.toISOString(),
+        role: user.role || 'USER',
         flag: latestFlag ? {
           reason: latestFlag.reason,
           status: latestFlag.status,
@@ -129,7 +131,10 @@ export async function POST(req: NextRequest) {
     }
 
     // User is valid and not suspended/deactivated
-    return NextResponse.json({ status: 'valid' });
+    return NextResponse.json({
+      status: 'valid',
+      role: user.role || 'USER',
+    });
   } catch (error) {
     console.error('Error checking user:', error);
     return NextResponse.json(

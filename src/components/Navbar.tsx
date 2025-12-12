@@ -49,57 +49,48 @@ const NavBar: React.FC = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto justify-content-start flex-row flex-wrap">
-            {currentUser ? (
-              // eslint-disable-next-line react/jsx-no-useless-fragment
+            {currentUser && role === 'ADMIN' && (
+              <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
+                <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
+                  Housing Resources
+                </NavDropdown.Item>
+                <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
+                  Campus Life
+                </NavDropdown.Item>
+              </NavDropdown>
+            )}
+            {currentUser && role !== 'ADMIN' && (
               <>
-                {role === 'ADMIN' ? (
-                  <>
-                    <Nav.Link id="admin-dashboard-nav" href="/admin" active={pathName === '/admin'}>
-                      Admin Dashboard
-                    </Nav.Link>
-                    <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
-                      <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
-                        Housing Resources
-                      </NavDropdown.Item>
-                      <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
-                        Campus Life
-                      </NavDropdown.Item>
-                    </NavDropdown>
-                  </>
-                ) : (
-                  <>
-                    <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'}>
-                      Browse Matches
-                    </Nav.Link>
-                    <Nav.Link
-                      id="lifestyle-survey-nav"
-                      href="/lifestyle-survey"
-                      active={pathName === '/lifestyle-survey'}
-                    >
-                      Lifestyle Survey
-                    </Nav.Link>
-                    <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
-                      <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
-                        Housing Resources
-                      </NavDropdown.Item>
-                      <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
-                        Campus Life
-                      </NavDropdown.Item>
-                    </NavDropdown>
-                    <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
-                      My Profile
-                    </Nav.Link>
-                    <Nav.Link
-                      id="edit-profile-nav"
-                      href="/edit-profile"
-                      active={pathName === '/edit-profile'}
-                    >
-                      Edit Profile
-                    </Nav.Link>
-                  </>
-                )}
+                <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'}>
+                  Browse Matches
+                </Nav.Link>
+                <Nav.Link
+                  id="lifestyle-survey-nav"
+                  href="/lifestyle-survey"
+                  active={pathName === '/lifestyle-survey'}
+                >
+                  Lifestyle Survey
+                </Nav.Link>
+                <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
+                  <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
+                    Housing Resources
+                  </NavDropdown.Item>
+                  <NavDropdown.Item id="resources-lifestyle-categories" href="/resources/lifestyle-categories" active={pathName === '/resources/lifestyle-categories'}>
+                    Campus Life
+                  </NavDropdown.Item>
+                </NavDropdown>
+                <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
+                  My Profile
+                </Nav.Link>
+                <Nav.Link
+                  id="edit-profile-nav"
+                  href="/edit-profile"
+                  active={pathName === '/edit-profile'}
+                >
+                  Edit Profile
+                </Nav.Link>
               </>
-            ) : ''}
+            )}
           </Nav>
           <Nav className="align-items-center gap-2 ms-auto">
             {session ? (

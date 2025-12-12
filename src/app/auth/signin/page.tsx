@@ -110,8 +110,18 @@ const SignIn = () => {
       }
 
       // Credentials are valid and user is not suspended - proceed with sign-in
+      // Determine callback URL based on user role
+      const userResponse = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const userData = await userResponse.json();
+      const callbackUrl = userData.role === 'ADMIN' ? '/admin' : '/home';
+
       await signIn('credentials', {
-        callbackUrl: '/home',
+        callbackUrl,
         email,
         password,
       });

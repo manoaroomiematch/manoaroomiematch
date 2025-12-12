@@ -35,14 +35,14 @@ const AdminStatisticsCard: React.FC<AdminStatisticsCardProps> = ({
       {' '}
       Users
     </span>
-    <span>
+    <span style={{ fontWeight: 600, letterSpacing: 0.5 }}>
       <Badge bg="warning" className="me-1">
         {totalFlags}
       </Badge>
       {' '}
       Flags
     </span>
-    <span>
+    <span style={{ fontWeight: 600, letterSpacing: 0.5 }}>
       <Badge bg="success" className="me-1">
         {totalCategories}
       </Badge>
