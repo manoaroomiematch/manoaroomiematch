@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Container, Button, Form } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -615,15 +615,14 @@ const AdminPage: React.FC = () => {
     return (
       <main style={{ background: colorMap[adminBgColor].bg }}>
         <div
-          className="admin-margin"
+          className="d-flex justify-content-center align-items-center"
           style={{
-            marginLeft: '2.5vw',
-            marginRight: '2.5vw',
+            minHeight: '100vh',
+            background: colorMap[adminBgColor].bg,
+            padding: '2.5vw',
           }}
         >
-          <Container fluid className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', background: colorMap[adminBgColor].bg }}>
-            <LoadingSpinner />
-          </Container>
+          <LoadingSpinner />
         </div>
       </main>
     );
@@ -634,14 +633,17 @@ const AdminPage: React.FC = () => {
       <div
         className="admin-margin"
         style={{
-          marginLeft: '2.5vw',
-          marginRight: '2.5vw',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          maxWidth: '1320px',
+          paddingLeft: '15px',
+          paddingRight: '15px',
         }}
       >
-        <Container fluid className="py-4" style={{ background: colorMap[adminBgColor].bg, minHeight: '100vh' }}>
-          <div className="d-flex gap-4" style={{ alignItems: 'flex-start' }}>
+        <div className="py-4" style={{ background: colorMap[adminBgColor].bg, minHeight: '100vh' }}>
+          <div className="d-flex flex-column flex-lg-row gap-4" style={{ alignItems: 'flex-start' }}>
             {/* Sidebar */}
-            <div style={{ width: 320, minWidth: 280 }}>
+            <div style={{ width: '100%', maxWidth: '320px', minWidth: '280px' }} className="d-none d-lg-block">
               <AdminSidebar
                 adminName={adminDisplayName}
                 adminEmail={session?.user?.email || ''}
@@ -656,9 +658,9 @@ const AdminPage: React.FC = () => {
               />
             </div>
             {/* Main Content Banner */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
               <div
-                className="mb-4 p-5 rounded-4 shadow-sm"
+                className="mb-4 p-3 p-md-5 rounded-4 shadow-sm"
                 style={{
                   background: colorMap[adminBgColor].banner,
                   color: '#fff',
@@ -982,7 +984,7 @@ const AdminPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </Container>
+        </div>
       </div>
 
       {/* Add Category Modal */}
@@ -1098,13 +1100,22 @@ const AdminPage: React.FC = () => {
       <style jsx>
         {`
       .admin-margin {
-        margin-left: 2.5vw;
-        margin-right: 2.5vw;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 1320px;
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+      @media (max-width: 992px) {
+        .admin-margin {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
       }
       @media (max-width: 768px) {
         .admin-margin {
-          margin-left: 0;
-          margin-right: 0;
+          padding-left: 10px;
+          padding-right: 10px;
         }
       }
     `}

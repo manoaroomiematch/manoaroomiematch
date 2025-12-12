@@ -48,9 +48,9 @@ const NavBar: React.FC = () => {
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto justify-content-start flex-row flex-wrap">
+          <Nav className="me-auto justify-content-start flex-row flex-wrap gap-2 gap-lg-0">
             {currentUser && role === 'ADMIN' && (
-              <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
+              <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')} className="d-lg-inline">
                 <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
                   Housing Resources
                 </NavDropdown.Item>
@@ -61,17 +61,18 @@ const NavBar: React.FC = () => {
             )}
             {currentUser && role !== 'ADMIN' && (
               <>
-                <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'}>
+                <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'} className="d-lg-inline">
                   Browse Matches
                 </Nav.Link>
                 <Nav.Link
                   id="lifestyle-survey-nav"
                   href="/lifestyle-survey"
                   active={pathName === '/lifestyle-survey'}
+                  className="d-lg-inline"
                 >
                   Lifestyle Survey
                 </Nav.Link>
-                <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')}>
+                <NavDropdown id="resources-dropdown" title="Resources" active={pathName.startsWith('/resources')} className="d-lg-inline">
                   <NavDropdown.Item id="resources-housing" href="/resources" active={pathName === '/resources'}>
                     Housing Resources
                   </NavDropdown.Item>
@@ -79,22 +80,23 @@ const NavBar: React.FC = () => {
                     Campus Life
                   </NavDropdown.Item>
                 </NavDropdown>
-                <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'}>
+                <Nav.Link id="profile-nav" href="/profile" active={pathName === '/profile'} className="d-lg-inline">
                   My Profile
                 </Nav.Link>
                 <Nav.Link
                   id="edit-profile-nav"
                   href="/edit-profile"
                   active={pathName === '/edit-profile'}
+                  className="d-lg-inline"
                 >
                   Edit Profile
                 </Nav.Link>
               </>
             )}
           </Nav>
-          <Nav className="align-items-center gap-2 ms-auto">
+          <Nav className="flex-column flex-lg-row align-items-start align-items-lg-center gap-2 ms-lg-auto">
             {session ? (
-              <>
+              <div className="d-flex flex-row align-items-center gap-2">
                 <NavDropdown
                   id="login-dropdown"
                   className="nav-login-dropdown"
@@ -157,7 +159,7 @@ const NavBar: React.FC = () => {
                     )}
                   </span>
                 </Nav.Link>
-              </>
+              </div>
             ) : (
               <NavDropdown id="login-dropdown" title="Login" className="nav-login-dropdown">
                 <NavDropdown.Item id="login-dropdown-sign-in" href="/auth/signin">

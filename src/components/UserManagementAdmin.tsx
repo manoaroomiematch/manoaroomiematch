@@ -127,48 +127,52 @@ const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, 
         <td>{name}</td>
         <td>{email}</td>
         <td>{role}</td>
-        <td className="d-flex gap-2">
-          {/* View Profile Button that navigates to the user's profile page */}
-          <Button
-            variant="primary"
-            size="sm"
-            className="rounded-pill d-flex align-items-center"
-            onClick={() => onView(email, id)}
-          >
-            View
-          </Button>
-          {/* Flag User Button to report user */}
-          <Button
-            variant="outline-danger"
-            size="sm"
-            className="rounded-pill d-flex align-items-center"
-            onClick={() => setShowFlagModal(true)}
-            title="Flag this user for moderation review"
-          >
-            <Flag className="me-1" style={{ fontSize: '0.9rem' }} />
-            Flag
-          </Button>
-          {/* Change Role Button */}
-          <Button
-            variant={currentRole === 'ADMIN' ? 'warning' : 'outline-warning'}
-            size="sm"
-            className="rounded-pill d-flex align-items-center"
-            onClick={() => setShowRoleModal(true)}
-            title={`Change role to ${currentRole === 'ADMIN' ? 'USER' : 'ADMIN'}`}
-          >
-            {currentRole === 'ADMIN' ? 'Demote' : 'Promote'}
-          </Button>
-          {/* Delete User Button that triggers user deletion */}
-          <Button
-            variant="danger"
-            size="sm"
-            className="rounded-pill d-flex align-items-center"
-            onClick={() => onDelete(id)}
-          >
-            <Trash className="me-1" />
-            {' '}
-            Delete
-          </Button>
+        <td>
+          <div className="d-flex flex-column gap-2">
+            <div className="d-flex gap-2 flex-wrap align-items-center">
+              {/* View Profile Button that navigates to the user's profile page */}
+              <Button
+                variant="primary"
+                size="sm"
+                className="rounded-pill d-flex align-items-center"
+                onClick={() => onView(email, id)}
+              >
+                View
+              </Button>
+              {/* Flag User Button to report user */}
+              <Button
+                variant="outline-danger"
+                size="sm"
+                className="rounded-pill d-flex align-items-center"
+                onClick={() => setShowFlagModal(true)}
+                title="Flag this user for moderation review"
+              >
+                <Flag className="me-1" style={{ fontSize: '0.9rem' }} />
+                Flag
+              </Button>
+              {/* Change Role Button */}
+              <Button
+                variant={currentRole === 'ADMIN' ? 'warning' : 'outline-warning'}
+                size="sm"
+                className="rounded-pill d-flex align-items-center"
+                onClick={() => setShowRoleModal(true)}
+                title={`Change role to ${currentRole === 'ADMIN' ? 'USER' : 'ADMIN'}`}
+              >
+                {currentRole === 'ADMIN' ? 'Demote' : 'Promote'}
+              </Button>
+              {/* Delete User Button that triggers user deletion */}
+              <Button
+                variant="danger"
+                size="sm"
+                className="rounded-pill d-flex align-items-center"
+                onClick={() => onDelete(id)}
+              >
+                <Trash className="me-1" />
+                {' '}
+                Delete
+              </Button>
+            </div>
+          </div>
         </td>
       </tr>
       {/* Modals rendered outside the table row for accessibility and spacing consistency */}

@@ -31,25 +31,29 @@ const LifestyleCategoriesTable: React.FC<CategoryRowProps> = ({
 }) => (
   <tr>
     <td>{capitalize(name)}</td>
-    <td className="d-flex gap-2">
-      <Button
-        variant="primary"
-        size="sm"
-        className="rounded-pill d-flex align-items-center"
-        onClick={() => onEdit && onEdit(id)}
-      >
-        <Pencil className="me-1" />
-        Edit
-      </Button>
-      <Button
-        variant="danger"
-        size="sm"
-        className="rounded-pill d-flex align-items-center"
-        onClick={() => onDelete && onDelete(id)}
-      >
-        <Trash className="me-1" />
-        Delete
-      </Button>
+    <td>
+      <div className="d-flex flex-column gap-2">
+        <div className="d-flex gap-2 flex-wrap align-items-center">
+          <Button
+            variant="primary"
+            size="sm"
+            className="rounded-pill d-flex align-items-center"
+            onClick={() => onEdit && onEdit(id)}
+          >
+            <Pencil className="me-1" />
+            Edit
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            className="rounded-pill d-flex align-items-center"
+            onClick={() => onDelete && onDelete(id)}
+          >
+            <Trash className="me-1" />
+            Delete
+          </Button>
+        </div>
+      </div>
     </td>
   </tr>
 );
