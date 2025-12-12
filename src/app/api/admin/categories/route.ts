@@ -51,6 +51,7 @@ export async function POST(req: Request) {
       data: {
         name,
         description: description || '',
+        is_active: true,
       },
     });
 
@@ -89,6 +90,7 @@ export async function PUT(req: Request) {
       data: {
         name,
         description: description || '',
+        is_active: true,
       },
     });
 
