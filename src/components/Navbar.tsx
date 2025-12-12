@@ -9,6 +9,7 @@ import { Container, Nav, Navbar, NavDropdown, Badge } from 'react-bootstrap';
 import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots } from 'react-bootstrap-icons';
 import Image from 'next/image';
 import ProfileAvatar from '@/components/ProfileAvatar';
+import NotificationsPanel from '@/components/NotificationsPanel';
 
 const NavBar: React.FC = () => {
   const { data: session } = useSession();
@@ -139,6 +140,7 @@ const NavBar: React.FC = () => {
                     Sign Out
                   </NavDropdown.Item>
                 </NavDropdown>
+                <NotificationsPanel />
                 <Nav.Link id="messages-nav" href="/messages" active={pathName === '/messages'}>
                   <span className="position-relative">
                     <ChatDots className="me-1" size={20} />

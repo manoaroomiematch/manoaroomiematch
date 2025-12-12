@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { reportedUserId, reason } = body;
 
+    // Validate required fields
     if (!reportedUserId || !reason) {
       return NextResponse.json(
         { error: 'Missing required fields: reportedUserId and reason' },
@@ -33,7 +34,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validate reportedUserId is a valid number
     const reportedUserIdNum = Number(reportedUserId);
+    if (Number.isNaN(reportedUserIdNum) || reportedUserIdNum <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid reportedUserId: must be a positive integer' },
+        { status: 400 },
+      );
+    }
+
+    // Validate reason is not empty
+    if (typeof reason !== 'string' || !reason.trim()) {
+      return NextResponse.json(
+        { error: 'Invalid reason: must be a non-empty string' },
+        { status: 400 },
+      );
+    }
 
     // Prevent self-reporting
     if (reporterId === reportedUserIdNum) {
@@ -55,19 +71,26 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if this user already reported this target
-    const existingFlag = await prisma.flag.findFirst({
-      where: {
-        reported_by_user_id: reporterId,
-        reported_user_id: reportedUserIdNum,
-      },
-    });
+    // Check if this user already reported this target (only for regular users)
+    // Admins can file multiple reports to track repeat offenses
+    const isAdmin = session.user.randomKey === 'ADMIN';
 
-    if (existingFlag) {
-      return NextResponse.json(
-        { error: 'You have already reported this user' },
-        { status: 409 },
-      );
+    if (!isAdmin) {
+      // Only block if there's a PENDING report, not if it's resolved
+      const pendingFlag = await prisma.flag.findFirst({
+        where: {
+          reported_by_user_id: reporterId,
+          reported_user_id: reportedUserIdNum,
+          status: 'pending',
+        },
+      });
+
+      if (pendingFlag) {
+        return NextResponse.json(
+          { error: 'You have a pending report for this user. Please wait for the moderation team to review it.' },
+          { status: 409 },
+        );
+      }
     }
 
     // Create the flag

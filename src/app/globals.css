@@ -353,6 +353,10 @@ main {
   z-index: 2050 !important;
 }
 
+.profile-modal-backdrop-hidden {
+  display: none !important;
+}
+
 /* Modal content should be above backdrop */
 .profile-modal,
 .modal {
