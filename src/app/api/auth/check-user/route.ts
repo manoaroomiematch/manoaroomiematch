@@ -57,12 +57,30 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      // Fetch latest deactivation action
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const latestAction = await (prisma as any).moderationAction.findFirst({
+        where: {
+          targetUserId: user.id,
+          action: 'deactivate',
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          action: true,
+          createdAt: true,
+        },
+      });
+
       return NextResponse.json({
         status: 'deactivated',
         flag: latestFlag ? {
           reason: latestFlag.reason,
           status: latestFlag.status,
           createdAt: latestFlag.created_at.toISOString(),
+        } : null,
+        action: latestAction ? {
+          action: latestAction.action,
+          createdAt: latestAction.createdAt.toISOString(),
         } : null,
       });
     }
@@ -81,6 +99,20 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      // Fetch latest suspension action
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const latestAction = await (prisma as any).moderationAction.findFirst({
+        where: {
+          targetUserId: user.id,
+          action: 'suspend',
+        },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          action: true,
+          createdAt: true,
+        },
+      });
+
       return NextResponse.json({
         status: 'suspended',
         suspendedUntil: user.suspendedUntil.toISOString(),
@@ -88,6 +120,10 @@ export async function POST(req: NextRequest) {
           reason: latestFlag.reason,
           status: latestFlag.status,
           createdAt: latestFlag.created_at.toISOString(),
+        } : null,
+        action: latestAction ? {
+          action: latestAction.action,
+          createdAt: latestAction.createdAt.toISOString(),
         } : null,
       });
     }

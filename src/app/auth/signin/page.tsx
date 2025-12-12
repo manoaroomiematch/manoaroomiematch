@@ -11,6 +11,11 @@ interface FlagInfo {
   createdAt: string;
 }
 
+interface ActionInfo {
+  action: string;
+  createdAt: string;
+}
+
 /** The sign in page. */
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +25,7 @@ const SignIn = () => {
     type: 'suspended' | 'deactivated';
     suspendedUntil?: string;
     flagInfo?: FlagInfo;
+    actionInfo?: ActionInfo;
   } | null>(null);
 
   const formatDate = (isoString: string) => {
@@ -33,12 +39,28 @@ const SignIn = () => {
     });
   };
 
-  const calculateDuration = (createdAt: string, suspendedUntil: string) => {
-    const start = new Date(createdAt);
+  const calculateDuration = (suspendedUntil: string) => {
+    const now = new Date();
     const end = new Date(suspendedUntil);
-    const diffMs = end.getTime() - start.getTime();
-    const hours = Math.round(diffMs / (1000 * 60 * 60));
-    return hours;
+    const diffMs = end.getTime() - now.getTime();
+
+    if (diffMs <= 0) {
+      return 'expired';
+    }
+
+    const totalHours = Math.ceil(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+
+    if (days === 0) {
+      return `${hours} hour${hours !== 1 ? 's' : ''}`;
+    }
+
+    if (hours === 0) {
+      return `${days} day${days !== 1 ? 's' : ''}`;
+    }
+
+    return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}`;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -68,6 +90,7 @@ const SignIn = () => {
             type: 'suspended',
             suspendedUntil: checkData.suspendedUntil,
             flagInfo: checkData.flag,
+            actionInfo: checkData.action,
           });
           setShowSuspensionModal(true);
           setIsLoading(false);
@@ -78,6 +101,7 @@ const SignIn = () => {
           setSuspensionInfo({
             type: 'deactivated',
             flagInfo: checkData.flag,
+            actionInfo: checkData.action,
           });
           setShowSuspensionModal(true);
           setIsLoading(false);
@@ -148,9 +172,7 @@ const SignIn = () => {
                   Duration:
                   {' '}
                   <span className="fw-semibold">
-                    {calculateDuration(suspensionInfo.flagInfo.createdAt, suspensionInfo.suspendedUntil)}
-                    {' '}
-                    hours
+                    {calculateDuration(suspensionInfo.suspendedUntil)}
                   </span>
                 </p>
               )}
@@ -165,13 +187,28 @@ const SignIn = () => {
             </div>
           )}
 
-          {suspensionInfo?.flagInfo?.createdAt && (
+          {(suspensionInfo?.flagInfo?.createdAt || suspensionInfo?.actionInfo?.createdAt) && (
             <div className="mt-3 pt-3 border-top">
-              <small className="text-muted">
-                Action date:
-                {' '}
-                {formatDate(suspensionInfo.flagInfo.createdAt)}
-              </small>
+              {suspensionInfo?.flagInfo?.createdAt && (
+                <p className="text-muted mb-2">
+                  <small>
+                    <strong>Reported on:</strong>
+                    {' '}
+                    {formatDate(suspensionInfo.flagInfo.createdAt)}
+                  </small>
+                </p>
+              )}
+              {suspensionInfo?.actionInfo?.createdAt && (
+                <p className="text-muted mb-0">
+                  <small>
+                    <strong>
+                      {suspensionInfo.type === 'suspended' ? 'Suspended on:' : 'Deactivated on:'}
+                    </strong>
+                    {' '}
+                    {formatDate(suspensionInfo.actionInfo.createdAt)}
+                  </small>
+                </p>
+              )}
             </div>
           )}
         </Modal.Body>

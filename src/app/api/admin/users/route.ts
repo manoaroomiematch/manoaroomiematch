@@ -105,6 +105,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid user id format' }, { status: 400 });
     }
 
+    // Check if user is trying to delete an admin
+    const userToDelete = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!userToDelete) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Prevent deleting the last admin
+    if (userToDelete.role === 'ADMIN') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const adminCount = await (prisma as any).user.count({
+        where: { role: 'ADMIN' },
+      });
+
+      if (adminCount === 1) {
+        return NextResponse.json(
+          { error: 'Cannot delete the last admin. There must be at least one admin in the system.' },
+          { status: 400 },
+        );
+      }
+    }
+
     // Delete all related records in correct order to avoid foreign key constraint violations
     try {
       // First, get the user's profile ID to delete matches

@@ -5,6 +5,65 @@ import { prisma } from '@/lib/prisma';
 import authOptions from '@/lib/authOptions';
 
 /**
+ * Helper function to notify all reporters of a user that action has been taken
+ * Sends notifications to all users who reported the specified user (excluding admins)
+ */
+async function notifyReporters(reportedUserId: number, actionType: string) {
+  try {
+    // Find all flags reported against this user
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allFlags = await (prisma as any).flag.findMany({
+      where: { reported_user_id: reportedUserId },
+      select: { reported_by_user_id: true },
+    });
+
+    // Get unique reporter IDs, excluding admins
+    const reporterIds = [...new Set(
+      allFlags
+        .map((f: any) => f.reported_by_user_id)
+        .filter((id: number) => id), // Filter out null/undefined
+    )];
+
+    if (reporterIds.length === 0) return;
+
+    // Fetch reporters to filter out admins
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reporters = await (prisma as any).user.findMany({
+      where: { id: { in: reporterIds } },
+      select: { id: true, role: true },
+    });
+
+    // Filter out admin reporters (admins don't need notifications for their own actions)
+    const regularReporterIds = reporters
+      .filter((r: any) => r.role !== 'ADMIN')
+      .map((r: any) => r.id);
+
+    if (regularReporterIds.length === 0) return;
+
+    // Create notifications for each regular user reporter
+    // eslint-disable-next-line no-nested-ternary
+    const notificationText = actionType === 'suspend'
+      ? 'Thank you for your report. We\'ve reviewed the case and taken appropriate action.'
+      : actionType === 'deactivate'
+        ? 'Thank you for your report. We\'ve reviewed the case and deactivated the user\'s account.'
+        : 'Thank you for your report. We\'ve reviewed the case.';
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (prisma as any).notification.createMany({
+      data: regularReporterIds.map((reporterId: number) => ({
+        user_id: reporterId,
+        type: 'report_action',
+        content: notificationText,
+        is_read: false,
+      })),
+    });
+  } catch (error) {
+    // Log error but don't fail the main request
+    console.error('Error notifying reporters:', error);
+  }
+}
+
+/**
  * POST /api/admin/resolve-flag
  * Resolves, suspends, deactivates, or reactivates a user based on a content moderation flag
  * Admin-only endpoint - supports actions: 'resolve', 'suspend', 'deactivate', 'reactivate'
@@ -173,6 +232,9 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      // Notify all reporters that action was taken
+      await notifyReporters(reportedUserId, 'suspend');
+
       return NextResponse.json({
         message: `User suspended successfully for ${durationHours} hours`,
         user: updatedUser,
@@ -244,6 +306,9 @@ export async function POST(req: NextRequest) {
           flagId: flagIdNum,
         },
       });
+
+      // Notify all reporters that action was taken
+      await notifyReporters(reportedUserId, 'deactivate');
 
       return NextResponse.json({
         message: 'User deactivated successfully',

@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/button-has-type */
 /* eslint-disable react/require-default-props */
 /**
@@ -190,20 +191,12 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
               {/* Status Badge and Info */}
               <div className="d-flex gap-2 align-items-center ms-auto">
                 {getStatusBadge()}
-                {suspensionCount > 0 && (
-                  <small className="text-muted">
-                    {suspensionCount}
-                    {' '}
-                    suspension
-                    {suspensionCount !== 1 ? 's' : ''}
-                  </small>
-                )}
               </div>
             </div>
 
             {/* History Row - Utility section */}
             {userId && (
-              <div className="d-flex gap-2">
+              <div className="d-flex gap-2 align-items-center">
                 <Button
                   variant="outline-secondary"
                   size="sm"
@@ -245,6 +238,14 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
                   {' '}
                   History
                 </Button>
+                {suspensionCount > 0 && (
+                  <small className="text-muted ms-auto">
+                    {suspensionCount}
+                    {' '}
+                    suspension
+                    {suspensionCount !== 1 ? 's' : ''}
+                  </small>
+                )}
               </div>
             )}
           </div>

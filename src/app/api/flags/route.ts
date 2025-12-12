@@ -76,16 +76,18 @@ export async function POST(req: Request) {
     const isAdmin = session.user.randomKey === 'ADMIN';
 
     if (!isAdmin) {
-      const existingFlag = await prisma.flag.findFirst({
+      // Only block if there's a PENDING report, not if it's resolved
+      const pendingFlag = await prisma.flag.findFirst({
         where: {
           reported_by_user_id: reporterId,
           reported_user_id: reportedUserIdNum,
+          status: 'pending',
         },
       });
 
-      if (existingFlag) {
+      if (pendingFlag) {
         return NextResponse.json(
-          { error: 'You have already reported this user' },
+          { error: 'You have a pending report for this user. Please wait for the moderation team to review it.' },
           { status: 409 },
         );
       }

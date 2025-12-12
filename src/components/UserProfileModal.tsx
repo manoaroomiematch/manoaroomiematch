@@ -26,9 +26,10 @@
  * @param userId - Optional user ID for reporting functionality
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Modal, Row, Col, Button, Form, Alert } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Modal, Row, Col, Button } from 'react-bootstrap';
 import { Flag } from 'react-bootstrap-icons';
+import ReportModal from './ReportModal';
 
 interface ProfileData {
   name: string;
@@ -68,88 +69,7 @@ interface UserProfileModalProps {
 }
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide, userId, isAdmin = false }) => {
-  const [showReportForm, setShowReportForm] = useState(false);
-  const [reportReason, setReportReason] = useState('');
-  const [reportError, setReportError] = useState<string | null>(null);
-  const [reportSuccess, setReportSuccess] = useState(false);
-  const [reportLoading, setReportLoading] = useState(false);
-  const reportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Clean up timeout if component unmounts or modal closes
-  useEffect(
-    () =>
-      // Clear timeout if it's still pending when component unmounts or modal closes
-      // eslint-disable-next-line implicit-arrow-linebreak
-      () => {
-        if (reportTimeoutRef.current) {
-          clearTimeout(reportTimeoutRef.current);
-        }
-      },
-    [show],
-  );
-
-  const handleReport = async () => {
-    if (!reportReason.trim()) {
-      setReportError('Please provide a reason for the report');
-      return;
-    }
-
-    if (!userId) {
-      setReportError('Unable to report this user');
-      return;
-    }
-
-    setReportLoading(true);
-    setReportError(null);
-
-    try {
-      // Send report to /api/flags endpoint
-      // The userId must be the User table ID (numeric), not the UserProfile ID
-      // The endpoint will:
-      // 1. Validate the user exists
-      // 2. Prevent duplicate reports from the same user
-      // 3. Create a flag that ties to this specific user
-      // 4. Admins will then see this flag in their moderation dashboard
-      const response = await fetch('/api/flags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reportedUserId: userId,
-          reason: reportReason.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setReportError(data.error || 'Failed to submit report');
-        return;
-      }
-
-      setReportSuccess(true);
-      setReportReason('');
-      // Store timeout ID so we can clean it up if component unmounts
-      reportTimeoutRef.current = setTimeout(() => {
-        setShowReportForm(false);
-        setReportSuccess(false);
-        reportTimeoutRef.current = null;
-      }, 2000);
-    } catch (err) {
-      setReportError('An error occurred while submitting your report');
-      console.error('Report error:', err);
-    } finally {
-      setReportLoading(false);
-    }
-  };
-
-  const handleCloseReport = () => {
-    setShowReportForm(false);
-    setReportReason('');
-    setReportError(null);
-    setReportSuccess(false);
-  };
+  const [showReportModal, setShowReportModal] = useState(false);
 
   // Filter out empty, null, or undefined interests
   const validInterests = profile?.interests?.filter(
@@ -171,84 +91,42 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
   };
 
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      size="lg"
-      centered
-      className="profile-modal"
-      style={{ zIndex: 1060 }}
-      backdropClassName="profile-modal-backdrop"
-    >
-      <Modal.Header closeButton className="border-0">
-        <Modal.Title className="w-100 text-center fw-bold">
-          Profile
-        </Modal.Title>
-        {userId && !showReportForm && !isAdmin && (
+    <>
+      <Modal
+        show={show && !showReportModal}
+        onHide={onHide}
+        size="lg"
+        centered
+        className="profile-modal"
+        style={{ zIndex: 1060 }}
+        backdropClassName="profile-modal-backdrop"
+      >
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="w-100 text-center fw-bold">
+            Profile
+          </Modal.Title>
+          {userId && !showReportModal && !isAdmin && (
           <Button
             variant="outline-danger"
             size="sm"
             className="position-absolute end-0 me-5"
-            onClick={() => setShowReportForm(true)}
+            onClick={() => setShowReportModal(true)}
           >
             <Flag size={16} className="me-1" />
             Report User
           </Button>
-        )}
-      </Modal.Header>
-      <Modal.Body className="p-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
-        {showReportForm ? (
-          <div className="mb-4">
-            <h6 className="fw-bold text-danger mb-3">Report User</h6>
-            {reportSuccess ? (
-              <Alert variant="success">
-                Thank you! Your report has been submitted successfully. The moderation team will review it shortly.
-              </Alert>
-            ) : (
-              <>
-                {reportError && <Alert variant="danger">{reportError}</Alert>}
-                <Form.Group className="mb-3">
-                  <Form.Label className="fw-bold">Report Reason</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    placeholder="Please describe why you're reporting this user..."
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value)}
-                    disabled={reportLoading}
-                  />
-                  <Form.Text className="text-muted d-block mt-1">
-                    Please be specific and factual in your report.
-                  </Form.Text>
-                </Form.Group>
-                <div className="d-flex gap-2">
-                  <Button
-                    variant="danger"
-                    onClick={handleReport}
-                    disabled={reportLoading || !reportReason.trim()}
-                  >
-                    {reportLoading ? 'Submitting...' : 'Submit Report'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={handleCloseReport}
-                    disabled={reportLoading}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        ) : (
-          <>
-            {!profile && (
+          )}
+        </Modal.Header>
+        <Modal.Body className="p-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+          {!showReportModal ? (
+            <>
+              {!profile && (
               <div className="text-center py-5">
                 <p className="text-muted">No profile data available</p>
               </div>
-            )}
+              )}
 
-            {profile && (
+              {profile && (
               <div>
                 {/* Top Section: Avatar and Basic Info */}
                 <Row className="mb-4">
@@ -511,11 +389,18 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
                   </div>
                 )}
               </div>
-            )}
-          </>
-        )}
-      </Modal.Body>
-    </Modal>
+              )}
+            </>
+          ) : null}
+        </Modal.Body>
+      </Modal>
+      <ReportModal
+        show={showReportModal}
+        onHide={() => setShowReportModal(false)}
+        userId={userId}
+        userName={profile?.name}
+      />
+    </>
   );
 };
 
