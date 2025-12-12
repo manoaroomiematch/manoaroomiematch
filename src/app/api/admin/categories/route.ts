@@ -115,7 +115,9 @@ export async function GET(req: Request) {
   try {
     // Check if user is authenticated and has admin role
     const session = await getServerSession(authOptions);
+    console.log('Admin categories GET - session:', { user: session?.user?.email, role: session?.user?.randomKey });
     if (!session || !session.user) {
+      console.log('Admin categories GET - Unauthorized: no session');
       return NextResponse.json(
         { error: 'Unauthorized - Please sign in' },
         { status: 401 },
@@ -124,6 +126,7 @@ export async function GET(req: Request) {
 
     // Check if user has admin role
     if (session.user.randomKey !== 'ADMIN') {
+      console.log('Admin categories GET - Forbidden: not admin');
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 },
@@ -141,6 +144,7 @@ export async function GET(req: Request) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       total = await (prisma as any).lifestyleCategory.count();
+      console.log('Admin categories GET - total count:', total);
     } catch (err) {
       console.log('LifestyleCategory table count failed:', err);
       return NextResponse.json({
@@ -161,6 +165,7 @@ export async function GET(req: Request) {
         skip,
         take: limit,
       });
+      console.log('Admin categories GET - fetched:', categories.length, 'categories');
     } catch (err) {
       console.log('LifestyleCategory table query failed, returning empty list:', err);
       return NextResponse.json({
@@ -177,6 +182,7 @@ export async function GET(req: Request) {
       description: category.description || '',
     }));
 
+    console.log('Admin categories GET - returning:', formattedCategories);
     return NextResponse.json({
       categories: formattedCategories,
       pagination: {
