@@ -62,9 +62,9 @@ const authOptions: NextAuthOptions = {
     signOut: '/auth/signout',
   },
   callbacks: {
-    redirect: ({ baseUrl }) => {
-      // Always redirect to home after sign in/out
-      return `${baseUrl}/home`;
+    redirect: ({ url }) => {
+      // Allow redirects to auth pages or respect the callbackUrl passed to signIn
+      return url;
     },
     session: ({ session, token }) => {
       // console.log('Session Callback', { session, token })

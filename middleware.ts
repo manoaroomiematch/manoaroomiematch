@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
   // Throttled to max once every 5 minutes to avoid database load
   clearExpiredSuspensionsAsync();
   const session = await getServerSession(authOptions);
-  const userRole = (session?.user as { randomKey?: string })?.randomKey;
+  const userRole = (session?.user as { role?: string })?.role;
   const { pathname } = request.nextUrl;
 
   // Admin-only routes

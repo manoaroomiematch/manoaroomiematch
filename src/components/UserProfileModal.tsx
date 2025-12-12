@@ -117,6 +117,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
           </Button>
           )}
         </Modal.Header>
+        {/* Horizontal line between header and body */}
+        <hr className="my-0" style={{ borderTop: '1.5px solid #e0e0e0' }} />
         <Modal.Body className="p-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
           {!showReportModal ? (
             <>

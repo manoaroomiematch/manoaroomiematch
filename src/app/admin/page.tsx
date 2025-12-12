@@ -600,8 +600,8 @@ const AdminPage: React.FC = () => {
     red: {
       bg: 'linear-gradient(120deg, #ffebee 60%, #ffcdd2 100%)',
       banner: 'linear-gradient(135deg, #c62828 0%, #ff8a80 100%)',
-      stats: '#ff8989ff',
-      statsText: '#460202ff',
+      stats: '#fe9292ff',
+      statsText: '#600505ff',
     },
     yellow: {
       bg: 'linear-gradient(120deg, #fffde7 60%, #fff9c4 100%)',
