@@ -21,17 +21,34 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [learnMore, setLearnMore] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Helper to extract Learn More link from description
+  function extractLearnMore(desc: string): { desc: string; link: string } {
+    const learnMoreRegex = /\n?\[Learn More\]\((https?:\/\/[^)]+)\)/i;
+    const match = desc.match(learnMoreRegex);
+    if (match) {
+      return {
+        desc: desc.replace(learnMoreRegex, '').trim(),
+        link: match[1],
+      };
+    }
+    return { desc, link: '' };
+  }
 
   useEffect(() => {
     if (show) {
       if (category && isEditing) {
         setName(category.name);
-        setDescription(category.description || '');
+        const { desc, link } = extractLearnMore(category.description || '');
+        setDescription(desc);
+        setLearnMore(link);
       } else {
         setName('');
         setDescription('');
+        setLearnMore('');
       }
       setLocalError(null);
     }
@@ -43,12 +60,19 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
       setLocalError('Category name is required');
       return;
     }
+    let fullDescription = description.trim();
+    if (learnMore.trim()) {
+      // Remove any existing Learn More link and append the new one
+      fullDescription = fullDescription.replace(/\n?\[Learn More\]\((https?:\/\/[^)]+)\)/i, '').trim();
+      fullDescription += `\n[Learn More](${learnMore.trim()})`;
+    }
     setLocalError(null);
     setSubmitting(true);
     try {
-      await onSubmit(name.trim(), description.trim());
+      await onSubmit(name.trim(), fullDescription);
       setName('');
       setDescription('');
+      setLearnMore('');
       onHide();
     } catch (err) {
       setLocalError(isEditing ? 'Failed to update category' : 'Failed to add category');
@@ -79,7 +103,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
               onChange={(e) => setName(e.target.value)}
               autoFocus
               disabled={submitting}
-              placeholder="e.g., Sleep Habits"
+              placeholder="e.g., Dining Services"
             />
           </Form.Group>
           <Form.Group controlId="categoryDescription">
@@ -92,17 +116,19 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
               disabled={submitting}
               placeholder="Brief description of this category..."
             />
+          </Form.Group>
+          <Form.Group controlId="categoryLearnMore" className="mt-3">
+            <Form.Label>Learn More Link</Form.Label>
+            <Form.Control
+              type="url"
+              value={learnMore}
+              onChange={(e) => setLearnMore(e.target.value)}
+              disabled={submitting}
+              placeholder="https://example.com"
+            />
             <Form.Text className="d-block mt-2 text-muted">
               <small>
-                <strong>Tip:</strong>
-                {' '}
-                You can add clickable links using markdown syntax:
-                <br />
-                <code>[Link Text](https://example.com)</code>
-                {' '}
-                or plain URLs like
-                {' '}
-                <code>https://example.com</code>
+                Paste a full URL. This will be shown as a separate Learn More link on the Campus Life page.
               </small>
             </Form.Text>
           </Form.Group>

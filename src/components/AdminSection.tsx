@@ -5,6 +5,7 @@
 
 'use client';
 
+/* eslint-disable react/require-default-props */
 import React from 'react';
 import { Button } from 'react-bootstrap';
 
@@ -84,10 +85,6 @@ const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
     </section>
   );
-};
-
-AdminSection.defaultProps = {
-  themeColor: 'white',
 };
 
 export default AdminSection;
