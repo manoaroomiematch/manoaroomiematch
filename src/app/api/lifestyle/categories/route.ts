@@ -32,9 +32,12 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       categories,
     });
+    // Disable caching so updates show immediately
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
+    return response;
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(

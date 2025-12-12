@@ -83,11 +83,18 @@ const LifestyleCategoriesTips: React.FC = () => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/lifestyle/categories');
+        // Add cache-busting query parameter to ensure fresh data
+        const response = await fetch('/api/lifestyle/categories', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch categories');
         }
         const data = await response.json();
+        console.log('Lifestyle categories fetched:', data.categories);
         setCategories(data.categories || []);
         setError(null);
       } catch (err) {
