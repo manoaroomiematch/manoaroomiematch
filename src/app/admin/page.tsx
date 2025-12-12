@@ -68,8 +68,6 @@ interface Category {
   id: number;
   name: string;
   description?: string;
-
-  lastUpdated: string;
 }
 
 /**
@@ -321,13 +319,17 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all categories with caching (client-side pagination) */
   const fetchCategories = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') {
+      console.log('fetchCategories skipped - status:', status, 'role:', session?.user?.randomKey);
+      return;
+    }
     try {
       // Check cache first
       const cacheKey = 'categories-all';
       if (!skipCache) {
         const cachedCategories = getFromCache<any>(cacheKey);
         if (cachedCategories) {
+          console.log('fetchCategories - using cache, categories:', cachedCategories.categories);
           setCategories(cachedCategories.categories || []);
           return;
         }
@@ -336,6 +338,8 @@ const AdminPage: React.FC = () => {
       const response = await fetch('/api/admin/categories?limit=1000');
       if (!response.ok) throw new Error(`Failed to fetch categories: ${response.statusText}`);
       const data = await response.json();
+      console.log('fetchCategories - API response:', data);
+      console.log('fetchCategories - setting categories:', data.categories);
       setCategories(data.categories || []);
 
       // Cache the result
@@ -385,6 +389,11 @@ const AdminPage: React.FC = () => {
     fetchAdminData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status]);
+
+  // Debug: log when categories change
+  useEffect(() => {
+    console.log('Admin page - categories state updated:', categories);
+  }, [categories]);
 
   /** Handle flag resolution - updates local state immediately after successful API call */
   // Use string for action to avoid TypeScript narrowing issues in user update logic
@@ -535,9 +544,6 @@ const AdminPage: React.FC = () => {
   const sortedCategories = [...filteredCategories].sort((a, b) => {
     if (categorySort === 'NameA') return a.name.localeCompare(b.name);
     if (categorySort === 'NameZ') return b.name.localeCompare(a.name);
-
-    if (categorySort === 'DateNew') return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-    if (categorySort === 'DateOld') return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
     return 0;
   });
 
@@ -729,6 +735,8 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                     <Form.Control
+                      id="search-user"
+                      name="search-user"
                       style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                       type="text"
                       placeholder="Search user..."
@@ -824,6 +832,8 @@ const AdminPage: React.FC = () => {
                   </div>
                   <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                     <Form.Control
+                      id="search-moderation"
+                      name="search-moderation"
                       style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                       type="text"
                       placeholder="Search by user..."
@@ -897,6 +907,8 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="d-flex gap-3 mb-3 flex-wrap align-items-end">
                     <Form.Control
+                      id="search-categories"
+                      name="search-categories"
                       style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                       type="text"
                       placeholder="Search categories..."
@@ -921,9 +933,6 @@ const AdminPage: React.FC = () => {
                       <option value="">Sort by</option>
                       <option value="NameA">Name A-Z</option>
                       <option value="NameZ">Name Z-A</option>
-
-                      <option value="DateNew">Date (Newest)</option>
-                      <option value="DateOld">Date (Oldest)</option>
                     </Form.Select>
                     <Button
                       variant="success"
