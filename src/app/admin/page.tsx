@@ -68,8 +68,6 @@ interface Category {
   id: number;
   name: string;
   description?: string;
-
-  lastUpdated: string;
 }
 
 /**
@@ -535,9 +533,6 @@ const AdminPage: React.FC = () => {
   const sortedCategories = [...filteredCategories].sort((a, b) => {
     if (categorySort === 'NameA') return a.name.localeCompare(b.name);
     if (categorySort === 'NameZ') return b.name.localeCompare(a.name);
-
-    if (categorySort === 'DateNew') return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-    if (categorySort === 'DateOld') return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
     return 0;
   });
 
@@ -921,9 +916,6 @@ const AdminPage: React.FC = () => {
                       <option value="">Sort by</option>
                       <option value="NameA">Name A-Z</option>
                       <option value="NameZ">Name Z-A</option>
-
-                      <option value="DateNew">Date (Newest)</option>
-                      <option value="DateOld">Date (Oldest)</option>
                     </Form.Select>
                     <Button
                       variant="success"
