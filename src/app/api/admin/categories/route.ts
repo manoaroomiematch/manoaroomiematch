@@ -52,13 +52,6 @@ export async function POST(req: Request) {
         name,
         description: description || '',
       },
-      include: {
-        questions: {
-          select: {
-            id: true,
-          },
-        },
-      },
     });
 
     return NextResponse.json({
@@ -66,7 +59,6 @@ export async function POST(req: Request) {
         id: newCategory.id,
         name: newCategory.name,
         description: newCategory.description,
-        items: newCategory.questions.length,
       },
     });
   } catch (error) {
@@ -98,13 +90,6 @@ export async function PUT(req: Request) {
         name,
         description: description || '',
       },
-      include: {
-        questions: {
-          select: {
-            id: true,
-          },
-        },
-      },
     });
 
     return NextResponse.json({
@@ -112,7 +97,6 @@ export async function PUT(req: Request) {
         id: updatedCategory.id,
         name: updatedCategory.name,
         description: updatedCategory.description,
-        items: updatedCategory.questions.length,
       },
     });
   } catch (error) {
@@ -165,19 +149,12 @@ export async function GET(req: Request) {
       });
     }
 
-    // Fetch paginated lifestyle categories with their question counts
+    // Fetch paginated lifestyle categories
     // Wrapped in try-catch to handle cases where LifestyleCategory table doesn't exist yet
     let categories: any[] = [];
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       categories = await (prisma as any).lifestyleCategory.findMany({
-        include: {
-          questions: {
-            select: {
-              id: true,
-            },
-          },
-        },
         orderBy: {
           name: 'asc', // Sort by name alphabetically
         },
@@ -198,7 +175,6 @@ export async function GET(req: Request) {
       id: category.id,
       name: category.name,
       description: category.description || '',
-      items: category.questions.length,
     }));
 
     return NextResponse.json({
