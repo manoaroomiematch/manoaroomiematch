@@ -111,7 +111,7 @@ const SignIn = () => {
 
         // Credentials are valid and user is not suspended - proceed with sign-in
         // Reuse role from checkData instead of making a second API call
-        const callbackUrl = checkData.role === 'ADMIN' ? '/admin' : '/home';
+        const callbackUrl = checkData.role === 'ADMIN' ? '/admin' : '/profile';
 
         await signIn('credentials', {
           callbackUrl,

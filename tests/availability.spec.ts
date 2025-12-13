@@ -184,15 +184,6 @@ authTest.describe('Authenticated User Pages Availability', () => {
     }
   });
 
-  authTest('Home page loads for authenticated users', async ({ getUserPage }) => {
-    const userPage = await getUserPage('john@foo.com', 'changeme');
-    await userPage.goto(`${BASE_URL}/home`);
-    await waitForPageLoad(userPage);
-
-    // Check for home page elements - user profile overview and matches
-    await expect(userPage.getByRole('heading', { name: /Your Matches/i })).toBeVisible();
-  });
-
   authTest('Resources page loads and displays housing resources', async ({ getUserPage }) => {
     const userPage = await getUserPage('john@foo.com', 'changeme');
     await userPage.goto(`${BASE_URL}/resources`);

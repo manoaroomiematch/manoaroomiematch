@@ -33,7 +33,6 @@ export async function middleware(request: NextRequest) {
     '/profile',
     '/edit-profile',
     '/messages',
-    '/home',
   ];
 
   // Check if admin trying to access regular user routes
