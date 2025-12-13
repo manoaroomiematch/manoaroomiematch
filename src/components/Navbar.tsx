@@ -6,7 +6,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Container, Nav, Navbar, NavDropdown, Badge } from 'react-bootstrap';
-import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots } from 'react-bootstrap-icons';
+import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots, Bookmark, Check2Circle, HandThumbsDown } from 'react-bootstrap-icons';
 import Image from 'next/image';
 import ProfileAvatar from '@/components/ProfileAvatar';
 import NotificationsPanel from '@/components/NotificationsPanel';
@@ -64,6 +64,20 @@ const NavBar: React.FC = () => {
                 <Nav.Link id="browse-matches-nav" href="/matches" active={pathName === '/matches'} className="d-lg-inline">
                   Browse Matches
                 </Nav.Link>
+                <NavDropdown id="my-matches-dropdown" title="My Matches" active={pathName.startsWith('/saved-matches') || pathName.startsWith('/accepted-matches') || pathName.startsWith('/passed-matches')} className="d-lg-inline">
+                  <NavDropdown.Item id="my-matches-saved" href="/saved-matches" active={pathName === '/saved-matches'}>
+                    <Bookmark className="me-2" size={16} />
+                    Saved Matches
+                  </NavDropdown.Item>
+                  <NavDropdown.Item id="my-matches-accepted" href="/accepted-matches" active={pathName === '/accepted-matches'}>
+                    <Check2Circle className="me-2" size={16} />
+                    Accepted Matches
+                  </NavDropdown.Item>
+                  <NavDropdown.Item id="my-matches-passed" href="/passed-matches" active={pathName === '/passed-matches'}>
+                    <HandThumbsDown className="me-2" size={16} />
+                    Passed Matches
+                  </NavDropdown.Item>
+                </NavDropdown>
                 <Nav.Link
                   id="lifestyle-survey-nav"
                   href="/lifestyle-survey"
