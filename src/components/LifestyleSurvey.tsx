@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-shadow */
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Col, Container, Form, Row, ProgressBar } from 'react-bootstrap';
+import { Button, Card, Col, Container, Form, Row, ProgressBar, Alert } from 'react-bootstrap';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 
 // TYPE DEFINITIONS
 interface LifestyleSurveyData {
@@ -115,6 +119,7 @@ const SURVEY_STEPS = [
 const STORAGE_KEY = 'lifestyle-survey-draft';
 
 const LifestyleSurvey: React.FC = () => {
+  const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyData, setSurveyData] = useState<LifestyleSurveyData>({
     sleepSchedule: '',
@@ -130,6 +135,7 @@ const LifestyleSurvey: React.FC = () => {
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isCheckingCompletion, setIsCheckingCompletion] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const totalSteps = SURVEY_STEPS.length;
 
@@ -162,7 +168,7 @@ const LifestyleSurvey: React.FC = () => {
     }
   }, []);
 
-  // Auto-save hook with localStorage and optional API backup
+  // Auto-save hook with localStorage (keeping this for draft functionality)
   useEffect(() => {
     const saveData = async () => {
       setIsSaving(true);
@@ -174,20 +180,13 @@ const LifestyleSurvey: React.FC = () => {
           timestamp,
         };
 
-        // Save to localStorage
+        // Save to localStorage as draft
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
 
-        // TODO: Optionally save to backend API
-        // await fetch('/api/lifestyle/draft', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(draftData),
-        // });
-
-        console.log('Progress auto-saved to localStorage:', surveyData);
+        console.log('Draft auto-saved to localStorage:', surveyData);
         setLastSaved(new Date());
       } catch (error) {
-        console.error('Error auto-saving:', error);
+        console.error('Error auto-saving draft:', error);
       } finally {
         setIsSaving(false);
       }
@@ -247,6 +246,7 @@ const LifestyleSurvey: React.FC = () => {
       ...prev,
       [key]: value,
     }));
+    setError(null); // Clear any errors when user makes changes
   };
 
   // Calculate progress percentage
@@ -311,9 +311,25 @@ const LifestyleSurvey: React.FC = () => {
   // Handle form submission
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    setError(null);
+
     try {
-      // TODO: Replace with actual API call
-      console.log('Survey submitted:', surveyData);
+      // Call the API to save the survey data to the database
+      const response = await fetch('/api/lifestyle-survey', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(surveyData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to save survey');
+      }
+
+      console.log('Survey submitted successfully:', data);
 
       // Save survey data to localStorage for confirmation page
       localStorage.setItem('lifestyle-survey-completed', JSON.stringify(surveyData));
@@ -327,9 +343,9 @@ const LifestyleSurvey: React.FC = () => {
 
       // Redirect to edit profile page for new users
       window.location.href = '/edit-profile';
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting survey:', error);
-      console.log('Error submitting survey. Please try again.');
+      setError(error.message || 'Error submitting survey. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -425,6 +441,12 @@ const LifestyleSurvey: React.FC = () => {
             </div>
           )}
 
+          {error && (
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
+
           <div className="mb-3">
             <div className="d-flex justify-content-between align-items-center mb-2">
               <small className="text-muted">
@@ -436,12 +458,12 @@ const LifestyleSurvey: React.FC = () => {
               {isClient && isSaving && (
                 <small className="text-muted">
                   <span className="spinner-border spinner-border-sm me-1" />
-                  Saving...
+                  Saving draft...
                 </small>
               )}
               {isClient && !isSaving && lastSaved && (
                 <small className="text-success">
-                  ✓ Saved
+                  ✓ Draft saved
                   {' '}
                   {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </small>
@@ -534,7 +556,14 @@ const LifestyleSurvey: React.FC = () => {
                     onClick={handleSubmit}
                     disabled={!isStepComplete() || isSubmitting}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Complete Survey'}
+                    {isSubmitting ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Complete Survey'
+                    )}
                   </Button>
                 ) : (
                   <Button
