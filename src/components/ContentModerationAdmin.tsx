@@ -5,8 +5,8 @@
  * A user management component to display and moderate flagged content.
  */
 import React, { useState } from 'react';
-import { Button, Collapse } from 'react-bootstrap';
-import { CheckCircle, XCircle, Ban, ArrowClockwise, ChevronDown, ChevronUp } from 'react-bootstrap-icons';
+import { Button, Collapse, Modal } from 'react-bootstrap';
+import { CheckCircle, XCircle, Ban, ArrowClockwise, ChevronDown, ChevronUp, X } from 'react-bootstrap-icons';
 
 export interface ContentFlag {
   onViewUser?: (userId: number, userName: string) => void;
@@ -26,6 +26,7 @@ export interface ContentFlag {
     notes?: string,
   ) => void;
   onShowHistory?: (userId: number) => void;
+  onDelete?: (flagId: number) => void;
 }
 
 interface ModerationHistoryAction {
@@ -52,15 +53,27 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
   onResolve = () => {},
   onShowHistory = () => {},
   onViewUser = () => {},
+  onDelete = () => {},
 }) => {
+  const [showHistory, setShowHistory] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [historyData, setHistoryData] = useState<ModerationHistoryAction[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyFetched, setHistoryFetched] = useState(false);
+
   // Unsuspend handler
   const handleUnsuspend = () => {
     onResolve(id, 'unsuspend', undefined, 'User unsuspended by admin');
   };
-  const [showHistory, setShowHistory] = useState(false);
-  const [historyData, setHistoryData] = useState<ModerationHistoryAction[] | null>(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [historyFetched, setHistoryFetched] = useState(false);
+
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    setShowDeleteModal(false);
+    onDelete(id);
+  };
   const isSuspended = status === 'suspended' || (suspendedUntil && new Date(suspendedUntil) > new Date());
   const isDeactivated = !active || status === 'user_deactivated';
   const isResolved = status === 'resolved';
@@ -106,7 +119,20 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
         <td>{reason}</td>
         <td>{date}</td>
         <td>
-          <div className="d-flex flex-column gap-2">
+          <div className="d-flex flex-column gap-2" style={{ position: 'relative' }}>
+            {/* Delete button for resolved reports - positioned in corner */}
+            {isResolved && (
+              <Button
+                variant="link"
+                size="sm"
+                className="p-0 text-danger"
+                style={{ position: 'absolute', top: 0, right: 0 }}
+                onClick={handleDelete}
+                title="Delete this resolved report"
+              >
+                <X size={18} />
+              </Button>
+            )}
             {/* Main Actions Row - View, Resolve, and Status */}
             <div className="d-flex gap-2 flex-wrap align-items-center">
               {userId && (
@@ -312,6 +338,24 @@ const ContentModerationTable: React.FC<ContentFlag> = ({
         </td>
       </tr>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Report</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this resolved report? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDelete}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

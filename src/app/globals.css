@@ -344,6 +344,10 @@ main {
   margin-left: 0.5rem;
 }
 
+.nav-avatar-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
 /* ===== MODAL STYLES ===== */
 /* Ensure modals appear above navbar and have proper z-index hierarchy */
 
@@ -405,3 +409,11 @@ main {
 .table-rounded thead th {
   border: none;
 }
+
+/* ===== MATCH PAGES BACKGROUND ===== */
+.match-pages-background {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+

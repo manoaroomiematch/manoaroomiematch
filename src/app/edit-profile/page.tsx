@@ -217,9 +217,9 @@ const EditProfilePage = () => {
   if (status === 'loading') {
     return (
       <main className="bg-light min-vh-100">
-        <Container className="py-5">
-          <div className="text-center">
-            <p>Loading...</p>
+        <Container className="py-5 text-center">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
         </Container>
       </main>

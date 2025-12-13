@@ -79,8 +79,6 @@ interface AdminSidebarProps {
   adminPhotoUrl?: string;
   adminFirstName?: string;
   adminLastName?: string;
-  adminBio?: string;
-  adminPronouns?: string;
   onProfileUpdate?: () => void;
   adminBgColor: 'white' | 'green' | 'blue' | 'red' | 'yellow';
   setAdminBgColor: (color: 'white' | 'green' | 'blue' | 'red' | 'yellow') => void;
@@ -92,8 +90,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   adminPhotoUrl,
   adminFirstName,
   adminLastName,
-  adminBio,
-  adminPronouns,
   onProfileUpdate,
   adminBgColor,
   setAdminBgColor,
@@ -350,8 +346,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         adminPhotoUrl={adminPhotoUrl}
         adminFirstName={adminFirstName}
         adminLastName={adminLastName}
-        adminBio={adminBio}
-        adminPronouns={adminPronouns}
       />
     </div>
   );
@@ -361,8 +355,6 @@ AdminSidebar.defaultProps = {
   adminPhotoUrl: undefined,
   adminFirstName: undefined,
   adminLastName: undefined,
-  adminBio: undefined,
-  adminPronouns: undefined,
   onProfileUpdate: undefined,
 };
 

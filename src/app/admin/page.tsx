@@ -470,6 +470,28 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  const handleDeleteFlag = async (flagId: number) => {
+    try {
+      const response = await fetch('/api/admin/delete-flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ flagId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete flag');
+      }
+
+      // Remove flag from local state
+      setFlags((prev) => prev.filter((flag) => flag.id !== flagId));
+    } catch (err) {
+      console.error('Error deleting flag:', err);
+      alert('Failed to delete report');
+    }
+  };
+
   const handleShowModerationHistory = async (userId: number) => {
     if (showModerationHistory === userId) {
       setShowModerationHistory(null);
@@ -615,11 +637,12 @@ const AdminPage: React.FC = () => {
     return (
       <main style={{ background: colorMap[adminBgColor].bg }}>
         <div
-          className="d-flex justify-content-center align-items-center"
+          className="text-center"
           style={{
             minHeight: '100vh',
             background: colorMap[adminBgColor].bg,
-            padding: '2.5vw',
+            padding: '2.5rem',
+            paddingTop: '3rem',
           }}
         >
           <LoadingSpinner />
@@ -650,8 +673,6 @@ const AdminPage: React.FC = () => {
                 adminPhotoUrl={adminPhotoUrl}
                 adminFirstName={adminProfile.firstName}
                 adminLastName={adminProfile.lastName}
-                adminBio={adminProfile.bio}
-                adminPronouns={adminProfile.pronouns}
                 onProfileUpdate={fetchAdminData}
                 adminBgColor={adminBgColor}
                 setAdminBgColor={setAdminBgColor}
@@ -743,7 +764,7 @@ const AdminPage: React.FC = () => {
                       name="search-user"
                       style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                       type="text"
-                      placeholder="Search user..."
+                      placeholder="Search user or email..."
                       value={search}
                       onChange={(e) => {
                         setSearch(e.target.value);
@@ -881,6 +902,7 @@ const AdminPage: React.FC = () => {
                           {...flag}
                           onResolve={handleResolveFlag}
                           onShowHistory={handleShowModerationHistory}
+                          onDelete={handleDeleteFlag}
                           onViewUser={(userId) => {
                             if (!userId) {
                             // Debug: log missing userId
