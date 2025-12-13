@@ -135,11 +135,12 @@ const ConversationPage = () => {
       if (conversation) {
         setConversation({
           ...conversation,
-          messages: [...conversation.messages, data.message],
+          messages: [...conversation.messages, data],
         });
       }
 
       setMessageInput('');
+      scrollToBottom();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
