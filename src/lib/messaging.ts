@@ -1,57 +1,23 @@
-// Messaging service for your existing database structure
-
+// src/lib/messaging.ts
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export interface SendMessageParams {
-  senderId: number; // Using Int to match your User.id type
-  receiverId: number;
-  content: string; // Using 'content' to match your existing field name
-}
-
-export interface MessageWithUsers {
-  id: number;
-  content: string;
-  isRead: boolean;
-  sentAt: Date;
-  readAt: Date | null;
-  sender: {
-    id: number;
-    email: string;
-    profile: {
-      name: string;
-      firstName: string | null;
-      lastName: string | null;
-      photoUrl: string | null;
-    } | null;
-  };
-  receiver: {
-    id: number;
-    email: string;
-    profile: {
-      name: string;
-      firstName: string | null;
-      lastName: string | null;
-      photoUrl: string | null;
-    } | null;
-  };
-}
-
 /**
- * Send a message from one user to another
+ * Get all conversations for a user
  */
-export async function sendMessage({
-  senderId,
-  receiverId,
-  content,
-}: SendMessageParams) {
+export async function getUserConversations(userId: number) {
   try {
-    const message = await prisma.message.create({
-      data: {
-        senderId,
-        receiverId,
-        content,
+    // Get all messages where user is sender or receiver
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: userId },
+          { receiverId: userId },
+        ],
+      },
+      orderBy: {
+        sentAt: 'desc',
       },
       include: {
         sender: {
@@ -60,9 +26,9 @@ export async function sendMessage({
             email: true,
             profile: {
               select: {
-                name: true,
                 firstName: true,
                 lastName: true,
+                name: true,
                 photoUrl: true,
               },
             },
@@ -74,9 +40,9 @@ export async function sendMessage({
             email: true,
             profile: {
               select: {
-                name: true,
                 firstName: true,
                 lastName: true,
+                name: true,
                 photoUrl: true,
               },
             },
@@ -85,124 +51,168 @@ export async function sendMessage({
       },
     });
 
-    return { success: true, message };
+    // Group messages by conversation (other user)
+    const conversationsMap = new Map();
+
+    messages.forEach((message) => {
+      const otherUserId = message.senderId === userId
+        ? message.receiverId
+        : message.senderId;
+
+      const otherUser = message.senderId === userId
+        ? message.receiver
+        : message.sender;
+
+      if (!conversationsMap.has(otherUserId)) {
+        // Get display name from profile
+        let displayName = 'Unknown User';
+        if (otherUser.profile) {
+          if (otherUser.profile.firstName && otherUser.profile.lastName) {
+            displayName = `${otherUser.profile.firstName} ${otherUser.profile.lastName}`;
+          } else if (otherUser.profile.name) {
+            displayName = otherUser.profile.name;
+          } else if (otherUser.profile.firstName) {
+            displayName = otherUser.profile.firstName;
+          }
+        } else {
+          // Fallback to email name
+          const emailName = otherUser.email.split('@')[0];
+          displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        }
+
+        conversationsMap.set(otherUserId, {
+          userId: otherUserId,
+          userName: displayName,
+          userPhoto: otherUser.profile?.photoUrl || null,
+          lastMessage: message.content,
+          lastMessageTime: message.sentAt.toISOString(),
+          unreadCount: 0,
+        });
+      }
+
+      // Count unread messages
+      if (message.receiverId === userId && !message.isRead) {
+        conversationsMap.get(otherUserId).unreadCount += 1;
+      }
+    });
+
+    return {
+      conversations: Array.from(conversationsMap.values()),
+    };
   } catch (error) {
-    console.error('Error sending message:', error);
-    return { success: false, error: 'Failed to send message' };
+    console.error('Error getting user conversations:', error);
+    throw error;
   }
 }
 
 /**
- * Get conversation between two users (chronological order)
+ * Get conversation between two users
  */
 export async function getConversation(
-  user1Id: number,
-  user2Id: number,
+  userId: number,
+  otherUserId: number,
   limit: number = 50,
-): Promise<MessageWithUsers[]> {
-  const messages = await prisma.message.findMany({
-    where: {
-      OR: [
-        { senderId: user1Id, receiverId: user2Id },
-        { senderId: user2Id, receiverId: user1Id },
-      ],
-    },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
+) {
+  try {
+    // Get the other user's info including profile
+    const otherUser = await prisma.user.findUnique({
+      where: { id: otherUserId },
+      select: {
+        id: true,
+        email: true,
+        profile: {
+          select: {
+            firstName: true,
+            lastName: true,
+            name: true,
+            photoUrl: true,
           },
         },
       },
-      receiver: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      sentAt: 'asc',
-    },
-    take: limit,
-  });
+    });
 
-  return messages as MessageWithUsers[];
+    if (!otherUser) {
+      throw new Error('User not found');
+    }
+
+    // Get messages between the two users
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: userId },
+        ],
+      },
+      orderBy: {
+        sentAt: 'desc',
+      },
+      take: limit,
+    });
+
+    // Get display name from profile
+    let displayName = 'Unknown User';
+    if (otherUser.profile) {
+      if (otherUser.profile.firstName && otherUser.profile.lastName) {
+        displayName = `${otherUser.profile.firstName} ${otherUser.profile.lastName}`;
+      } else if (otherUser.profile.name) {
+        displayName = otherUser.profile.name;
+      } else if (otherUser.profile.firstName) {
+        displayName = otherUser.profile.firstName;
+      }
+    } else {
+      // Fallback to email name
+      const emailName = otherUser.email.split('@')[0];
+      displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+    }
+
+    return {
+      otherUser: {
+        id: otherUser.id,
+        name: displayName,
+        photo: otherUser.profile?.photoUrl || null,
+      },
+      messages: messages.reverse(), // Show oldest first
+    };
+  } catch (error) {
+    console.error('Error getting conversation:', error);
+    throw error;
+  }
 }
 
 /**
- * Get recent messages from a conversation
+ * Send a message
  */
-export async function getRecentMessages(
-  user1Id: number,
-  user2Id: number,
-  count: number = 20,
-): Promise<MessageWithUsers[]> {
-  const messages = await prisma.message.findMany({
-    where: {
-      OR: [
-        { senderId: user1Id, receiverId: user2Id },
-        { senderId: user2Id, receiverId: user1Id },
-      ],
-    },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
+export async function sendMessage(data: {
+  senderId: number;
+  receiverId: number;
+  content: string;
+}) {
+  try {
+    const message = await prisma.message.create({
+      data: {
+        senderId: data.senderId,
+        receiverId: data.receiverId,
+        content: data.content,
+        sentAt: new Date(),
+        isRead: false,
       },
-      receiver: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      sentAt: 'desc',
-    },
-    take: count,
-  });
+    });
 
-  // Reverse to get chronological order
-  return messages.reverse() as MessageWithUsers[];
+    return {
+      success: true,
+      message,
+    };
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return {
+      success: false,
+      error: 'Failed to send message',
+    };
+  }
 }
 
 /**
- * Mark a message as read
+ * Mark a specific message as read
  */
 export async function markMessageAsRead(messageId: number) {
   try {
@@ -214,10 +224,16 @@ export async function markMessageAsRead(messageId: number) {
       },
     });
 
-    return { success: true, message };
+    return {
+      success: true,
+      message,
+    };
   } catch (error) {
     console.error('Error marking message as read:', error);
-    return { success: false, error: 'Failed to mark message as read' };
+    return {
+      success: false,
+      error: 'Failed to mark message as read',
+    };
   }
 }
 
@@ -225,14 +241,14 @@ export async function markMessageAsRead(messageId: number) {
  * Mark all messages in a conversation as read
  */
 export async function markConversationAsRead(
-  receiverId: number,
-  senderId: number,
+  userId: number,
+  otherUserId: number,
 ) {
   try {
     const result = await prisma.message.updateMany({
       where: {
-        receiverId,
-        senderId,
+        senderId: otherUserId,
+        receiverId: userId,
         isRead: false,
       },
       data: {
@@ -241,207 +257,35 @@ export async function markConversationAsRead(
       },
     });
 
-    return { success: true, count: result.count };
+    return {
+      success: true,
+      count: result.count,
+    };
   } catch (error) {
     console.error('Error marking conversation as read:', error);
-    return { success: false, error: 'Failed to mark conversation as read' };
+    return {
+      success: false,
+      error: 'Failed to mark conversation as read',
+      count: 0,
+    };
   }
 }
 
 /**
  * Get unread message count for a user
  */
-export async function getUnreadCount(userId: number): Promise<number> {
-  const count = await prisma.message.count({
-    where: {
-      receiverId: userId,
-      isRead: false,
-    },
-  });
-
-  return count;
-}
-
-/**
- * Get all conversations for a user (list of users they've messaged with)
- */
-export async function getUserConversations(userId: number) {
-  // Get all unique users this user has conversed with
-  const sentTo = await prisma.message.findMany({
-    where: { senderId: userId },
-    select: {
-      receiver: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
-      },
-    },
-    distinct: ['receiverId'],
-  });
-
-  const receivedFrom = await prisma.message.findMany({
-    where: { receiverId: userId },
-    select: {
-      sender: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
-      },
-    },
-    distinct: ['senderId'],
-  });
-
-  // Combine and deduplicate
-  const conversationUsers = new Map();
-
-  sentTo.forEach((msg: { receiver: { id: any; }; }) => {
-    conversationUsers.set(msg.receiver.id, msg.receiver);
-  });
-
-  receivedFrom.forEach((msg: { sender: { id: any; }; }) => {
-    conversationUsers.set(msg.sender.id, msg.sender);
-  });
-
-  // Get latest message and unread count for each conversation
-  const conversations = await Promise.all(
-    Array.from(conversationUsers.values()).map(async (user: any) => {
-      const latestMessage = await prisma.message.findFirst({
-        where: {
-          OR: [
-            { senderId: userId, receiverId: user.id },
-            { senderId: user.id, receiverId: userId },
-          ],
-        },
-        orderBy: { sentAt: 'desc' },
-      });
-
-      const unreadCount = await prisma.message.count({
-        where: {
-          senderId: user.id,
-          receiverId: userId,
-          isRead: false,
-        },
-      });
-
-      return {
-        user,
-        latestMessage,
-        unreadCount,
-      };
-    }),
-  );
-
-  // Sort by latest message
-  conversations.sort((a, b) => {
-    if (!a.latestMessage) return 1;
-    if (!b.latestMessage) return -1;
-    return b.latestMessage.sentAt.getTime() - a.latestMessage.sentAt.getTime();
-  });
-
-  return conversations;
-}
-
-/**
- * Delete a message (only by sender)
- */
-export async function deleteMessage(messageId: number, userId: number) {
+export async function getUnreadCount(userId: number) {
   try {
-    // Verify the user is the sender
-    const message = await prisma.message.findUnique({
-      where: { id: messageId },
+    const count = await prisma.message.count({
+      where: {
+        receiverId: userId,
+        isRead: false,
+      },
     });
 
-    if (!message) {
-      return { success: false, error: 'Message not found' };
-    }
-
-    if (message.senderId !== userId) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    await prisma.message.delete({
-      where: { id: messageId },
-    });
-
-    return { success: true };
+    return count;
   } catch (error) {
-    console.error('Error deleting message:', error);
-    return { success: false, error: 'Failed to delete message' };
+    console.error('Error getting unread count:', error);
+    return 0;
   }
-}
-
-/**
- * Search messages by content
- */
-export async function searchMessages(
-  userId: number,
-  searchTerm: string,
-  limit: number = 20,
-) {
-  const messages = await prisma.message.findMany({
-    where: {
-      OR: [
-        { senderId: userId },
-        { receiverId: userId },
-      ],
-      content: {
-        contains: searchTerm,
-        mode: 'insensitive',
-      },
-    },
-    include: {
-      sender: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
-      },
-      receiver: {
-        select: {
-          id: true,
-          email: true,
-          profile: {
-            select: {
-              name: true,
-              firstName: true,
-              lastName: true,
-              photoUrl: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      sentAt: 'desc',
-    },
-    take: limit,
-  });
-
-  return messages;
 }
