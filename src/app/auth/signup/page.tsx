@@ -27,7 +27,13 @@ const SignUp = () => {
   const schema = Yup.object().shape({
     firstName: Yup.string().required('First Name is required'),
     lastName: Yup.string().required('Last Name is required'),
-    email: Yup.string().required('Email is required').email('Email is invalid'),
+    email: Yup.string()
+      .required('Email is required')
+      .email('Email is invalid')
+      .test('is-hawaii-edu', 'Only @hawaii.edu emails are allowed', (value) => {
+        if (!value) return false;
+        return value.toLowerCase().endsWith('@hawaii.edu');
+      }),
     password: Yup.string()
       .required('Password is required')
       .min(6, 'Password must be at least 6 characters')
@@ -127,8 +133,34 @@ const SignUp = () => {
                 <PersonFill size={64} className="text-success" />
               </div>
               <h1 className="display-4 fw-bold mb-2">Create Account</h1>
-              <p className="text-muted">Join Manoa Roomie Match and find your ideal roommate</p>
+              <p className="text-muted">Join Mānoa Roomie Match and find your ideal roommate</p>
             </div>
+            <Alert variant="info" className="shadow-sm mb-3">
+              <Alert.Heading className="h6 fw-bold">
+                <EnvelopeFill className="me-2" />
+                UH Email Required
+              </Alert.Heading>
+              <p className="mb-2 small">
+                Only
+                {' '}
+                <strong>@hawaii.edu</strong>
+                {' '}
+                email addresses can create an account.
+              </p>
+              <p className="mb-0 small">
+                Don&apos;t have your UH email?
+                {' '}
+                <a
+                  href="https://www.hawaii.edu/myuhinfo/uh-email-account/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-decoration-none fw-semibold"
+                  style={{ color: '#198754' }}
+                >
+                  Learn how to get it here
+                </a>
+              </p>
+            </Alert>
             {submitError && (
               <Alert variant="danger" onClose={() => setSubmitError(null)} dismissible className="shadow-sm">
                 {submitError}
@@ -200,7 +232,7 @@ const SignUp = () => {
                         type="email"
                         {...register('email')}
                         className={`form-control form-control-lg ${errors.email ? 'is-invalid' : ''}`}
-                        placeholder="you@example.com"
+                        placeholder="you@hawaii.edu"
                         disabled={isLoading}
                         style={{
                           borderRadius: '10px',
