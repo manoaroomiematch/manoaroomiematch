@@ -196,8 +196,16 @@ export async function getMatchesByUserId(userId: string) {
       ],
     },
     include: {
-      user1: true,
-      user2: true,
+      user1: {
+        include: {
+          user: true,
+        },
+      },
+      user2: {
+        include: {
+          user: true,
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });

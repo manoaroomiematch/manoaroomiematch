@@ -23,7 +23,7 @@ import SideBySideComparison from '@/components/SideBySideComparison';
 import CompatibilityReportBox from '@/components/CompatibilityReport';
 import IcebreakersBox from '@/components/Icebreakers';
 import UserProfileModal from '@/components/UserProfileModal';
-import { saveMatchAction } from '@/lib/matchActions';
+import { saveMatchAction, getMatchAction } from '@/lib/matchActions';
 
 interface ProfileData {
   name: string;
@@ -70,6 +70,7 @@ export default function ComparisonPage() {
   const [lastAction, setLastAction] = useState<{ type: string; matchId: string } | null>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [matchStatus, setMatchStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchComparison() {
@@ -118,6 +119,12 @@ export default function ComparisonPage() {
 
     fetchComparison();
   }, [matchId, status, session?.user?.randomKey]);
+
+  // Check current match status from localStorage
+  useEffect(() => {
+    const currentStatus = getMatchAction(matchId);
+    setMatchStatus(currentStatus);
+  }, [matchId]);
 
   const handleViewProfile = async (userId: string) => {
     setProfileLoading(true);
@@ -198,6 +205,8 @@ export default function ComparisonPage() {
       router.push('/saved-matches');
     } else if (lastAction?.type === 'pass') {
       router.push('/matches');
+    } else if (lastAction?.type === 'unmatch') {
+      router.push('/accepted-matches');
     }
     setShowActionModal(false);
   };
@@ -265,16 +274,33 @@ export default function ComparisonPage() {
     }
   };
 
+  const handleUnmatch = async () => {
+    setActionLoading(true);
+    try {
+      saveMatchAction(matchId, 'passed');
+      setLastAction({ type: 'unmatch', matchId });
+      setCanUndo(true);
+      setActionModalMessage('Match removed from your accepted matches.');
+      setIsConfirming(true);
+      setShowActionModal(true);
+    } catch (err) {
+      console.error('Error removing match:', err);
+      setActionModalMessage('Error removing match. Please try again.');
+      setIsConfirming(false);
+      setShowActionModal(true);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
       <main className="bg-light min-vh-100">
-        <Container className="py-5">
-          <div className="text-center">
-            <div className="spinner-border text-success" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading comparison...</p>
+        <Container className="py-5 text-center">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="mt-3">Loading comparison...</p>
         </Container>
       </main>
     );
@@ -305,6 +331,152 @@ export default function ComparisonPage() {
       </main>
     );
   }
+
+  const renderActionButtons = () => {
+    if (matchStatus === 'accepted') {
+      return (
+        <div className="d-flex flex-column flex-sm-row justify-content-center gap-4 flex-wrap">
+          <Button
+            variant="success"
+            size="lg"
+            className="px-5"
+            disabled
+            title="You already accepted this match"
+          >
+            Accept Match ✓
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="px-5"
+            onClick={handleSaveForLater}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Save for Later'}
+          </Button>
+          <Button
+            variant="danger"
+            size="lg"
+            className="px-5"
+            onClick={handlePassMatch}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Pass'}
+          </Button>
+          <Button
+            variant="outline-dark"
+            size="lg"
+            className="px-5"
+            onClick={handleUnmatch}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Unmatch'}
+          </Button>
+        </div>
+      );
+    }
+
+    if (matchStatus === 'saved') {
+      return (
+        <div className="d-flex flex-column flex-sm-row justify-content-center gap-4 flex-wrap">
+          <Button
+            variant="success"
+            size="lg"
+            className="px-5"
+            onClick={handleAcceptMatch}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Accept Match'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="px-5"
+            disabled
+            title="You already saved this match"
+          >
+            Save for Later ✓
+          </Button>
+          <Button
+            variant="danger"
+            size="lg"
+            className="px-5"
+            onClick={handlePassMatch}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Pass'}
+          </Button>
+        </div>
+      );
+    }
+
+    if (matchStatus === 'passed') {
+      return (
+        <div className="d-flex flex-column flex-sm-row justify-content-center gap-4 flex-wrap">
+          <Button
+            variant="success"
+            size="lg"
+            className="px-5"
+            onClick={handleAcceptMatch}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Accept Match'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="px-5"
+            onClick={handleSaveForLater}
+            disabled={actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Save for Later'}
+          </Button>
+          <Button
+            variant="danger"
+            size="lg"
+            className="px-5"
+            disabled
+            title="You already passed on this match"
+          >
+            Pass ✓
+          </Button>
+        </div>
+      );
+    }
+
+    // Default: no action taken yet
+    return (
+      <div className="d-flex flex-column flex-sm-row justify-content-center gap-4 flex-wrap">
+        <Button
+          variant="success"
+          size="lg"
+          className="px-5"
+          onClick={handleAcceptMatch}
+          disabled={actionLoading}
+        >
+          {actionLoading ? 'Processing...' : 'Accept Match'}
+        </Button>
+        <Button
+          variant="secondary"
+          size="lg"
+          className="px-5"
+          onClick={handleSaveForLater}
+          disabled={actionLoading}
+        >
+          {actionLoading ? 'Processing...' : 'Save for Later'}
+        </Button>
+        <Button
+          variant="danger"
+          size="lg"
+          className="px-5"
+          onClick={handlePassMatch}
+          disabled={actionLoading}
+        >
+          {actionLoading ? 'Processing...' : 'Pass'}
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <main className="bg-light py-4">
@@ -426,35 +598,7 @@ export default function ComparisonPage() {
         {/* Action buttons */}
         <Row className="mt-4">
           <Col className="text-center">
-            <div className="d-flex flex-column flex-sm-row justify-content-center gap-3">
-              <Button
-                variant="success"
-                size="lg"
-                className="px-5"
-                onClick={handleAcceptMatch}
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Processing...' : 'Accept Match'}
-              </Button>
-              <Button
-                variant="outline-secondary"
-                size="lg"
-                className="px-5"
-                onClick={handleSaveForLater}
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Processing...' : 'Save for Later'}
-              </Button>
-              <Button
-                variant="outline-danger"
-                size="lg"
-                className="px-5"
-                onClick={handlePassMatch}
-                disabled={actionLoading}
-              >
-                {actionLoading ? 'Processing...' : 'Pass'}
-              </Button>
-            </div>
+            {renderActionButtons()}
           </Col>
         </Row>
       </Container>

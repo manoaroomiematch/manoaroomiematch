@@ -370,7 +370,7 @@ const LifestyleSurvey: React.FC = () => {
       <Container className="py-5">
         <Row className="justify-content-center">
           <Col xs={12} className="text-center">
-            <div className="spinner-border text-primary" role="status">
+            <div className="spinner-border text-success" role="status">
               <span className="visually-hidden">Loading...</span>
             </div>
           </Col>

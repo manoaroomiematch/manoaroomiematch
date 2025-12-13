@@ -152,7 +152,7 @@ const NotificationsPanel: React.FC = () => {
               backgroundColor: 'white',
               border: '1px solid #ddd',
               borderRadius: '4px',
-              width: 'min(320px, calc(100vw - 4rem))',
+              width: 'min(280px, calc(100vw - 2rem))',
               maxHeight: '500px',
               overflowY: 'auto',
               zIndex: 1000,

@@ -12,8 +12,6 @@ interface AdminEditProfileModalProps {
   adminName: string;
   adminEmail: string;
   adminPhotoUrl?: string;
-  adminBio?: string;
-  adminPronouns?: string;
   adminFirstName?: string;
   adminLastName?: string;
 }
@@ -25,8 +23,6 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
   adminName,
   adminEmail,
   adminPhotoUrl,
-  adminBio = '',
-  adminPronouns = '',
   adminFirstName = '',
   adminLastName = '',
 }) => {
@@ -34,8 +30,7 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
   const [editFormData, setEditFormData] = useState({
     firstName: '',
     lastName: '',
-    bio: '',
-    pronouns: '',
+    email: '',
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -72,8 +67,7 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
       setEditFormData({
         firstName: adminFirstName || '',
         lastName: adminLastName || '',
-        bio: adminBio || '',
-        pronouns: adminPronouns || '',
+        email: adminEmail || '',
       });
 
       // Update profile photo if available
@@ -91,7 +85,7 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
     if (storedTheme) {
       setThemePreference(storedTheme);
     }
-  }, [show, adminFirstName, adminLastName, adminBio, adminPronouns, adminPhotoUrl]);
+  }, [show, adminFirstName, adminLastName, adminEmail, adminPhotoUrl]);
 
   // Save theme preference to localStorage
   useEffect(() => {
@@ -127,8 +121,6 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
           email: adminEmail,
           firstName: editFormData.firstName.trim(),
           lastName: editFormData.lastName.trim(),
-          bio: editFormData.bio.trim(),
-          pronouns: editFormData.pronouns.trim(),
           profilePhoto: profilePhoto || null,
         }),
       });
@@ -308,6 +300,14 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
               </Button>
             )}
           </div>
+          {/* Helper Text */}
+          <div className="text-center">
+            <small className="text-muted d-block mt-2">
+              Drag & drop or click to upload
+              <br />
+              JPG, PNG, WebP, or GIF (max 5MB)
+            </small>
+          </div>
         </div>
 
         {/* Basic Information Section */}
@@ -334,24 +334,13 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Pronouns</Form.Label>
-              <Form.Control
-                type="text"
-                value={editFormData.pronouns}
-                onChange={(e) => setEditFormData((prev) => ({ ...prev, pronouns: e.target.value }))}
-                placeholder="e.g., he/him, she/her, they/them"
-              />
-            </Form.Group>
-
             <Form.Group className="mb-0">
-              <Form.Label>Bio</Form.Label>
+              <Form.Label>Email</Form.Label>
               <Form.Control
-                as="textarea"
-                rows={3}
-                value={editFormData.bio}
-                onChange={(e) => setEditFormData((prev) => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell us about yourself"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData((prev) => ({ ...prev, email: e.target.value }))}
+                placeholder="Email address"
               />
             </Form.Group>
           </Form>
@@ -474,8 +463,6 @@ const AdminEditProfileModal: React.FC<AdminEditProfileModalProps> = ({
 
 AdminEditProfileModal.defaultProps = {
   adminPhotoUrl: undefined,
-  adminBio: undefined,
-  adminPronouns: undefined,
   adminFirstName: undefined,
   adminLastName: undefined,
   onSave: undefined,

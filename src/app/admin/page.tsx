@@ -615,11 +615,12 @@ const AdminPage: React.FC = () => {
     return (
       <main style={{ background: colorMap[adminBgColor].bg }}>
         <div
-          className="d-flex justify-content-center align-items-center"
+          className="text-center"
           style={{
             minHeight: '100vh',
             background: colorMap[adminBgColor].bg,
-            padding: '2.5vw',
+            padding: '2.5rem',
+            paddingTop: '3rem',
           }}
         >
           <LoadingSpinner />
@@ -650,8 +651,6 @@ const AdminPage: React.FC = () => {
                 adminPhotoUrl={adminPhotoUrl}
                 adminFirstName={adminProfile.firstName}
                 adminLastName={adminProfile.lastName}
-                adminBio={adminProfile.bio}
-                adminPronouns={adminProfile.pronouns}
                 onProfileUpdate={fetchAdminData}
                 adminBgColor={adminBgColor}
                 setAdminBgColor={setAdminBgColor}

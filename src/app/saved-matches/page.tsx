@@ -382,22 +382,20 @@ export default function SavedMatchesPage() {
   if (status === 'loading' || loading) {
     return (
       <main className="bg-light min-vh-100">
-        <Container className="py-5">
-          <div className="text-center">
-            <div className="spinner-border text-success" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading your saved matches...</p>
+        <Container className="pt-3 pb-5 text-center">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="mt-3">Loading your saved matches...</p>
         </Container>
       </main>
     );
   }
 
   return (
-    <main className="bg-light min-vh-100">
-      <Container className="py-5">
-        <Row className="mb-4">
+    <main className="match-pages-background">
+      <Container className="pt-1 pb-5">
+        <Row className="mb-3">
           <Col>
             <Link href="/matches" passHref legacyBehavior>
               <Button variant="outline-secondary" className="mb-3">

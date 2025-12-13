@@ -357,7 +357,7 @@ const BrowseMatches: React.FC = () => {
 
   return (
     <main>
-      <Container fluid className="py-4">
+      <Container className="py-4">
         {error && (
           <Row className="mb-3">
             <Col>
