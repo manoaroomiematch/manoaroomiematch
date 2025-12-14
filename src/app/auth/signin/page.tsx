@@ -1,14 +1,28 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EnvelopeFill, LockFill, PersonCircle } from 'react-bootstrap-icons';
 
 /** The sign in page. */
 const SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  // Redirect to appropriate page after successful login
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.randomKey === 'ADMIN') {
+        router.replace('/admin');
+      } else {
+        router.replace('/profile');
+      }
+    }
+  }, [session, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,9 +34,9 @@ const SignIn = () => {
     const email = target.email.value;
     const password = target.password.value;
     const result = await signIn('credentials', {
-      callbackUrl: '/profile',
       email,
       password,
+      redirect: false,
     });
 
     if (result?.error) {

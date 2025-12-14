@@ -18,7 +18,7 @@ const Home = () => {
     if (status === 'authenticated' && session) {
       const userRole = (session as any)?.user?.randomKey;
       const destination = userRole === 'ADMIN' ? '/admin' : '/profile';
-      router.push(destination);
+      router.replace(destination);
     }
   }, [status, session, router]);
 

@@ -154,6 +154,27 @@ const LifestyleSurvey: React.FC = () => {
   // Restore from draft on mount
   useEffect(() => {
     try {
+      const startFresh = localStorage.getItem('survey-start-fresh') === 'true';
+      if (startFresh) {
+        // Clear any previous survey state and start at step 0
+        localStorage.removeItem('survey-start-fresh');
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('lifestyle-survey-completed');
+        setSurveyData({
+          sleepSchedule: '',
+          noiseTolerance: 50,
+          cleanliness: '',
+          studyHabits: '',
+          socialLevel: '',
+          guestPolicy: '',
+        });
+        setCurrentStep(0);
+        setLastSaved(null);
+        setShowDraftBanner(false);
+        console.log('Starting fresh survey for new signup');
+        return;
+      }
+
       const savedDraft = localStorage.getItem(STORAGE_KEY);
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft);
