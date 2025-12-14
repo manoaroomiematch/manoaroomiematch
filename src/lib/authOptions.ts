@@ -69,9 +69,13 @@ const authOptions: NextAuthOptions = {
         // Relative path is safe
         return url;
       }
-      if (new URL(url, baseUrl).origin === baseUrl) {
-        // Same origin redirect is safe
-        return url;
+      try {
+        if (new URL(url, baseUrl).origin === baseUrl) {
+          // Same origin redirect is safe
+          return url;
+        }
+      } catch (error) {
+        // Ignore invalid URLs
       }
       // Invalid redirect - return to home
       return baseUrl;

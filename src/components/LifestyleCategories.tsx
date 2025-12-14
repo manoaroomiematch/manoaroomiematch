@@ -9,7 +9,7 @@
  * Shows category name and description, sorted alphabetically
  */
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Alert } from 'react-bootstrap';
 
 // CSS for animations and hover effects
 const styles = `
@@ -149,23 +149,22 @@ const LifestyleCategoriesTips: React.FC = () => {
 
   if (loading) {
     return (
-      <main style={{ background: '#f8f9fa', minHeight: '100vh', paddingTop: '3rem', paddingBottom: '3rem' }}>
-        <Container className="py-5">
-          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-            <Spinner animation="border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </Spinner>
+      <main style={{ background: '#f8f9fa', minHeight: '100vh', paddingTop: '0', paddingBottom: '3rem' }}>
+        <Container className="pt-3 pb-5 text-center">
+          <div className="spinner-border text-success" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
+          <p className="mt-3">Loading campus life information...</p>
         </Container>
       </main>
     );
   }
 
   return (
-    <main style={{ background: '#f8f9fa', minHeight: '100vh', paddingTop: '3rem', paddingBottom: '3rem' }}>
+    <main style={{ background: '#f8f9fa', minHeight: '100vh', paddingTop: '1.5rem', paddingBottom: '3rem' }}>
       <style>{styles}</style>
-      <Container className="py-5">
-        <div className="mb-5">
+      <Container className="pt-3 pb-5">
+        <div className="mb-3">
           <h1 className="mb-3 fw-bold">Campus Life</h1>
           <p className="lead text-muted">
             Find key information for living on campus, including housing documents, move-in details, community expectations, dining, maintenance support, staff contacts, campus services, and job opportunities.

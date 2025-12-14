@@ -175,9 +175,14 @@ const AdminPage: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to delete user');
       }
+      // Remove user from users list
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
-      // Clear user cache on delete
+      // Remove all flags (reports) for this deleted user
+      const deletedUserId = Number(deleteUserId);
+      setFlags((prev) => prev.filter((flag) => flag.userId !== deletedUserId));
+      // Clear caches on delete
       clearCache('users-all');
+      clearCache('flags-all');
       setUserModalError(null);
       setShowDeleteUserModal(false);
     } catch (err) {
@@ -267,7 +272,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all users with caching (client-side pagination) */
   const fetchUsers = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'users-all';
@@ -293,7 +298,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all flags with caching (client-side pagination) */
   const fetchFlags = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'flags-all';
@@ -319,7 +324,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all categories with caching (client-side pagination) */
   const fetchCategories = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'categories-all';
@@ -345,7 +350,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch admin profile and all data on initial load */
   const fetchAdminData = async () => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       setInitialLoading(true);
       // Fetch admin profile
@@ -467,6 +472,28 @@ const AdminPage: React.FC = () => {
       alert(errorMessage);
     } finally {
       setModerationActionLoading(false);
+    }
+  };
+
+  const handleDeleteFlag = async (flagId: number) => {
+    try {
+      const response = await fetch('/api/admin/delete-flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ flagId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete flag');
+      }
+
+      // Remove flag from local state
+      setFlags((prev) => prev.filter((flag) => flag.id !== flagId));
+    } catch (err) {
+      console.error('Error deleting flag:', err);
+      alert('Failed to delete report');
     }
   };
 
@@ -615,11 +642,12 @@ const AdminPage: React.FC = () => {
     return (
       <main style={{ background: colorMap[adminBgColor].bg }}>
         <div
-          className="d-flex justify-content-center align-items-center"
+          className="text-center"
           style={{
             minHeight: '100vh',
             background: colorMap[adminBgColor].bg,
-            padding: '2.5vw',
+            padding: '2.5rem',
+            paddingTop: '3rem',
           }}
         >
           <LoadingSpinner />
@@ -650,8 +678,6 @@ const AdminPage: React.FC = () => {
                 adminPhotoUrl={adminPhotoUrl}
                 adminFirstName={adminProfile.firstName}
                 adminLastName={adminProfile.lastName}
-                adminBio={adminProfile.bio}
-                adminPronouns={adminProfile.pronouns}
                 onProfileUpdate={fetchAdminData}
                 adminBgColor={adminBgColor}
                 setAdminBgColor={setAdminBgColor}
@@ -743,7 +769,7 @@ const AdminPage: React.FC = () => {
                       name="search-user"
                       style={{ maxWidth: '280px', borderRadius: '0.75rem', boxShadow: '0 1px 4px #0001' }}
                       type="text"
-                      placeholder="Search user..."
+                      placeholder="Search user or email..."
                       value={search}
                       onChange={(e) => {
                         setSearch(e.target.value);
@@ -804,6 +830,13 @@ const AdminPage: React.FC = () => {
                           }}
                           onView={handleViewUser}
                           onFlagged={() => fetchFlags(true)}
+                          onRoleChanged={(userId, newRole) => {
+                            setUsers((prev) => prev.map((user) => (
+                              user.id === userId ? { ...user, role: newRole } : user
+                            )));
+                            // Clear the users cache since the data has changed
+                            clearCache('users-all');
+                          }}
                         />
                       ))}
                     </tbody>
@@ -881,6 +914,7 @@ const AdminPage: React.FC = () => {
                           {...flag}
                           onResolve={handleResolveFlag}
                           onShowHistory={handleShowModerationHistory}
+                          onDelete={handleDeleteFlag}
                           onViewUser={(userId) => {
                             if (!userId) {
                             // Debug: log missing userId

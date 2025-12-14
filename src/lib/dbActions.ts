@@ -196,9 +196,137 @@ export async function getMatchesByUserId(userId: string) {
       ],
     },
     include: {
-      user1: true,
-      user2: true,
+      user1: {
+        include: {
+          user: true,
+        },
+      },
+      user2: {
+        include: {
+          user: true,
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
+}
+
+/**
+ * Converts survey string values to the numeric scale used in the database
+ */
+function convertSurveyToDatabase(surveyData: {
+  sleepSchedule: string;
+  noiseTolerance: number;
+  cleanliness: string;
+  studyHabits: string;
+  socialLevel: string;
+  guestPolicy: string;
+}) {
+  // Sleep schedule mapping (string -> Int 1-5)
+  const sleepScheduleMap: Record<string, number> = {
+    'early-bird': 1,
+    neither: 3,
+    unknown: 3,
+    'night-owl': 5,
+  };
+
+  // Cleanliness mapping (string -> Int 1-5)
+  const cleanlinessMap: Record<string, number> = {
+    'very-clean': 5,
+    'slightly-clean': 4,
+    neither: 3,
+    'slightly-dirty': 2,
+    'very-dirty': 1,
+  };
+
+  // Social level mapping (string -> Int 1-4)
+  const socialLevelMap: Record<string, number> = {
+    private: 1,
+    'somewhat-social': 2,
+    mixed: 3,
+    'very-social': 4,
+  };
+
+  // Guest frequency mapping (string -> Int 1-4)
+  const guestFrequencyMap: Record<string, number> = {
+    'no-guests': 1,
+    'rare-guests': 2,
+    'occasional-guests': 3,
+    'frequent-guests': 4,
+  };
+
+  return {
+    sleepSchedule: sleepScheduleMap[surveyData.sleepSchedule] || 3,
+    cleanliness: cleanlinessMap[surveyData.cleanliness] || 3,
+    noiseLevel: surveyData.noiseTolerance, // Already a number 0-100
+    socialLevel: socialLevelMap[surveyData.socialLevel] || 3,
+    guestFrequency: guestFrequencyMap[surveyData.guestPolicy] || 3,
+  };
+}
+
+/**
+ * Saves lifestyle survey data to the user's profile
+ */
+export async function saveLifestyleSurvey(email: string, surveyData: {
+  sleepSchedule: string;
+  noiseTolerance: number;
+  cleanliness: string;
+  studyHabits: string;
+  socialLevel: string;
+  guestPolicy: string;
+}) {
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { profile: true },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Convert survey data to database format
+  const dbData = convertSurveyToDatabase(surveyData);
+
+  // Update the user's profile with lifestyle data
+  const updatedProfile = await prisma.userProfile.update({
+    where: { userId: user.id },
+    data: dbData,
+  });
+
+  return updatedProfile;
+}
+
+/**
+ * Saves lifestyle survey and generates matches for the user
+ * This is called when a user completes the lifestyle survey
+ */
+export async function saveLifestyleSurveyAndMatch(email: string, surveyData: {
+  sleepSchedule: string;
+  noiseTolerance: number;
+  cleanliness: string;
+  studyHabits: string;
+  socialLevel: string;
+  guestPolicy: string;
+}) {
+  // First, save the lifestyle survey data
+  const profile = await saveLifestyleSurvey(email, surveyData);
+
+  // Get the user ID from the profile
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Import and call the existing match generation function
+  // This will generate matches for the new user against all existing users
+  const { generateMatchesForUser } = await import('./matchGeneration');
+  const matchIds = await generateMatchesForUser(user.id);
+
+  console.log(`Generated ${matchIds.length} matches for user ${email}`);
+
+  return profile;
 }

@@ -41,12 +41,14 @@ async function notifyReporters(reportedUserId: number, actionType: string) {
     if (regularReporterIds.length === 0) return;
 
     // Create notifications for each regular user reporter
-    // eslint-disable-next-line no-nested-ternary
-    const notificationText = actionType === 'suspend'
-      ? 'Thank you for your report. We\'ve reviewed the case and taken appropriate action.'
-      : actionType === 'deactivate'
-        ? 'Thank you for your report. We\'ve reviewed the case and deactivated the user\'s account.'
-        : 'Thank you for your report. We\'ve reviewed the case.';
+    let notificationText: string;
+    if (actionType === 'suspend' || actionType === 'resolve') {
+      notificationText = 'Thank you for your report. We\'ve reviewed the case and taken appropriate action.';
+    } else if (actionType === 'deactivate') {
+      notificationText = 'Thank you for your report. We\'ve reviewed the case and deactivated the user\'s account.';
+    } else {
+      notificationText = 'Thank you for your report. We\'ve reviewed the case.';
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (prisma as any).notification.createMany({
@@ -194,6 +196,9 @@ export async function POST(req: NextRequest) {
           flagId: flagIdNum,
         },
       });
+
+      // Notify reporters that action has been taken
+      await notifyReporters(reportedUserId, 'resolve');
 
       return NextResponse.json({
         message: 'Flag resolved successfully',

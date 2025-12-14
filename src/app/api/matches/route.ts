@@ -27,7 +27,12 @@ export async function GET() {
 
     const matches = await getMatchesByUserId(profile.id);
 
-    return NextResponse.json({ matches, currentProfileId: profile.id });
+    // Filter out admin profiles
+    const filteredMatches = matches.filter(
+      (match) => match.user1.user?.role !== 'ADMIN' && match.user2.user?.role !== 'ADMIN',
+    );
+
+    return NextResponse.json({ matches: filteredMatches, currentProfileId: profile.id });
   } catch (error) {
     console.error('Error fetching matches:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

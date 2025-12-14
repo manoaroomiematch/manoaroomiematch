@@ -15,10 +15,13 @@ export interface UserManagementProps {
   onDelete: (id: string) => void;
   onView: (email: string, userId?: string) => void;
   onFlagged?: () => void;
+  onRoleChanged?: (userId: string, newRole: string) => void;
 }
 
 /* Renders a single row in the User Management table. See admin/page.tsx. */
-const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, onDelete, onView, onFlagged }) => {
+const UserManagement: React.FC<UserManagementProps> = ({
+  id, name, email, role, onDelete, onView, onFlagged, onRoleChanged,
+}) => {
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [flagLoading, setFlagLoading] = useState(false);
@@ -103,6 +106,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ id, name, email, role, 
 
       setRoleSuccess(true);
       setCurrentRole(newRole);
+      if (onRoleChanged) {
+        onRoleChanged(id, newRole);
+      }
       setTimeout(() => {
         setShowRoleModal(false);
         setRoleSuccess(false);
