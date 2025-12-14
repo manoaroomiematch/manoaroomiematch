@@ -135,18 +135,20 @@ const SignUp = () => {
   return (
     <main
       style={{
-        flex: '1 0 auto',
+        minHeight: '100vh',
         backgroundImage: 'url(/background/Flower%20%20Print.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
         paddingTop: '1rem',
         paddingBottom: '1rem',
+        flex: '1 0 auto',
       }}
     >
-      <Container className="py-3 py-md-4 mb-4" style={{ maxWidth: '540px' }}>
-        <Row className="justify-content-center px-2 g-2">
-          <Col xs={12} sm={10} md={8} lg={6} xl={5}>
+      <Container className="py-3 py-md-4 py-lg-5">
+        <Row className="justify-content-center g-0 px-2">
+          <Col xs={12} sm={11} md={9} lg={6} xl={5}>
             <Card
               className="shadow-lg border-0 text-center mb-4"
               style={{
@@ -156,14 +158,15 @@ const SignUp = () => {
               }}
             >
               <Card.Body className="p-3 p-md-4">
-                <div className="mb-2">
-                  <PersonFill size={40} className="text-success" />
+                <div className="mb-2 mb-md-3">
+                  <PersonFill size={36} className="text-success d-sm-none" />
+                  <PersonFill size={48} className="text-success d-none d-sm-inline" />
                 </div>
-                <h1 className="fw-bold mb-2 fs-3 fs-md-1">Create Account</h1>
-                <p className="text-muted mb-0 small">Join Mānoa Roomie Match and find your ideal roommate</p>
+                <h1 className="fw-bold mb-2 fs-3 fs-md-2 fs-lg-1">Create Account</h1>
+                <p className="text-muted mb-0 small fs-6">Join Mānoa Roomie Match and find your ideal roommate</p>
               </Card.Body>
             </Card>
-            <Alert variant="info" className="shadow-sm mb-3 py-2 px-3 small">
+            <Alert variant="info" className="shadow-sm mb-3 py-2 px-2 px-md-3 small fs-7">
               <Alert.Heading className="h6 fw-bold mb-2">
                 <EnvelopeFill className="me-2" />
                 UH Email Required
@@ -202,12 +205,12 @@ const SignUp = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
               }}
             >
-              <Card.Body className="p-4 p-md-5">
+              <Card.Body className="p-3 p-md-4 p-lg-5">
                 <Form onSubmit={handleSubmit(onSubmit)}>
-                  <Row>
-                    <Col md={6}>
+                  <Row className="g-2">
+                    <Col xs={12} md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label className="fw-semibold">First Name</Form.Label>
+                        <Form.Label className="fw-semibold small">First Name</Form.Label>
                         <input
                           type="text"
                           {...register('firstName')}
@@ -227,9 +230,9 @@ const SignUp = () => {
                         <div className="invalid-feedback">{errors.firstName?.message}</div>
                       </Form.Group>
                     </Col>
-                    <Col md={6}>
+                    <Col xs={12} md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label className="fw-semibold">Last Name</Form.Label>
+                        <Form.Label className="fw-semibold small">Last Name</Form.Label>
                         <input
                           type="text"
                           {...register('lastName')}
@@ -252,7 +255,7 @@ const SignUp = () => {
                   </Row>
 
                   <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">Email Address</Form.Label>
+                    <Form.Label className="fw-semibold small">Email Address</Form.Label>
                     <div className="position-relative">
                       <EnvelopeFill
                         size={18}
@@ -281,7 +284,7 @@ const SignUp = () => {
                   </Form.Group>
 
                   <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">Password</Form.Label>
+                    <Form.Label className="fw-semibold small">Password</Form.Label>
                     <div className="position-relative">
                       <LockFill
                         size={18}
@@ -328,7 +331,7 @@ const SignUp = () => {
                     )}
                   </Form.Group>
                   <Form.Group className="mb-4">
-                    <Form.Label className="fw-semibold">Confirm Password</Form.Label>
+                    <Form.Label className="fw-semibold small">Confirm Password</Form.Label>
                     <div className="position-relative">
                       <LockFill
                         size={18}
