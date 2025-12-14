@@ -24,6 +24,7 @@ export async function getUserConversations(userId: number) {
           select: {
             id: true,
             email: true,
+            role: true,
             profile: {
               select: {
                 firstName: true,
@@ -38,6 +39,7 @@ export async function getUserConversations(userId: number) {
           select: {
             id: true,
             email: true,
+            role: true,
             profile: {
               select: {
                 firstName: true,
@@ -87,6 +89,7 @@ export async function getUserConversations(userId: number) {
           lastMessage: message.content,
           lastMessageTime: message.sentAt.toISOString(),
           unreadCount: 0,
+          userRole: otherUser.role,
         });
       }
 
@@ -120,6 +123,7 @@ export async function getConversation(
       select: {
         id: true,
         email: true,
+        role: true,
         profile: {
           select: {
             firstName: true,
@@ -170,6 +174,7 @@ export async function getConversation(
         id: otherUser.id,
         name: displayName,
         photo: otherUser.profile?.photoUrl || null,
+        role: otherUser.role,
       },
       messages: messages.reverse(), // Show oldest first
     };

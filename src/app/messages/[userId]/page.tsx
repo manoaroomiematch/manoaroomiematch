@@ -32,6 +32,7 @@ interface UserProfile {
   id: number;
   name: string;
   photo: string | null;
+  role?: string;
 }
 
 interface ConversationData {
@@ -267,13 +268,18 @@ const ConversationPage = () => {
                   )}
 
                   <div className="flex-grow-1">
-                    <h5 className="mb-0">{conversation.otherUser.name}</h5>
+                    <div className="d-flex align-items-center gap-2">
+                      <h5 className="mb-0">{conversation.otherUser.name}</h5>
+                      {conversation.otherUser.role === 'ADMIN' && (
+                        <Badge bg="primary" className="small">Admin</Badge>
+                      )}
+                    </div>
                   </div>
 
                   {/* Message Actions Dropdown */}
                   <MessageActionsDropdown
                     otherUser={conversation.otherUser}
-                    isAdmin={session?.user?.randomKey === 'ADMIN'}
+                    isAdmin={conversation.otherUser.role === 'ADMIN'}
                   />
                 </div>
               </Card.Header>

@@ -5,7 +5,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
-import { Container, Nav, Navbar, NavDropdown, Badge } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown } from 'react-bootstrap';
 import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots, Bookmark, Check2Circle, HandThumbsDown } from 'react-bootstrap-icons';
 import Image from 'next/image';
 import ProfileAvatar from '@/components/ProfileAvatar';
@@ -105,24 +105,16 @@ const NavBar: React.FC = () => {
                   <span className="position-relative">
                     <ChatDots className="me-1" size={20} />
                     {unreadMessageCount > 0 && (
-                      <Badge
-                        bg="danger"
-                        pill
-                        className="position-absolute"
+                      <span
+                        className="badge bg-danger rounded-circle"
                         style={{
-                          top: '-8px',
-                          right: '-8px',
-                          fontSize: '0.65rem',
-                          minWidth: '18px',
-                          height: '18px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0 5px',
+                          width: '8px',
+                          height: '8px',
+                          position: 'absolute',
+                          top: '-4px',
+                          right: '-4px',
                         }}
-                      >
-                        {unreadMessageCount}
-                      </Badge>
+                      />
                     )}
                   </span>
                 </Nav.Link>

@@ -100,11 +100,15 @@ const MessageActionsDropdown: React.FC<MessageActionsDropdownProps> = ({
         </Dropdown.Toggle>
 
         <Dropdown.Menu>
-          <Dropdown.Item onClick={handleViewProfile} disabled={loadingProfile}>
-            <PersonFill className="me-2" />
-            {isAdmin ? 'View Profile (Admin)' : 'View Profile'}
-          </Dropdown.Item>
-          <Dropdown.Divider />
+          {!isAdmin && (
+            <>
+              <Dropdown.Item onClick={handleViewProfile} disabled={loadingProfile}>
+                <PersonFill className="me-2" />
+                View Profile
+              </Dropdown.Item>
+              <Dropdown.Divider />
+            </>
+          )}
           <Dropdown.Item
             className={isBlocked ? 'text-success' : 'text-warning'}
             onClick={handleBlockUser}
