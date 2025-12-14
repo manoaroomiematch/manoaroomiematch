@@ -119,7 +119,10 @@ const SignUp = () => {
     <main
       style={{
         flex: '1 0 auto',
-        background: 'linear-gradient(135deg, #f0f9f4 0%, #d4edda 100%)',
+        backgroundImage: 'url(/background/Flower%20%20Print.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
         paddingTop: '2rem',
         paddingBottom: '2rem',
       }}
@@ -127,13 +130,22 @@ const SignUp = () => {
       <Container className="py-4 pb-5 mb-5">
         <Row className="justify-content-center">
           <Col xs={12} sm={10} md={8} lg={6} xl={5}>
-            <div className="text-center mb-4">
-              <div className="mb-3">
-                <PersonFill size={64} className="text-success" />
-              </div>
-              <h1 className="display-4 fw-bold mb-2">Create Account</h1>
-              <p className="text-muted">Join Mānoa Roomie Match and find your ideal roommate</p>
-            </div>
+            <Card
+              className="shadow-lg border-0 text-center mb-4"
+              style={{
+                borderRadius: '16px',
+                backdropFilter: 'blur(10px)',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              }}
+            >
+              <Card.Body className="p-4">
+                <div className="mb-3">
+                  <PersonFill size={64} className="text-success" />
+                </div>
+                <h1 className="display-4 fw-bold mb-2">Create Account</h1>
+                <p className="text-muted mb-0">Join Mānoa Roomie Match and find your ideal roommate</p>
+              </Card.Body>
+            </Card>
             <Alert variant="info" className="shadow-sm mb-3">
               <Alert.Heading className="h6 fw-bold">
                 <EnvelopeFill className="me-2" />
