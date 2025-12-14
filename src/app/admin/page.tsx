@@ -272,7 +272,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all users with caching (client-side pagination) */
   const fetchUsers = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'users-all';
@@ -298,7 +298,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all flags with caching (client-side pagination) */
   const fetchFlags = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'flags-all';
@@ -324,7 +324,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all categories with caching (client-side pagination) */
   const fetchCategories = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'categories-all';
@@ -350,7 +350,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch admin profile and all data on initial load */
   const fetchAdminData = async () => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       setInitialLoading(true);
       // Fetch admin profile
@@ -830,6 +830,13 @@ const AdminPage: React.FC = () => {
                           }}
                           onView={handleViewUser}
                           onFlagged={() => fetchFlags(true)}
+                          onRoleChanged={(userId, newRole) => {
+                            setUsers((prev) => prev.map((user) => (
+                              user.id === userId ? { ...user, role: newRole } : user
+                            )));
+                            // Clear the users cache since the data has changed
+                            clearCache('users-all');
+                          }}
                         />
                       ))}
                     </tbody>
