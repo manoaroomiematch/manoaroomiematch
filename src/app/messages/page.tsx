@@ -23,6 +23,7 @@ interface Conversation {
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
+  userRole?: string;
 }
 
 const MessagesPage = () => {

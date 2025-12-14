@@ -5,6 +5,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Container, Nav, Navbar, NavDropdown, Badge } from 'react-bootstrap';
 import { BoxArrowRight, Lock, PersonFill, PersonPlusFill, PencilSquare, ChatDots, Bookmark, Check2Circle, HandThumbsDown } from 'react-bootstrap-icons';
 import Image from 'next/image';
@@ -18,17 +19,36 @@ const NavBar: React.FC = () => {
   const role = userWithRole?.randomKey;
   const pathName = usePathname();
 
-  /**
-   * Tracks the number of unread messages for the current user.
-   * This is currently using mock data for demonstration purposes.
-   *
-   * When implementing the real messaging system, this should be replaced with
-   * an API call to fetch the actual count from your database, something like:
-   * const { data: unreadCount } = useSWR('/api/messages/unread');
-   *
-   * The notification badge will automatically show/hide based on this value.
-   */
-  const unreadMessageCount = 1; // Mock data - replace with actual API call
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+
+  // Fetch unread message count on component mount and periodically
+  useEffect(() => {
+    if (!session) {
+      setUnreadMessageCount(0);
+      // eslint-disable-next-line no-useless-return
+      return;
+    }
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/messages/unread-count');
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadMessageCount(data.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching unread message count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Poll for updates every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+
+    // eslint-disable-next-line consistent-return
+    return () => clearInterval(interval);
+  }, [session]);
   return (
     <Navbar bg="light" expand="lg" className="py-3">
       <Container>
@@ -114,14 +134,9 @@ const NavBar: React.FC = () => {
                           right: '-8px',
                           fontSize: '0.65rem',
                           minWidth: '18px',
-                          height: '18px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '0 5px',
                         }}
                       >
-                        {unreadMessageCount}
+                        {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
                       </Badge>
                     )}
                   </span>

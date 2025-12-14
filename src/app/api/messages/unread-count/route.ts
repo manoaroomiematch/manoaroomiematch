@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const count = await getUnreadCount(user.id);
-    return NextResponse.json({ count });
+    return NextResponse.json({ unreadCount: count });
   } catch (error) {
     console.error('Error getting unread count:', error);
     return NextResponse.json(

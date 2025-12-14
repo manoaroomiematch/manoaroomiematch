@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         email: true,
+        role: true,
         profile: {
           select: {
             firstName: true,
@@ -129,9 +130,10 @@ export async function GET(request: NextRequest) {
         id: user.id,
         name: displayName,
         email: user.email,
-        major: user.profile?.major || null,
+        major: user.role === 'ADMIN' ? null : (user.profile?.major || null),
         photoUrl: user.profile?.photoUrl || null,
         bio: user.profile?.bio || null,
+        role: user.role,
       };
     });
 

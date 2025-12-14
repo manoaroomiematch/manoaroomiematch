@@ -14,9 +14,10 @@ interface UserResult {
   id: number;
   name: string;
   email: string;
-  major?: string;
+  major?: string | null;
   photoUrl?: string;
-  bio?: string;
+  bio?: string | null;
+  role?: string;
 }
 
 const NewMessagePage = () => {
@@ -177,10 +178,13 @@ const NewMessagePage = () => {
                         </div>
                         <div className="flex-grow-1" style={{ minWidth: 0 }}>
                           <h6 className="mb-0 fw-semibold">{user.name}</h6>
-                          {user.major && (
+                          {user.role === 'ADMIN' && (
+                            <p className="mb-0 small text-muted fw-semibold text-primary">Admin</p>
+                          )}
+                          {user.role !== 'ADMIN' && user.major && (
                             <p className="mb-0 small text-muted">{user.major}</p>
                           )}
-                          {user.bio && (
+                          {user.role !== 'ADMIN' && user.bio && (
                             <p className="mb-0 small text-muted text-truncate">{user.bio}</p>
                           )}
                         </div>
