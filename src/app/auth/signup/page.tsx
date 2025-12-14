@@ -1,7 +1,6 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
@@ -20,7 +19,6 @@ type SignUpForm = {
 };
 /** The sign up page. */
 const SignUp = () => {
-  const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const schema = Yup.object().shape({
     firstName: Yup.string().required('First Name is required'),
@@ -86,24 +84,10 @@ const SignUp = () => {
   const onSubmit = async (data: SignUpForm) => {
     setSubmitError(null);
     setIsLoading(true);
+
     try {
       // console.log(JSON.stringify(data, null, 2));
       await createUser(data);
-      // After creating, signIn with redirect to the lifestyle survey page
-      const result = await signIn('credentials', {
-        callbackUrl: '/lifestyle-survey',
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setSubmitError('Sign in failed after registration. Please try logging in manually.');
-        setIsLoading(false);
-      } else if (result?.ok) {
-        router.push('/lifestyle-survey');
-        router.refresh();
-      }
     } catch (error: any) {
       console.error('Registration error:', error);
       if (error.message === 'Email already exists' || (error.message && error.message.includes('Unique constraint'))) {
@@ -111,6 +95,29 @@ const SignUp = () => {
       } else {
         setSubmitError(`Registration failed: ${error.message || 'Unknown error'}`);
       }
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // After creating, signIn with redirect to the lifestyle survey page
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: true, // Explicitly set redirect to true
+        callbackUrl: '/lifestyle-survey', // Use a relative path for NextAuth to handle
+      });
+
+      // Since redirect is true, NextAuth handles the navigation.
+      // If there's an error, it will be caught.
+      if (result?.error) {
+        setSubmitError(`Sign in failed after registration: ${result.error}. Please try logging in manually.`);
+        setIsLoading(false);
+      }
+      // No need for router.push here, NextAuth will redirect.
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      setSubmitError(`An unexpected error occurred during sign-in: ${error.message || 'Unknown error'}`);
       setIsLoading(false);
     }
   };

@@ -7,6 +7,7 @@ import { Match, UserProfile } from '@prisma/client';
 import { useSession } from 'next-auth/react';
 import MatchCard, { MatchData } from '@/components/MatchCard';
 import MatchFilterPanel, { MatchFilters, DEFAULT_FILTERS } from '@/components/MatchFilters';
+import { getPassedMatches, getSavedMatches, getAcceptedMatches } from '@/lib/matchActions';
 
 /**
  * BrowseMatches Page Component
@@ -107,7 +108,17 @@ const BrowseMatches: React.FC = () => {
 
         setCurrentProfileId(profileId);
 
+        // Get passed, saved, and accepted matches from localStorage to filter them out
+        const passedMatchIds = getPassedMatches();
+        const savedMatchIds = getSavedMatches();
+        const acceptedMatchIds = getAcceptedMatches();
+
         const formattedMatches = apiMatches
+          .filter(
+            (match) => !passedMatchIds.includes(match.id)
+              && !savedMatchIds.includes(match.id)
+              && !acceptedMatchIds.includes(match.id),
+          ) // Exclude passed, saved, and accepted matches
           .map((match) => buildMatchCard(match, profileId))
           .filter((match): match is ExtendedMatchData => match !== null);
 
@@ -346,7 +357,7 @@ const BrowseMatches: React.FC = () => {
 
   return (
     <main>
-      <Container fluid className="py-4">
+      <Container className="py-4">
         {error && (
           <Row className="mb-3">
             <Col>
@@ -359,28 +370,30 @@ const BrowseMatches: React.FC = () => {
 
         {/* Page Header */}
         <Row className="mb-4 align-items-center">
-          <Col xs={12} md={8}>
+          <Col xs={12} md={6}>
             <h1 className="mb-0">Browse Matches</h1>
           </Col>
-          <Col xs={12} md={4} className="text-md-end mt-3 mt-md-0">
-            <ButtonGroup aria-label="View mode toggle">
-              <Button
-                variant={viewMode === 'grid' ? 'success' : 'outline-success'}
-                onClick={() => setViewMode('grid')}
-                aria-label="Grid view"
-              >
-                <Grid3x3GapFill className="me-2" />
-                Grid
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'success' : 'outline-success'}
-                onClick={() => setViewMode('list')}
-                aria-label="List view"
-              >
-                <ListUl className="me-2" />
-                List
-              </Button>
-            </ButtonGroup>
+          <Col xs={12} md={6} className="text-md-end mt-3 mt-md-0">
+            <div className="d-flex gap-2 justify-content-end flex-wrap">
+              <ButtonGroup aria-label="View mode toggle">
+                <Button
+                  variant={viewMode === 'grid' ? 'success' : 'outline-success'}
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                >
+                  <Grid3x3GapFill className="me-2" />
+                  Grid
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'success' : 'outline-success'}
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                >
+                  <ListUl className="me-2" />
+                  List
+                </Button>
+              </ButtonGroup>
+            </div>
           </Col>
         </Row>
 
