@@ -1,11 +1,12 @@
+/* eslint-disable max-len */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable import/no-extraneous-dependencies */
-import { test as base, expect, Page } from '@playwright/test';
+import { test as base, Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 
 // Base configuration
-const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'https://manoaroomiematch.vercel.app';
 const SESSION_STORAGE_PATH = path.join(__dirname, 'playwright-auth-sessions');
 
 // Ensure session directory exists
@@ -112,7 +113,13 @@ async function authenticateWithUI(
 
     // Navigate to login page
     await page.goto(`${BASE_URL}/auth/signin`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+
+    // If redirected to not-authorized, 404, or not on signin, skip authentication
+    const url = page.url();
+    if (url.includes('/not-authorized') || url.includes('/404') || !url.includes('/auth/signin')) {
+      throw new Error(`Authentication skipped: redirected to ${url}`);
+    }
 
     // Fill in credentials with retry logic
     await fillFormWithRetry(page, [
