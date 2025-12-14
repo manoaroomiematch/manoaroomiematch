@@ -50,18 +50,22 @@ const SignIn = () => {
       style={{
         minHeight: '100vh',
         backgroundImage: 'url(/background/Flower%20Print%202.png)',
-        backgroundSize: '100%',
+        backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
         imageRendering: 'crisp-edges',
         filter: 'contrast(1.05) saturate(1.1)',
-        paddingTop: '2rem',
-        paddingBottom: '2rem',
+        paddingTop: '1rem',
+        paddingBottom: '1rem',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '1 0 auto',
       }}
     >
-      <Container className="py-4 pb-5 mb-5">
-        <Row className="justify-content-center">
-          <Col xs={12} sm={10} md={8} lg={6} xl={5}>
+      <Container className="py-3 py-md-4 py-lg-5 flex-grow-1 d-flex align-items-center justify-content-center">
+        <Row className="justify-content-center g-0 w-100">
+          <Col xs={12} sm={11} md={9} lg={7} xl={6}>
             <Card
               className="shadow-lg border-0 text-center mb-4"
               style={{
@@ -70,12 +74,13 @@ const SignIn = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
               }}
             >
-              <Card.Body className="p-4">
-                <div className="mb-3">
-                  <PersonCircle size={64} className="text-success" />
+              <Card.Body className="p-3 p-md-4">
+                <div className="mb-2 mb-md-3">
+                  <PersonCircle size={48} className="text-success d-sm-none" />
+                  <PersonCircle size={64} className="text-success d-none d-sm-inline" />
                 </div>
-                <h1 className="display-4 fw-bold mb-2">Welcome Back</h1>
-                <p className="text-muted mb-0">Sign in to continue to Manoa Roomie Match</p>
+                <h1 className="fw-bold mb-2 fs-2 fs-md-1">Welcome Back</h1>
+                <p className="text-muted mb-0 small fs-6">Sign in to continue to Manoa Roomie Match</p>
               </Card.Body>
             </Card>
             <Card
@@ -86,10 +91,10 @@ const SignIn = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
               }}
             >
-              <Card.Body className="p-5">
+              <Card.Body className="p-3 p-md-4 p-lg-5">
                 <Form method="post" onSubmit={handleSubmit}>
                   <Form.Group controlId="formBasicEmail" className="mb-4">
-                    <Form.Label className="fw-semibold">Email Address</Form.Label>
+                    <Form.Label className="fw-semibold small">Email Address</Form.Label>
                     <div className="position-relative">
                       <EnvelopeFill
                         className="position-absolute text-muted"
@@ -115,7 +120,7 @@ const SignIn = () => {
                     </div>
                   </Form.Group>
                   <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold">Password</Form.Label>
+                    <Form.Label className="fw-semibold small">Password</Form.Label>
                     <div className="position-relative">
                       <LockFill
                         className="position-absolute text-muted"
