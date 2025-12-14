@@ -7,7 +7,8 @@ import authOptions from '@/lib/authOptions';
 /**
  * GET /api/profile/[userId]
  * Returns a user's profile by ID (authenticated users only)
- * Used for viewing matched user profiles in match details
+ * Accepts either UserProfile ID (cuid) or User ID (number)
+ * Used for viewing matched user profiles in match details and messages
  */
 export async function GET(
   req: Request,
@@ -25,9 +26,24 @@ export async function GET(
       return NextResponse.json({ error: 'User ID parameter required' }, { status: 400 });
     }
 
-    const profile = await prisma.userProfile.findUnique({
-      where: { id: userId },
-    });
+    // Check if userId is a number (User ID) or string (UserProfile ID)
+    const isNumericId = !Number.isNaN(Number(userId));
+
+    let profile;
+
+    if (isNumericId) {
+      // Fetch by User ID (number)
+      profile = await prisma.userProfile.findUnique({
+        where: {
+          userId: Number(userId),
+        },
+      });
+    } else {
+      // Fetch by UserProfile ID (cuid string)
+      profile = await prisma.userProfile.findUnique({
+        where: { id: userId },
+      });
+    }
 
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });

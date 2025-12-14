@@ -66,9 +66,10 @@ interface UserProfileModalProps {
   onHide: () => void;
   userId?: number; // Optional user ID for reporting functionality
   isAdmin?: boolean; // If true, hides the report button (admins use moderation tools instead)
+  hideReportButton?: boolean; // If true, hides the report button (e.g., when report is in dropdown instead)
 }
 
-const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide, userId, isAdmin = false }) => {
+const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHide, userId, isAdmin = false, hideReportButton = false }) => {
   const [showReportModal, setShowReportModal] = useState(false);
 
   // Filter out empty, null, or undefined interests
@@ -105,16 +106,16 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ profile, show, onHi
           <Modal.Title className="w-100 text-center fw-bold">
             Profile
           </Modal.Title>
-          {userId && !showReportModal && !isAdmin && (
-          <Button
-            variant="outline-danger"
-            size="sm"
-            className="position-absolute end-0 me-5"
-            onClick={() => setShowReportModal(true)}
-          >
-            <Flag size={16} className="me-1" />
-            Report User
-          </Button>
+          {userId && !showReportModal && !isAdmin && !hideReportButton && (
+            <Button
+              variant="outline-danger"
+              size="sm"
+              className="position-absolute end-0 me-5"
+              onClick={() => setShowReportModal(true)}
+            >
+              <Flag size={16} className="me-1" />
+              Report User
+            </Button>
           )}
         </Modal.Header>
         {/* Horizontal line between header and body */}

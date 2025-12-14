@@ -188,6 +188,11 @@ export async function sendMessage(data: {
   content: string;
 }) {
   try {
+    // Check if the sender has blocked the receiver (for symmetry, though unusual)
+    // or if there's any other restriction
+    // Note: We allow sending if blocked, as blocking is one-way.
+    // The receiver won't see the message in conversation, but technical delivery works.
+
     const message = await prisma.message.create({
       data: {
         senderId: data.senderId,

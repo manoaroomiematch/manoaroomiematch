@@ -34,9 +34,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const parsedReceiverId = parseInt(receiverId, 10);
+
+    // Check if receiver has blocked the sender
+    const receiverProfile = await prisma.userProfile.findUnique({
+      where: { userId: parsedReceiverId },
+    });
+
+    if (receiverProfile) {
+      const preferences = (receiverProfile.preferences as any) || {};
+      const blockedUsers = Array.isArray(preferences.blockedUsers) ? preferences.blockedUsers : [];
+
+      if (blockedUsers.includes(user.id)) {
+        return NextResponse.json(
+          { error: 'You cannot message this user as they have blocked you' },
+          { status: 403 },
+        );
+      }
+    }
+
     const result = await sendMessage({
       senderId: user.id,
-      receiverId: parseInt(receiverId, 10),
+      receiverId: parsedReceiverId,
       content,
     });
 
