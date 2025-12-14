@@ -100,7 +100,7 @@ const NavBar: React.FC = () => {
           <Nav className="flex-column flex-lg-row align-items-start align-items-lg-center gap-2 ms-lg-auto">
             {session ? (
               <div className="d-flex flex-row align-items-center gap-2">
-                <NotificationsPanel />
+                {role !== 'ADMIN' && <NotificationsPanel />}
                 <Nav.Link id="messages-nav" href="/messages" active={pathName === '/messages'}>
                   <span className="position-relative">
                     <ChatDots className="me-1" size={20} />

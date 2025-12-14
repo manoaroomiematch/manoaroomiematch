@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Badge, Modal, Button } from 'react-bootstrap';
-import { BellFill } from 'react-bootstrap-icons';
+import { BellFill, X } from 'react-bootstrap-icons';
 
 interface Notification {
   id: number;
@@ -88,6 +88,33 @@ const NotificationsPanel: React.FC = () => {
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId: number, e: React.MouseEvent) => {
+    // Prevent triggering the mark as read handler
+    e.stopPropagation();
+
+    try {
+      const response = await fetch('/api/notifications/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ notificationId }),
+      });
+
+      if (response.ok) {
+        // Remove notification from local state
+        setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+        // Update unread count if the deleted notification was unread
+        const deletedNotification = notifications.find((n) => n.id === notificationId);
+        if (deletedNotification && !deletedNotification.is_read) {
+          setUnreadCount(Math.max(0, unreadCount - 1));
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
     }
   };
 
@@ -192,17 +219,33 @@ const NotificationsPanel: React.FC = () => {
                         {formatDate(notification.created_at)}
                       </small>
                     </div>
-                    {!notification.is_read && (
-                      <span
-                        className="badge bg-primary rounded-circle"
+                    <div className="d-flex gap-2 align-items-start" style={{ flexShrink: 0 }}>
+                      {!notification.is_read && (
+                        <span
+                          className="badge bg-primary rounded-circle"
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            marginTop: '4px',
+                          }}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 text-danger"
                         style={{
-                          width: '8px',
-                          height: '8px',
-                          marginTop: '4px',
-                          flexShrink: 0,
+                          border: 'none',
+                          background: 'none',
+                          cursor: 'pointer',
+                          marginTop: '2px',
                         }}
-                      />
-                    )}
+                        onClick={(e) => handleDeleteNotification(notification.id, e)}
+                        title="Delete notification"
+                        aria-label="Delete notification"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </div>
                 </button>
               ))

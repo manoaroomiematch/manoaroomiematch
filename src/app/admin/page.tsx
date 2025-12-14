@@ -175,9 +175,14 @@ const AdminPage: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to delete user');
       }
+      // Remove user from users list
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
-      // Clear user cache on delete
+      // Remove all flags (reports) for this deleted user
+      const deletedUserId = Number(deleteUserId);
+      setFlags((prev) => prev.filter((flag) => flag.userId !== deletedUserId));
+      // Clear caches on delete
       clearCache('users-all');
+      clearCache('flags-all');
       setUserModalError(null);
       setShowDeleteUserModal(false);
     } catch (err) {
@@ -267,7 +272,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all users with caching (client-side pagination) */
   const fetchUsers = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'users-all';
@@ -293,7 +298,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all flags with caching (client-side pagination) */
   const fetchFlags = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'flags-all';
@@ -319,7 +324,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch all categories with caching (client-side pagination) */
   const fetchCategories = async (skipCache = false) => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       // Check cache first
       const cacheKey = 'categories-all';
@@ -345,7 +350,7 @@ const AdminPage: React.FC = () => {
 
   /** Fetch admin profile and all data on initial load */
   const fetchAdminData = async () => {
-    if (status !== 'authenticated' || session?.user?.randomKey !== 'ADMIN') return;
+    if (status !== 'authenticated' || !session?.user?.id) return;
     try {
       setInitialLoading(true);
       // Fetch admin profile
@@ -825,6 +830,13 @@ const AdminPage: React.FC = () => {
                           }}
                           onView={handleViewUser}
                           onFlagged={() => fetchFlags(true)}
+                          onRoleChanged={(userId, newRole) => {
+                            setUsers((prev) => prev.map((user) => (
+                              user.id === userId ? { ...user, role: newRole } : user
+                            )));
+                            // Clear the users cache since the data has changed
+                            clearCache('users-all');
+                          }}
                         />
                       ))}
                     </tbody>
