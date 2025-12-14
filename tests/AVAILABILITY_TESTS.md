@@ -3,8 +3,8 @@
 ## Overview
 This document describes the comprehensive Playwright availability tests implemented for the Mānoa RoomieMatch application. These tests verify that all pages are accessible and that all forms operate correctly with legal inputs.
 
-## Test File
-- **Location**: `/tests/availability.spec.ts`
+## Test Files
+- **Locations**: `/tests/core-features.spec.ts`, `/tests/signin-suspension.spec.ts`
 - **Purpose**: Test availability of all application pages and validate form functionality
 
 ## Test Categories
@@ -80,6 +80,7 @@ These tests use authenticated sessions to verify protected pages:
   - Tests old password input
   - Validates new password input
   - Checks form functionality
+
 
 ### 3. Admin Pages
 These tests verify admin-only functionality:
@@ -184,7 +185,7 @@ npx playwright test availability.spec.ts --debug
 
 ## Test Coverage
 
-### Pages Tested: 15
+### Pages Tested: 19
 1. Landing Page (/)
 2. Sign In (/auth/signin)
 3. Sign Up (/auth/signup)
@@ -192,14 +193,18 @@ npx playwright test availability.spec.ts --debug
 5. Edit Profile (/edit-profile)
 6. Lifestyle Survey (/lifestyle-survey)
 7. Matches (/matches)
-8. Messages (/messages)
-9. Home (/home)
-10. Resources (/resources)
-11. Change Password (/auth/change-password)
-12. Admin (/admin)
-13. Not Found (404)
-14. Not Authorized
-15. Navigation (Navbar)
+8. Accepted Matches (/accepted-matches)
+9. Passed Matches (/passed-matches)
+10. Saved Matches (/saved-matches)
+11. Messages (/messages)
+12. Home (/home)
+13. Resources (/resources)
+14. Lifestyle Categories (/resources/lifestyle-categories)
+15. Change Password (/auth/change-password)
+16. Admin (/admin)
+17. Not Found (404)
+18. Not Authorized (/not-authorized)
+19. Navigation (Navbar)
 
 ### Forms Tested: 6
 1. Sign In Form

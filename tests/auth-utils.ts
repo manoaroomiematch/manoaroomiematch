@@ -82,20 +82,33 @@ async function authenticateWithUI(
         ]).catch(() => false);
 
         if (isAuthenticated) {
-          console.log(`✓ Restored session for ${email}`);
+          // Only log on first restoration, not every test
+          if (!process.env.PW_SESSION_RESTORED) {
+            console.log(`✓ Restored session for ${email}`);
+            process.env.PW_SESSION_RESTORED = '1';
+          }
           return;
         }
 
-        console.log(`× Saved session for ${email} expired, re-authenticating...`);
+        if (!process.env.PW_SESSION_EXPIRED) {
+          console.warn(`× Saved session for ${email} expired, re-authenticating...`);
+          process.env.PW_SESSION_EXPIRED = '1';
+        }
       }
     } catch (error) {
-      console.log(`× Error restoring session: ${error}`);
+      if (!process.env.PW_SESSION_ERROR) {
+        console.warn(`× Error restoring session: ${error}`);
+        process.env.PW_SESSION_ERROR = '1';
+      }
     }
   }
 
   // If session restoration fails, authenticate via UI
   try {
-    console.log(`→ Authenticating ${email} via UI...`);
+    if (!process.env.PW_SESSION_AUTH) {
+      console.log(`→ Authenticating ${email} via UI...`);
+      process.env.PW_SESSION_AUTH = '1';
+    }
 
     // Navigate to login page
     await page.goto(`${BASE_URL}/auth/signin`);
@@ -132,7 +145,7 @@ async function authenticateWithUI(
       ]).catch(() => false);
     } catch (error) {
       // Continue anyway - session might be valid even if verification is flaky
-      console.log(`Auth verification had issues but continuing: ${error}`);
+      // Suppress noisy output
     }
 
     if (!authSuccessful) {
@@ -141,13 +154,20 @@ async function authenticateWithUI(
       if (errorVisible) {
         throw new Error(`Authentication failed: error message displayed for ${email}`);
       }
-      console.log(`⚠ Auth verification inconclusive but continuing for ${email}`);
+      // Only log once per run
+      if (!process.env.PW_SESSION_INCONCLUSIVE) {
+        console.warn(`⚠ Auth verification inconclusive but continuing for ${email}`);
+        process.env.PW_SESSION_INCONCLUSIVE = '1';
+      }
     }
 
     // Save session for future tests
     const cookies = await page.context().cookies();
     fs.writeFileSync(sessionPath, JSON.stringify({ cookies }));
-    console.log(`✓ Successfully authenticated ${email} and saved session`);
+    if (!process.env.PW_SESSION_SUCCESS) {
+      console.log(`✓ Successfully authenticated ${email} and saved session`);
+      process.env.PW_SESSION_SUCCESS = '1';
+    }
   } catch (error) {
     console.error(`× Authentication failed for ${email}:`, error);
 
