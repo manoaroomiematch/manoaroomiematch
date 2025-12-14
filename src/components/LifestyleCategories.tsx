@@ -185,7 +185,7 @@ const LifestyleCategoriesTips: React.FC = () => {
               const learnMoreLink = match ? match[1] : '';
               return (
                 <Col md={6} lg={4} key={category.id} className="category-card">
-                  <Card className="h-100 border-0 bg-white grow-card" style={{ transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)' }}>
+                  <Card className="h-100 bg-white grow-card" style={{ transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)', border: '1px solid #dee2e6' }}>
                     <Card.Header className="bg-success bg-opacity-10 border-0 py-3">
                       <Card.Title className="fw-bold text-success mb-0">
                         {category.name.charAt(0).toUpperCase() + category.name.slice(1)}

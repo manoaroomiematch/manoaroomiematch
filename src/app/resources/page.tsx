@@ -12,7 +12,7 @@ import Image from 'next/image';
  */
 
 const ResourcesPage = () => (
-  <main className="bg-light min-vh-100 py-5">
+  <main style={{ background: '#f8f9fa' }} className="py-5">
     <Container className="py-4">
       {/* Header Section with decorative graphic */}
       <Row className="align-items-center mb-5">
