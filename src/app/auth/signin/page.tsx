@@ -95,8 +95,8 @@ const SignIn = () => {
                           transition: 'all 0.3s ease',
                           border: '2px solid #e0e0e0',
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#198754'}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        onFocus={(e) => { e.target.style.borderColor = '#198754'; }}
+                        onBlur={(e) => { e.target.style.borderColor = '#e0e0e0'; }}
                       />
                     </div>
                   </Form.Group>
@@ -121,8 +121,8 @@ const SignIn = () => {
                           transition: 'all 0.3s ease',
                           border: '2px solid #e0e0e0',
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#198754'}
-                        onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+                        onFocus={(e) => { e.target.style.borderColor = '#198754'; }}
+                        onBlur={(e) => { e.target.style.borderColor = '#e0e0e0'; }}
                       />
                     </div>
                   </Form.Group>
