@@ -10,15 +10,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { Container, Row, Col, Card, Form, Button, Badge, Spinner, Alert, Dropdown } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import {
   PersonCircle,
   Send,
   ArrowLeft,
-  PersonFill,
-  ShieldX,
-  ExclamationTriangle,
 } from 'react-bootstrap-icons';
+import MessageActionsDropdown from '@/components/MessageActionsDropdown';
 
 interface Message {
   id: number;
@@ -272,46 +270,11 @@ const ConversationPage = () => {
                     <h5 className="mb-0">{conversation.otherUser.name}</h5>
                   </div>
 
-                  {/* Dropdown menu for user actions */}
-                  <Dropdown align="end">
-                    <Dropdown.Toggle
-                      variant="link"
-                      className="text-dark p-0"
-                      id="user-actions-dropdown"
-                    >
-                      <span className="visually-hidden">User actions</span>
-                    </Dropdown.Toggle>
-
-                    <Dropdown.Menu>
-                      <Dropdown.Item
-                        onClick={() => router.push(`/profile/${conversation.otherUser.id}`)}
-                      >
-                        <PersonFill className="me-2" />
-                        View Profile
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item
-                        className="text-warning"
-                        onClick={() => {
-                          console.log(`Block user: ${conversation.otherUser.name}`);
-                          // TODO: Implement block user functionality
-                        }}
-                      >
-                        <ShieldX className="me-2" />
-                        Block User
-                      </Dropdown.Item>
-                      <Dropdown.Item
-                        className="text-danger"
-                        onClick={() => {
-                          console.log(`Report user: ${conversation.otherUser.name}`);
-                          // TODO: Implement report user functionality
-                        }}
-                      >
-                        <ExclamationTriangle className="me-2" />
-                        Report User
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
+                  {/* Message Actions Dropdown */}
+                  <MessageActionsDropdown
+                    otherUser={conversation.otherUser}
+                    isAdmin={session?.user?.randomKey === 'ADMIN'}
+                  />
                 </div>
               </Card.Header>
 
