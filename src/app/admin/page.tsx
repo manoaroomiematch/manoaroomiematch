@@ -175,9 +175,14 @@ const AdminPage: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to delete user');
       }
+      // Remove user from users list
       setUsers((prev) => prev.filter((u) => u.id !== deleteUserId));
-      // Clear user cache on delete
+      // Remove all flags (reports) for this deleted user
+      const deletedUserId = Number(deleteUserId);
+      setFlags((prev) => prev.filter((flag) => flag.userId !== deletedUserId));
+      // Clear caches on delete
       clearCache('users-all');
+      clearCache('flags-all');
       setUserModalError(null);
       setShowDeleteUserModal(false);
     } catch (err) {

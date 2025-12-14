@@ -162,6 +162,16 @@ export async function POST(req: Request) {
         },
       });
 
+      // Delete all moderation actions where user is target or admin
+      await prisma.moderationAction.deleteMany({
+        where: {
+          OR: [
+            { targetUserId: userId },
+            { adminUserId: userId },
+          ],
+        },
+      });
+
       // Delete all notifications for this user
       await prisma.notification.deleteMany({ where: { user_id: userId } });
 
