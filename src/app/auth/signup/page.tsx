@@ -100,6 +100,16 @@ const SignUp = () => {
     }
 
     try {
+      // Ensure new signups start survey from the beginning
+      try {
+        localStorage.setItem('survey-start-fresh', 'true');
+        // Also clear any possible previous completion markers
+        localStorage.removeItem('lifestyle-survey-completed');
+        localStorage.removeItem('lifestyle-survey-draft');
+      } catch (e) {
+        // Ignore localStorage errors (e.g., server-side)
+      }
+
       // After creating, signIn with redirect to the lifestyle survey page
       const result = await signIn('credentials', {
         email: data.email,
@@ -130,12 +140,12 @@ const SignUp = () => {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        paddingTop: '2rem',
-        paddingBottom: '2rem',
+        paddingTop: '1rem',
+        paddingBottom: '1rem',
       }}
     >
-      <Container className="py-4 pb-5 mb-5">
-        <Row className="justify-content-center">
+      <Container className="py-3 py-md-4 mb-4" style={{ maxWidth: '540px' }}>
+        <Row className="justify-content-center px-2 g-2">
           <Col xs={12} sm={10} md={8} lg={6} xl={5}>
             <Card
               className="shadow-lg border-0 text-center mb-4"
@@ -145,27 +155,27 @@ const SignUp = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
               }}
             >
-              <Card.Body className="p-4">
-                <div className="mb-3">
-                  <PersonFill size={64} className="text-success" />
+              <Card.Body className="p-3 p-md-4">
+                <div className="mb-2">
+                  <PersonFill size={40} className="text-success" />
                 </div>
-                <h1 className="display-4 fw-bold mb-2">Create Account</h1>
-                <p className="text-muted mb-0">Join Mānoa Roomie Match and find your ideal roommate</p>
+                <h1 className="fw-bold mb-2 fs-3 fs-md-1">Create Account</h1>
+                <p className="text-muted mb-0 small">Join Mānoa Roomie Match and find your ideal roommate</p>
               </Card.Body>
             </Card>
-            <Alert variant="info" className="shadow-sm mb-3">
-              <Alert.Heading className="h6 fw-bold">
+            <Alert variant="info" className="shadow-sm mb-3 py-2 px-3 small">
+              <Alert.Heading className="h6 fw-bold mb-2">
                 <EnvelopeFill className="me-2" />
                 UH Email Required
               </Alert.Heading>
-              <p className="mb-2 small">
+              <p className="mb-2">
                 Only
                 {' '}
                 <strong>@hawaii.edu</strong>
                 {' '}
                 email addresses can create an account.
               </p>
-              <p className="mb-0 small">
+              <p className="mb-0">
                 Don&apos;t have your UH email?
                 {' '}
                 <a
@@ -192,7 +202,7 @@ const SignUp = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.95)',
               }}
             >
-              <Card.Body className="p-5">
+              <Card.Body className="p-4 p-md-5">
                 <Form onSubmit={handleSubmit(onSubmit)}>
                   <Row>
                     <Col md={6}>
@@ -201,12 +211,13 @@ const SignUp = () => {
                         <input
                           type="text"
                           {...register('firstName')}
-                          className={`form-control form-control-lg ${errors.firstName ? 'is-invalid' : ''}`}
+                          className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
                           placeholder="John"
                           disabled={isLoading}
                           style={{
                             borderRadius: '10px',
                             fontSize: '0.95rem',
+                            height: '44px',
                             transition: 'all 0.3s ease',
                             border: '2px solid #e0e0e0',
                           }}
@@ -222,12 +233,13 @@ const SignUp = () => {
                         <input
                           type="text"
                           {...register('lastName')}
-                          className={`form-control form-control-lg ${errors.lastName ? 'is-invalid' : ''}`}
+                          className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
                           placeholder="Doe"
                           disabled={isLoading}
                           style={{
                             borderRadius: '10px',
                             fontSize: '0.95rem',
+                            height: '44px',
                             transition: 'all 0.3s ease',
                             border: '2px solid #e0e0e0',
                           }}
@@ -243,19 +255,21 @@ const SignUp = () => {
                     <Form.Label className="fw-semibold">Email Address</Form.Label>
                     <div className="position-relative">
                       <EnvelopeFill
+                        size={18}
                         className="position-absolute text-muted"
                         style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
                       />
                       <input
                         type="email"
                         {...register('email')}
-                        className={`form-control form-control-lg ${errors.email ? 'is-invalid' : ''}`}
+                        className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                         placeholder="you@hawaii.edu"
                         disabled={isLoading}
                         style={{
                           borderRadius: '10px',
                           fontSize: '0.95rem',
                           paddingLeft: '45px',
+                          height: '44px',
                           transition: 'all 0.3s ease',
                           border: '2px solid #e0e0e0',
                         }}
@@ -270,6 +284,7 @@ const SignUp = () => {
                     <Form.Label className="fw-semibold">Password</Form.Label>
                     <div className="position-relative">
                       <LockFill
+                        size={18}
                         className="position-absolute text-muted"
                         style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
                       />
@@ -278,13 +293,14 @@ const SignUp = () => {
                         {...register('password', {
                           onChange: (e) => setWatchPassword(e.target.value),
                         })}
-                        className={`form-control form-control-lg ${errors.password ? 'is-invalid' : ''}`}
+                        className={`form-control ${errors.password ? 'is-invalid' : ''}`}
                         placeholder="Minimum 6 characters"
                         disabled={isLoading}
                         style={{
                           borderRadius: '10px',
                           fontSize: '0.95rem',
                           paddingLeft: '45px',
+                          height: '44px',
                           transition: 'all 0.3s ease',
                           border: '2px solid #e0e0e0',
                         }}
@@ -315,19 +331,21 @@ const SignUp = () => {
                     <Form.Label className="fw-semibold">Confirm Password</Form.Label>
                     <div className="position-relative">
                       <LockFill
+                        size={18}
                         className="position-absolute text-muted"
                         style={{ left: '15px', top: '50%', transform: 'translateY(-50%)', zIndex: 10 }}
                       />
                       <input
                         type="password"
                         {...register('confirmPassword')}
-                        className={`form-control form-control-lg ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                        className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
                         placeholder="Re-enter your password"
                         disabled={isLoading}
                         style={{
                           borderRadius: '10px',
                           fontSize: '0.95rem',
                           paddingLeft: '45px',
+                          height: '44px',
                           transition: 'all 0.3s ease',
                           border: '2px solid #e0e0e0',
                         }}

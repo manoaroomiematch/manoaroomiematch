@@ -17,9 +17,9 @@ const SignIn = () => {
   useEffect(() => {
     if (session?.user) {
       if (session.user.randomKey === 'ADMIN') {
-        router.push('/admin');
+        router.replace('/admin');
       } else {
-        router.push('/profile');
+        router.replace('/profile');
       }
     }
   }, [session, router]);

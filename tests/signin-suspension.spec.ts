@@ -2,22 +2,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Sign-in Suspension and Deactivation Notifications', () => {
-  let appAvailable = true;
+  const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://127.0.0.1:3000';
 
-  const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'https://manoaroomiematch.vercel.app';
-  test.beforeAll(async () => {
-    // Try to fetch the sign-in page to check if the app is running
-    try {
-      const res = await fetch(`${BASE_URL}/auth/signin`);
-      appAvailable = res.ok;
-    } catch (e) {
-      appAvailable = false;
-    }
-  });
-
-  test.beforeEach(function (this: any) {
-    if (!appAvailable) this.skip('App is not running or not reachable. Skipping tests.');
-  });
   test.slow();
 
   test('should display suspension notification modal when suspended user attempts login', async ({ page }) => {
