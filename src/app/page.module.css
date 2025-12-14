@@ -86,14 +86,14 @@
 }
 
 .heroInfoCard {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.25);
   padding: 1rem 1.25rem;
   border-radius: 0.5rem;
   min-width: 240px;
   max-width: 360px;
   flex: 1 1 300px;
   text-align: center;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.3);
 }
 
 .heroInfoCard h4 {
@@ -181,8 +181,12 @@
 
 /* Overview Section */
 .overviewSection {
-  background-color: #f8f9fa;
-  padding: 4rem 2rem;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/background/rainbow.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding: 4rem 2rem 2rem 2rem;
 }
 
 .overviewContainer {
@@ -208,8 +212,12 @@
 
 /* Features Section */
 .featuresSection {
-  background-color: white;
-  padding: 4rem 2rem;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('/background/rainbow.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  padding: 2rem 2rem 4rem 2rem;
 }
 
 .featuresContainer {

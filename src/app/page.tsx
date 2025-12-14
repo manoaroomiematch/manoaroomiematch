@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { People, BarChartLine, ShieldCheck, Lightbulb } from 'react-bootstrap-icons';
+import { People, BarChartLine, ShieldCheck, Chat } from 'react-bootstrap-icons';
 import styles from './page.module.css';
 
 /** The Landing page - redirects to home if user is logged in */
@@ -45,14 +45,14 @@ const Home = () => {
       description: 'Quick lifestyle survey to share your preferences and living habits.',
     },
     {
+      icon: Chat,
+      title: 'In App Messaging',
+      description: 'Connect with matching roommates using our messaging tools.',
+    },
+    {
       icon: ShieldCheck,
       title: 'Verified Profiles',
       description: 'UH authentication ensures real students in your community.',
-    },
-    {
-      icon: Lightbulb,
-      title: 'AI Assistance',
-      description: 'Optional AI-powered message templates to start conversations.',
     },
   ];
 
@@ -61,7 +61,15 @@ const Home = () => {
     return (
       <main className={styles.landingPage}>
         {/* Hero Section */}
-        <section className={styles.heroSection}>
+        <section
+          className={styles.heroSection}
+          style={{
+            backgroundImage: 'url(/background/banner.png)',
+            backgroundSize: '150%',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
           <div className={styles.heroBackground} />
           <div className={styles.heroOverlay}>
             <div className={styles.heroContent}>
@@ -79,7 +87,7 @@ const Home = () => {
                   <p>
                     Quick lifestyle survey
                     <br />
-                    <span className={styles.noWrap}>(6-10 questions)</span>
+                    <span className={styles.noWrap}>(6 questions)</span>
                   </p>
                 </div>
                 <div className={styles.heroInfoCard}>
@@ -151,8 +159,17 @@ const Home = () => {
         </section>
 
         {/* Second CTA placed above Sign Up Prompt */}
-        <section className={styles.ctaSection}>
-          <div className={styles.ctaContainer}>
+        <section
+          className={styles.ctaSection}
+          style={{
+            backgroundImage: 'url(/background/banner.png)',
+            backgroundSize: '150%',
+            backgroundPosition: '20%',
+            backgroundRepeat: 'no-repeat',
+            transform: 'scaleX(-1)',
+          }}
+        >
+          <div className={styles.ctaContainer} style={{ transform: 'scaleX(-1)' }}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
               <Image
                 src="/graphic7.png"

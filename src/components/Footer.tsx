@@ -2,7 +2,7 @@ import { Row, Col, Container } from 'react-bootstrap';
 
 /** The Footer appears at the bottom of every page. Rendered by the App Layout component. */
 const Footer = () => (
-  <footer className="mt-auto py-2 bg-success text-white">
+  <footer className="mt-auto py-2 text-white" style={{ backgroundColor: '#0d5c36' }}>
     <Container>
       <Row>
         <Col className="text-center small">
@@ -13,13 +13,6 @@ const Footer = () => (
           University of Hawaii
           <br />
           Honolulu, HI 96822
-          <br />
-          <a
-            href="http://ics-software-engineering.github.io/nextjs-application-template"
-            className="text-white text-decoration-none"
-          >
-            Template Home Page
-          </a>
         </Col>
       </Row>
     </Container>
