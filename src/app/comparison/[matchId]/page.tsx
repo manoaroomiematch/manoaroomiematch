@@ -517,7 +517,7 @@ export default function ComparisonPage() {
         </Row>
 
         <Row className="mb-4 g-4">
-          <Col lg={6}>
+          <Col lg={12}>
             <Card className="shadow-sm h-100">
               <Card.Body className="p-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
@@ -528,7 +528,7 @@ export default function ComparisonPage() {
                     <i className="bi bi-hand-thumbs-up" />
                   </div>
                   <div>
-                    <h5 className="fw-bold mb-0">Compatible Traits</h5>
+                    <h4 className="fw-bold mb-0">Compatible Traits</h4>
                     <small className="text-muted">Where your lifestyles naturally align</small>
                   </div>
                 </div>
@@ -547,47 +547,11 @@ export default function ComparisonPage() {
               </Card.Body>
             </Card>
           </Col>
-          <Col lg={6}>
-            <Card className="shadow-sm h-100">
-              <Card.Body className="p-4">
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <div
-                    className="bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center rounded"
-                    style={{ width: '44px', height: '44px' }}
-                  >
-                    <i className="bi bi-exclamation-triangle" />
-                  </div>
-                  <div>
-                    <h5 className="fw-bold mb-0">Potential Conflicts</h5>
-                    <small className="text-muted">Areas to discuss early</small>
-                  </div>
-                </div>
-                {data.conflicts.length > 0 ? (
-                  <ListGroup variant="flush">
-                    {data.conflicts.map((conflict, index) => (
-                      <ListGroup.Item key={conflict + index} className="px-0">
-                        <i className="bi bi-dot text-danger me-2" />
-                        {conflict}
-                      </ListGroup.Item>
-                    ))}
-                  </ListGroup>
-                ) : (
-                  <p className="text-muted mb-0">No major conflicts detected.</p>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
         </Row>
 
-        {/* Two Column Layout for Report and Icebreakers */}
+        {/* Icebreakers */}
         <Row className="g-4 mb-4">
-          <Col lg={6}>
-            <CompatibilityReportBox
-              matchId={matchId}
-              report={data.match.compatibilityReport || undefined}
-            />
-          </Col>
-          <Col lg={6}>
+          <Col>
             <IcebreakersBox
               matchId={matchId}
               icebreakers={data.match.icebreakers}
